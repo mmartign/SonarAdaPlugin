@@ -5,6 +5,7 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
 ## Features
 
 - Ada language registration for `.adb`, `.ads`, and `.ada` files.
+- Native Ada analysis with libadalang.
 - Built-in Ada quality profile.
 - Basic source metrics: lines, non-comment lines, comment lines, statements, functions, and cyclomatic complexity.
 - Syntax highlighting for comments, strings, Ada keywords, constants, and pragmas.
@@ -96,3 +97,7 @@ AdaControl findings are imported as Sonar external issues with engine id `AdaCon
 `sonar.ada.adacontrol.extraArgs` is appended after the input file list, which is why ASIS/compiler options can be supplied as `-- -gnat12`.
 
 Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer instead of copying AdaControl source code or bundled rule files into this Apache-licensed project.
+
+## License
+
+This plugin is licensed under the Apache License 2.0. See `LICENSE` for details.
