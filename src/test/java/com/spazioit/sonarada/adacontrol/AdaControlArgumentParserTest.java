@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import com.spazioit.sonarada.adacontrol.AdaControlArgumentParser;
+
 class AdaControlArgumentParserTest {
 
   private final AdaControlArgumentParser parser = new AdaControlArgumentParser();

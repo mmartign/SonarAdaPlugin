@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
+import com.spazioit.sonarada.adacontrol.AdaControlIssue;
+import com.spazioit.sonarada.adacontrol.AdaControlReportParser;
+
 class AdaControlReportParserTest {
 
   private final AdaControlReportParser parser = new AdaControlReportParser();
