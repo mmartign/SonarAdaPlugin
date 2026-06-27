@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.spazioit.sonarada</groupId>
+  <artifactId>sonar-ada-plugin</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>sonar-plugin</packaging>
+
+  <name>SonarQube Ada Plugin</name>
+  <description>Static analysis support for Ada source files in SonarQube.</description>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <repositories>
+    <repository>
+      <id>adacore</id>
+      <url>https://repo.adacore.com/artifactory/maven</url>
+    </repository>
+  </repositories>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <sonar.plugin.api.version>13.8.0.4399</sonar.plugin.api.version>
+    <sonar.packaging.version>1.25.1.3002</sonar.packaging.version>
+    <junit.version>5.14.0</junit.version>
+    <assertj.version>3.27.6</assertj.version>
+    <libadalang.version>24.0.0</libadalang.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.sonarsource.api.plugin</groupId>
+      <artifactId>sonar-plugin-api</artifactId>
+      <version>${sonar.plugin.api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.adacore.libadalang</groupId>
+      <artifactId>libadalang</artifactId>
+      <version>${libadalang.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.4</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.4</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.4</version>
+        <configuration>
+          <useModulePath>false</useModulePath>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonarsource.sonar-packaging-maven-plugin</groupId>
+        <artifactId>sonar-packaging-maven-plugin</artifactId>
+        <version>${sonar.packaging.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <pluginKey>ada</pluginKey>
+          <pluginName>Ada</pluginName>
+          <pluginDescription>Static analysis support for Ada source files.</pluginDescription>
+          <pluginClass>com.spazioit.sonarada.AdaPlugin</pluginClass>
+          <pluginOrganizationName>Local</pluginOrganizationName>
+          <sonarLintSupported>false</sonarLintSupported>
+          <requiredForLanguages>ada</requiredForLanguages>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

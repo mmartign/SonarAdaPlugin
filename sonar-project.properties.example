@@ -1,0 +1,13 @@
+sonar.projectKey=my-ada-project
+sonar.projectName=My Ada Project
+sonar.sources=src
+sonar.sourceEncoding=UTF-8
+
+# Optional AdaControl integration.
+# AdaControl must be installed separately on the scanner machine.
+# sonar.ada.adacontrol.enabled=true
+# sonar.ada.adacontrol.executable=/path/to/adactl
+# sonar.ada.adacontrol.rulesFile=adacontrol.aru
+# sonar.ada.adacontrol.projectFile=my_project.gpr
+# sonar.ada.adacontrol.extraArgs=-- -gnat12
+# sonar.ada.adacontrol.reportPaths=build/adacontrol-report.csv
