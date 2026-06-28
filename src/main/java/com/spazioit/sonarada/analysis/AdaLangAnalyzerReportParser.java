@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.spazioit.sonarada.adacontrol;
+package com.spazioit.sonarada.analysis;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,17 +23,17 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class AdaControlReportParser {
+public final class AdaLangAnalyzerReportParser {
 
-  public List<AdaControlIssue> parse(Path reportPath) throws IOException {
-    List<AdaControlIssue> issues = new ArrayList<>();
+  public List<AdaLangAnalyzerIssue> parse(Path reportPath) throws IOException {
+    List<AdaLangAnalyzerIssue> issues = new ArrayList<>();
     for (String line : Files.readAllLines(reportPath, StandardCharsets.UTF_8)) {
       parseLine(line).ifPresent(issues::add);
     }
     return List.copyOf(issues);
   }
 
-  public java.util.Optional<AdaControlIssue> parseLine(String line) {
+  public java.util.Optional<AdaLangAnalyzerIssue> parseLine(String line) {
     if (line == null || line.isBlank()) {
       return java.util.Optional.empty();
     }
@@ -54,7 +54,7 @@ public final class AdaControlReportParser {
       return java.util.Optional.empty();
     }
 
-    return java.util.Optional.of(new AdaControlIssue(
+    return java.util.Optional.of(new AdaLangAnalyzerIssue(
       fields.get(0).trim(),
       lineNumber,
       column,

@@ -19,12 +19,6 @@ package com.spazioit.sonarada.analysis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.spazioit.sonarada.AdaRule;
-import com.spazioit.sonarada.analysis.AdaAnalysis;
-import com.spazioit.sonarada.analysis.AdaAnalysisConfig;
-import com.spazioit.sonarada.analysis.AdaIssue;
-import com.spazioit.sonarada.analysis.AdaMetrics;
-import com.spazioit.sonarada.analysis.LibadalangAnalyzer;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

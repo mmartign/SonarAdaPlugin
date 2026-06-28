@@ -7,12 +7,13 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
 - Ada language registration for `.adb`, `.ads`, and `.ada` files.
 - Native Ada analysis with libadalang.
 - Built-in Ada quality profile.
-- Basic source metrics: lines, non-comment lines, comment lines, statements, functions, and cyclomatic complexity.
+- Basic source metrics: lines, non-comment lines, comment lines, functions, and cyclomatic complexity.
 - Syntax highlighting for comments, strings, Ada keywords, constants, and pragmas.
 - CPD token generation for duplicate-code detection.
+- AdaLang_Analyzer report parsing for CSV/CSVX findings produced by Spazio IT's external Ada analyzer.
 - Optional AdaControl integration:
   - Run an installed `adactl` executable during analysis.
-  - Import pre-generated AdaControl CSV/CSVX reports.
+  - Import pre-generated AdaControl reports.
   - Publish AdaControl findings as Sonar external issues.
 - A curated set of eleven built-in checks inspired by common Ada best practices and AdaControl rules. For a more comprehensive analysis, the AdaControl integration is recommended. The built-in rules include:
   - `ADA001`: Lines should not be too long.
@@ -66,6 +67,16 @@ sonar.ada.file.suffixes=.adb,.ads,.ada
 
 Rule thresholds such as line length, file length, and complexity are configured as rule parameters in the Ada quality profile.
 
+## AdaLang_Analyzer reports
+
+AdaLang_Analyzer is a Spazio IT static analyzer for Ada, similar in role to clang-analyzer, and is under active development. Its report parser is `AdaLangAnalyzerReportParser`.
+
+Expected AdaLang_Analyzer report fields are:
+
+```text
+file,line,column,key,label,rule,message
+```
+
 ## AdaControl integration
 
 AdaControl is not bundled with this plugin. Install AdaControl separately on the scanner machine, then enable the integration in scanner properties or SonarQube settings.
@@ -75,7 +86,7 @@ Run AdaControl from the scanner:
 ```properties
 sonar.ada.adacontrol.enabled=true
 sonar.ada.adacontrol.executable=/path/to/adactl
-sonar.ada.adacontrol.rulesFile=adacontrol.aru
+sonar.ada.adacontrol.rulesFile=adactl.aru
 sonar.ada.adacontrol.projectFile=my_project.gpr
 sonar.ada.adacontrol.extraArgs=-- -gnat12
 sonar.ada.adacontrol.timeoutSeconds=300
@@ -101,4 +112,4 @@ Because AdaControl is GPL-2.0 software, this plugin integrates with it as an ext
 
 ## License
 
-This plugin is licensed under the GNU Affero General Public License v3.0. See `LICENSE` for details.
+This plugin is licensed under the terms of the GNU Affero General Public License, version 3.0.
