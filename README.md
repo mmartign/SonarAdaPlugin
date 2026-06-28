@@ -1,6 +1,6 @@
 # SonarQube Ada Plugin
 
-This repository contains a SonarQube Server plugin that adds static analysis support for Ada source files.
+This repository contains a SonarQube Server plugin that adds static analysis support for Ada source files. The native analysis engine is based on libadalang, with a built-in rule set inspired by the popular AdaControl tool.
 
 ## Features
 
@@ -14,7 +14,7 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
   - Run an installed `adactl` executable during analysis.
   - Import pre-generated AdaControl CSV/CSVX reports.
   - Publish AdaControl findings as Sonar external issues.
-- Ten built-in checks:
+- A curated set of eleven built-in checks inspired by common Ada best practices and AdaControl rules. For a more comprehensive analysis, the AdaControl integration is recommended. The built-in rules include:
   - `ADA001`: Lines should not be too long.
   - `ADA002`: Tab characters should not be used.
   - `ADA003`: Trailing whitespace should not be used.
@@ -25,6 +25,7 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
   - `ADA008`: Package `use` clauses should be avoided.
   - `ADA009`: Ada files should not be too long.
   - `ADA010`: Ada files should not be too complex.
+  - `ADA011`: The `'Address'` attribute should not be used.
 
 ## Build
 
@@ -96,8 +97,8 @@ AdaControl findings are imported as Sonar external issues with engine id `AdaCon
 
 `sonar.ada.adacontrol.extraArgs` is appended after the input file list, which is why ASIS/compiler options can be supplied as `-- -gnat12`.
 
-Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer instead of copying AdaControl source code or bundled rule files into this Apache-licensed project.
+Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer. This avoids any direct linking that would conflict with this plugin's AGPL-3.0 license.
 
 ## License
 
-This plugin is licensed under the Apache License 2.0. See `LICENSE` for details.
+This plugin is licensed under the GNU Affero General Public License v3.0. See `LICENSE` for details.

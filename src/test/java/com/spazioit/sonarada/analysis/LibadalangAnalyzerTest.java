@@ -68,6 +68,26 @@ class LibadalangAnalyzerTest {
   }
 
   /**
+   * Verifies that the 'Address attribute is detected.
+   */
+  @Test
+  void detectsAddressAttribute() {
+    String source = """
+      with System;
+      procedure Check_Address is
+         X : Integer;
+         A : System.Address := X'Address;
+      begin
+         null;
+      end Check_Address;
+      """;
+
+    AdaAnalysis analysis = analyzer.analyze(source, AdaAnalysisConfig.allRules());
+
+    assertThat(ruleKeys(analysis)).contains(AdaRule.NO_ADDRESS_ATTRIBUTE.key());
+  }
+
+  /**
    * Verifies that rule parameters, such as the maximum line length, are correctly
    * applied during analysis.
    */

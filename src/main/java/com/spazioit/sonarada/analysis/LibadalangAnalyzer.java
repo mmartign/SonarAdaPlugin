@@ -17,6 +17,7 @@
 package com.spazioit.sonarada.analysis;
 
 import com.adacore.libadalang.AdaNode;
+import com.adacore.libadalang.AttributeRef;
 import com.adacore.libadalang.AnalysisResult;
 import com.adacore.libadalang.CaseExpr;
 import com.adacore.libadalang.CaseStmt;
@@ -202,6 +203,12 @@ public final class LibadalangAnalyzer {
         boolean hasNullStmt = handler.fStmts.stream().anyMatch(s -> s instanceof LangkitNullStmt);
         if (hasOthers && hasNullStmt) {
           addIssue(issues, AdaRule.SWALLOWED_EXCEPTION, handler, "Handle this exception, log it, or re-raise it instead of silently ignoring it.");
+        }
+      }
+
+      if (config.isActive(AdaRule.NO_ADDRESS_ATTRIBUTE) && node instanceof AttributeRef attr) {
+        if ("address".equalsIgnoreCase(attr.fAttribute.getText())) {
+          addIssue(issues, AdaRule.NO_ADDRESS_ATTRIBUTE, node, "Avoid using the 'Address' attribute.");
         }
       }
     }
