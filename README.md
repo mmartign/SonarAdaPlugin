@@ -136,8 +136,8 @@ AdaControl findings are imported as Sonar external issues with engine id `AdaCon
 
 `sonar.ada.adacontrol.extraArgs` is appended after the input file list, which is why ASIS/compiler options can be supplied as `-- -gnat12`.
 
-Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer. This avoids any direct linking that would conflict with this plugin's AGPL-3.0 license.
+Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer. This avoids any direct linking that would conflict with this plugin's GPL-3.0-or-later license.
 
 ## License
 
-This plugin is licensed under the terms of the GNU Affero General Public License, version 3.0.
+This plugin is licensed under the GNU General Public License, version 3.0 or later (`GPL-3.0-or-later`).
