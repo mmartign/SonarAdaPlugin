@@ -92,7 +92,7 @@ AdaLang Analyzer is a Spazio IT static analyzer for Ada, similar in role to clan
 
 ```properties
 sonar.ada.adalang.enabled=true
-sonar.ada.adalang.executable=/Users/mmartign/libadalang-tools/adalang_analyzer/bin/adalang_analyzer
+sonar.ada.adalang.executable=/Users/mmartign/AdaLang_Analyzer/bin/adalang_analyzer
 sonar.ada.adalang.checks=*
 sonar.ada.adalang.timeoutSeconds=300
 ```
