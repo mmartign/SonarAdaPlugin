@@ -36,6 +36,12 @@ public final class AdaProperties {
   public static final String ADACONTROL_TIMEOUT_SECONDS_KEY = "sonar.ada.adacontrol.timeoutSeconds";
   public static final String ADACONTROL_FAIL_ON_ERROR_KEY = "sonar.ada.adacontrol.failOnError";
 
+  public static final String ADALANG_ANALYZER_ENABLED_KEY = "sonar.ada.adalang.enabled";
+  public static final String ADALANG_ANALYZER_EXECUTABLE_KEY = "sonar.ada.adalang.executable";
+  public static final String ADALANG_ANALYZER_CHECKS_KEY = "sonar.ada.adalang.checks";
+  public static final String ADALANG_ANALYZER_TIMEOUT_SECONDS_KEY = "sonar.ada.adalang.timeoutSeconds";
+  public static final String ADALANG_ANALYZER_FAIL_ON_ERROR_KEY = "sonar.ada.adalang.failOnError";
+
   private AdaProperties() {
   }
 
@@ -105,6 +111,45 @@ public final class AdaProperties {
         .description("Fail the Sonar scan when adactl cannot be started, times out, or exits with an execution error. Violation exit codes do not fail the scan.")
         .category(CATEGORY)
         .subCategory("AdaControl")
+        .defaultValue("true")
+        .type(PropertyType.BOOLEAN)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_ENABLED_KEY)
+        .name("Run Spazio IT AdaLang Analyzer")
+        .description("Run the external adalang-analyzer executable during Ada analysis.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .defaultValue("false")
+        .type(PropertyType.BOOLEAN)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_EXECUTABLE_KEY)
+        .name("AdaLang Analyzer executable")
+        .description("Path to adalang-analyzer. Use an absolute path when it is not on PATH.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .defaultValue("adalang-analyzer")
+        .type(PropertyType.STRING)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_CHECKS_KEY)
+        .name("AdaLang Analyzer checks")
+        .description("Optional comma-separated check names passed to adalang-analyzer with -checks=.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .type(PropertyType.STRING)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_TIMEOUT_SECONDS_KEY)
+        .name("AdaLang Analyzer timeout")
+        .description("Maximum number of seconds to wait for adalang-analyzer.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .defaultValue("300")
+        .type(PropertyType.INTEGER)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_FAIL_ON_ERROR_KEY)
+        .name("Fail analysis on AdaLang Analyzer execution errors")
+        .description("Fail the Sonar scan when adalang-analyzer cannot start, times out, or exits with an internal error.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
         .defaultValue("true")
         .type(PropertyType.BOOLEAN)
         .build()

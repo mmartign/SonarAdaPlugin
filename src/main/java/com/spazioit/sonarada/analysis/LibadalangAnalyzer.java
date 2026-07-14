@@ -16,46 +16,12 @@
  */
 package com.spazioit.sonarada.analysis;
 
-import com.adacore.libadalang.AdaNode;
-import com.adacore.libadalang.AttributeRef;
-import com.adacore.libadalang.AnalysisResult;
-import com.adacore.libadalang.CaseExpr;
-import com.adacore.libadalang.CaseStmt;
-import com.adacore.libadalang.Comment;
-import com.adacore.libadalang.ExitStmt;
-import com.adacore.libadalang.ForLoopStmt;
-import com.adacore.libadalang.GotoStmt;
-import com.adacore.libadalang.IfExpr;
-import com.adacore.libadalang.IfStmt;
-import com.adacore.libadalang.IterateStmt;
-import com.adacore.libadalang.LangkitCharacter;
-import com.adacore.libadalang.LangkitChoiceOthers;
-import com.adacore.libadalang.LangkitAnalysisContext;
-import com.adacore.libadalang.LangkitAnalysisUnit;
-import com.adacore.libadalang.LangkitBaseNode;
-import com.adacore.libadalang.LangkitBasicDecl;
-import com.adacore.libadalang.LangkitElsifExprPart;
-import com.adacore.libadalang.LangkitElsifStmtPart;
-import com.adacore.libadalang.LangkitExceptionHandler;
-import com.adacore.libadalang.LangkitFileUnitProvider;
-import com.adacore.libadalang.LangkitNullStmt;
-import com.adacore.libadalang.LangkitSubpBody;
-import com.adacore.libadalang.LangkitToken;
-import com.adacore.libadalang.Libadalang;
-import java.nio.charset.StandardCharsets;
-import com.adacore.libadalang.LogicAnd;
-import com.adacore.libadalang.LogicOr;
-import com.adacore.libadalang.PragmaNode;
-import com.adacore.libadalang.RaiseExpr;
-import com.adacore.libadalang.RaiseStmt;
-import com.adacore.libadalang.ReturnStmt;
-import com.adacore.libadalang.SubpBody;
-import com.adacore.libadalang.Token;
-import com.adacore.libadalang.Trivia;
-import com.adacore.libadalang.UsePackageClause;
-import com.adacore.libadalang.WhileLoopStmt;
+import com.adacore.libadalang.Libadalang.*;
 import com.spazioit.sonarada.AdaRule;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -70,15 +36,19 @@ public final class LibadalangAnalyzer {
 
   private static final Pattern TRAILING_WHITESPACE = Pattern.compile("[ \\t]+$");
   private static final Pattern TODO_COMMENT = Pattern.compile("(?i)\\b(TODO|FIXME)\\b");
+  private static final Set<String> KEYWORDS = Set.of(
+    "abort", "abs", "abstract", "accept", "access", "aliased", "all", "and", "array", "at",
+    "begin", "body", "case", "constant", "declare", "delay", "delta", "digits", "do", "else",
+    "elsif", "end", "entry", "exception", "exit", "for", "function", "generic", "goto", "if", "in",
+    "interface", "is", "limited", "loop", "mod", "new", "not", "of", "or", "others", "out", "overriding",
+    "package", "parallel", "private", "procedure", "protected", "raise", "range", "record", "rem", "renames",
+    "requeue", "return", "reverse", "select", "separate", "some", "subtype", "synchronized", "tagged", "task",
+    "terminate", "then", "type", "until", "use", "when", "while", "with", "xor"
+  );
 
   public AdaAnalysis analyze(String source, AdaAnalysisConfig config) {
-    try (
-      LangkitAnalysisContext context = Libadalang.createContext(
-        null, null, null, null, StandardCharsets.UTF_8, true
-      );
-      LangkitFileUnitProvider unitProvider = context.getUnitProvider()
-    ) {
-      LangkitAnalysisUnit unit = unitProvider.getUnitFromBuffer("file.adb", source, StandardCharsets.UTF_8);
+    try (AnalysisContext context = AnalysisContext.create()) {
+      AnalysisUnit unit = context.getUnitFromBuffer(source, "file.adb", "UTF-8", GrammarRule.COMPILATION_RULE);
 
       AdaMetrics metrics = computeMetrics(unit);
       List<AdaIssue> issues = new ArrayList<>();
@@ -91,63 +61,119 @@ public final class LibadalangAnalyzer {
     }
   }
 
-  private static AdaMetrics computeMetrics(LangkitAnalysisUnit unit) {
-    int lines = unit.getEndLoc().getLine();
-    int ncloc = (int) unit.getTriviaManager().getLinesWithTokens().stream().count();
-    int commentLines = (int) unit.getTriviaManager().getLinesWithComments().stream().count();
-    int statements = unit.getRoot().stream(LangkitNullStmt.class).toArray().length; // A rough approximation
-    int functions = unit.getRoot().stream(LangkitSubpBody.class).toArray().length;
-    int complexity = computeComplexity(unit.getRoot());
+  private static AdaMetrics computeMetrics(AnalysisUnit unit) {
+    Set<Integer> codeLines = new HashSet<>();
+    Set<Integer> commentLines = new HashSet<>();
+    for (Token token : tokens(unit)) {
+      if (token.getKind() == TokenKind.ADA_COMMENT) {
+        commentLines.add(token.getSourceLocationRange().start.line);
+      } else if (!token.isTrivia()) {
+        codeLines.add(token.getSourceLocationRange().start.line);
+      }
+    }
 
-    return new AdaMetrics(lines, ncloc, commentLines, statements, functions, complexity);
+    List<AdaNode> nodes = nodes(unit.getRoot());
+    int lines = unit.getLastToken().getSourceLocationRange().end.line;
+    int statements = (int) nodes.stream().filter(NullStmt.class::isInstance).count(); // A rough approximation
+    int functions = (int) nodes.stream().filter(SubpBody.class::isInstance).count();
+    int complexity = computeComplexity(nodes);
+
+    return new AdaMetrics(lines, codeLines.size(), commentLines.size(), statements, functions, complexity);
   }
 
-  private static int computeComplexity(AdaNode root) {
+  private static int computeComplexity(List<AdaNode> nodes) {
     int complexity = 1;
-    for (AdaNode node : root.stream()) {
+    for (AdaNode node : nodes) {
       if (node instanceof IfStmt || node instanceof CaseStmt || node instanceof ForLoopStmt || node instanceof WhileLoopStmt ||
           node instanceof IfExpr || node instanceof CaseExpr) {
         complexity++;
-      } else if (node instanceof LangkitElsifStmtPart || node instanceof LangkitElsifExprPart) {
+      } else if (node instanceof ElsifStmtPart || node instanceof ElsifExprPart) {
         complexity++;
-      } else if (node instanceof LogicAnd || node instanceof LogicOr) {
+      } else if (node instanceof OpAnd || node instanceof OpAndThen || node instanceof OpOr || node instanceof OpOrElse) {
         complexity++;
-      } else if (node instanceof LangkitExceptionHandler) {
+      } else if (node instanceof ExceptionHandler) {
         complexity++;
-      } else if (node instanceof GotoStmt || node instanceof ExitStmt || node instanceof ReturnStmt || node instanceof RaiseStmt || node instanceof RaiseExpr || node instanceof IterateStmt) {
+      } else if (node instanceof GotoStmt || node instanceof ExitStmt || node instanceof ReturnStmt || node instanceof RaiseStmt || node instanceof RaiseExpr) {
         // These don't always add to complexity in the standard model, but can be counted
       }
     }
     return complexity;
   }
 
-  private static List<AdaHighlight> generateHighlights(LangkitAnalysisUnit unit) {
+  private static List<AdaHighlight> generateHighlights(AnalysisUnit unit) {
     List<AdaHighlight> highlights = new ArrayList<>();
-    for (Trivia trivia : unit.getTriviaManager().getTrivia()) {
-      if (trivia instanceof Comment) {
-        highlights.add(new AdaHighlight(trivia.getStartLoc().getLine(), trivia.getStartLoc().getCol() - 1, trivia.getEndLoc().getCol(), AdaHighlightKind.COMMENT));
-      }
-    }
-    for (Token token : unit.getTokens()) {
-      if (token.getKind().equals("StringLit")) {
-        highlights.add(new AdaHighlight(token.getStartLoc().getLine(), token.getStartLoc().getCol() - 1, token.getEndLoc().getCol(), AdaHighlightKind.STRING));
-      } else if (token.isKeyword()) {
-        highlights.add(new AdaHighlight(token.getStartLoc().getLine(), token.getStartLoc().getCol() - 1, token.getEndLoc().getCol(), AdaHighlightKind.KEYWORD));
+    boolean expectPragmaName = false;
+    for (Token token : tokens(unit)) {
+      String text = token.getText();
+      String kind = token.getKind().name;
+
+      if (token.getKind() == TokenKind.ADA_COMMENT) {
+        addHighlight(highlights, token, AdaHighlightKind.COMMENT);
+      } else if (token.isTrivia()) {
+        continue;
+      } else if ("pragma".equalsIgnoreCase(text)) {
+        addHighlight(highlights, token, AdaHighlightKind.PRAGMA);
+        expectPragmaName = true;
+      } else if (expectPragmaName) {
+        // A pragma name immediately follows the pragma keyword. Highlighting
+        // the two tokens separately avoids overlapping SonarQube ranges while
+        // still rendering the complete pragma introducer as an annotation.
+        addHighlight(highlights, token, AdaHighlightKind.PRAGMA);
+        expectPragmaName = false;
+      } else if (isStringLiteral(kind)) {
+        addHighlight(highlights, token, AdaHighlightKind.STRING);
+      } else if (isConstantLiteral(kind, text)) {
+        addHighlight(highlights, token, AdaHighlightKind.CONSTANT);
+      } else if (KEYWORDS.contains(text.toLowerCase(Locale.ROOT))) {
+        addHighlight(highlights, token, AdaHighlightKind.KEYWORD);
       }
     }
     return highlights;
   }
 
-  private static List<AdaCpdToken> generateCpdTokens(LangkitAnalysisUnit unit) {
+  private static boolean isStringLiteral(String tokenKind) {
+    return "String".equals(tokenKind) || tokenKind.startsWith("Format_String_");
+  }
+
+  private static boolean isConstantLiteral(String tokenKind, String tokenText) {
+    return "Integer".equals(tokenKind)
+      || "Decimal".equals(tokenKind)
+      || "Char".equals(tokenKind)
+      || "true".equalsIgnoreCase(tokenText)
+      || "false".equalsIgnoreCase(tokenText)
+      || "null".equalsIgnoreCase(tokenText);
+  }
+
+  private static void addHighlight(List<AdaHighlight> highlights, Token token, AdaHighlightKind kind) {
+    highlights.add(new AdaHighlight(
+      token.getSourceLocationRange().start.line,
+      token.getSourceLocationRange().start.column - 1,
+      token.getSourceLocationRange().end.column - 1,
+      kind
+    ));
+  }
+
+  private static List<AdaCpdToken> generateCpdTokens(AnalysisUnit unit) {
     List<AdaCpdToken> cpdTokens = new ArrayList<>();
-    for (Token token : unit.getTokens()) {
-      String image = token.getKind().equals("Number") ? "$NUMBER" : token.getText().toLowerCase(Locale.ROOT);
-      cpdTokens.add(new AdaCpdToken(image, token.getStartLoc().getLine(), token.getStartLoc().getCol() - 1, token.getEndLoc().getCol()));
+    for (Token token : tokens(unit)) {
+      if (token.isTrivia()) {
+        continue;
+      }
+      String image = switch (token.getKind()) {
+        case ADA_INTEGER, ADA_DECIMAL -> "$NUMBER";
+        default -> token.getText().toLowerCase(Locale.ROOT);
+      };
+      cpdTokens.add(new AdaCpdToken(
+        image,
+        token.getSourceLocationRange().start.line,
+        token.getSourceLocationRange().start.column - 1,
+        token.getSourceLocationRange().end.column - 1
+      ));
     }
     return cpdTokens;
   }
 
-  private void checkRules(LangkitAnalysisUnit unit, String source, AdaAnalysisConfig config, List<AdaIssue> issues, AdaMetrics metrics) {
+  private void checkRules(AnalysisUnit unit, String source, AdaAnalysisConfig config, List<AdaIssue> issues, AdaMetrics metrics) {
     checkLineBasedRules(source, config, issues);
     checkNodeBasedRules(unit, config, issues);
     checkFileThresholds(unit, metrics, config, issues);
@@ -182,14 +208,14 @@ public final class LibadalangAnalyzer {
     }
   }
 
-  private void checkNodeBasedRules(LangkitAnalysisUnit unit, AdaAnalysisConfig config, List<AdaIssue> issues) {
-    for (AdaNode node : unit.getRoot().stream()) {
+  private void checkNodeBasedRules(AnalysisUnit unit, AdaAnalysisConfig config, List<AdaIssue> issues) {
+    for (AdaNode node : nodes(unit.getRoot())) {
       if (config.isActive(AdaRule.GOTO_STATEMENT) && node instanceof GotoStmt) {
         addIssue(issues, AdaRule.GOTO_STATEMENT, node, "Replace this goto with structured control flow.");
       }
 
       if (config.isActive(AdaRule.PRAGMA_SUPPRESS) && node instanceof PragmaNode pragma) {
-        if ("suppress".equalsIgnoreCase(pragma.fPragmaName.getText())) {
+        if ("suppress".equalsIgnoreCase(pragma.fId().getText())) {
           addIssue(issues, AdaRule.PRAGMA_SUPPRESS, pragma, "Remove this pragma Suppress or justify it outside the main quality profile.");
         }
       }
@@ -198,28 +224,28 @@ public final class LibadalangAnalyzer {
         addIssue(issues, AdaRule.PACKAGE_USE_CLAUSE, node, "Prefer explicit package qualification instead of a package use clause.");
       }
 
-      if (config.isActive(AdaRule.SWALLOWED_EXCEPTION) && node instanceof LangkitExceptionHandler handler) {
-        boolean hasOthers = handler.fChoices.stream().anyMatch(c -> c instanceof LangkitChoiceOthers);
-        boolean hasNullStmt = handler.fStmts.stream().anyMatch(s -> s instanceof LangkitNullStmt);
+      if (config.isActive(AdaRule.SWALLOWED_EXCEPTION) && node instanceof ExceptionHandler handler) {
+        boolean hasOthers = containsInstance(handler.fHandledExceptions(), OthersDesignator.class);
+        boolean hasNullStmt = containsInstance(handler.fStmts(), NullStmt.class);
         if (hasOthers && hasNullStmt) {
           addIssue(issues, AdaRule.SWALLOWED_EXCEPTION, handler, "Handle this exception, log it, or re-raise it instead of silently ignoring it.");
         }
       }
 
       if (config.isActive(AdaRule.NO_ADDRESS_ATTRIBUTE) && node instanceof AttributeRef attr) {
-        if ("address".equalsIgnoreCase(attr.fAttribute.getText())) {
+        if ("address".equalsIgnoreCase(attr.fAttribute().getText())) {
           addIssue(issues, AdaRule.NO_ADDRESS_ATTRIBUTE, node, "Avoid using the 'Address' attribute.");
         }
       }
     }
 
     if (config.isActive(AdaRule.TODO_COMMENT)) {
-      for (Trivia trivia : unit.getTriviaManager().getTrivia()) {
-        if (trivia instanceof Comment) {
-          Matcher todo = TODO_COMMENT.matcher(trivia.getText());
+      for (Token token : tokens(unit)) {
+        if (token.getKind() == TokenKind.ADA_COMMENT) {
+          Matcher todo = TODO_COMMENT.matcher(token.getText());
           if (todo.find()) {
-            int line = trivia.getStartLoc().getLine();
-            int startCol = trivia.getStartLoc().getCol() - 1 + todo.start();
+            int line = token.getSourceLocationRange().start.line;
+            int startCol = token.getSourceLocationRange().start.column - 1 + todo.start();
             int endCol = startCol + todo.group(1).length();
             issues.add(new AdaIssue(AdaRule.TODO_COMMENT.key(), line, startCol, endCol, "Resolve this " + todo.group(1).toUpperCase(Locale.ROOT) + " comment."));
           }
@@ -228,7 +254,7 @@ public final class LibadalangAnalyzer {
     }
   }
 
-  private void checkFileThresholds(LangkitAnalysisUnit unit, AdaMetrics metrics, AdaAnalysisConfig config, List<AdaIssue> issues) {
+  private void checkFileThresholds(AnalysisUnit unit, AdaMetrics metrics, AdaAnalysisConfig config, List<AdaIssue> issues) {
     if (config.isActive(AdaRule.FILE_LENGTH)) {
       int maximum = config.intParam(AdaRule.FILE_LENGTH, "maximum");
       if (metrics.lines() > maximum) {
@@ -259,20 +285,56 @@ public final class LibadalangAnalyzer {
   }
 
   private static void addIssue(List<AdaIssue> issues, AdaRule rule, AdaNode node, String message) {
-    LangkitToken start = node.getTokenStart();
-    LangkitToken end = node.getTokenEnd();
-    if (start != null && end != null) {
+    Token start = node.tokenStart();
+    Token end = node.tokenEnd();
+    if (!start.isNone() && !end.isNone()) {
       issues.add(new AdaIssue(
         rule.key(),
-        start.getStartLoc().getLine(),
-        start.getStartLoc().getCol() - 1,
-        end.getEndLoc().getCol(),
+        start.getSourceLocationRange().start.line,
+        start.getSourceLocationRange().start.column - 1,
+        end.getSourceLocationRange().end.column - 1,
         message
       ));
     }
   }
 
-  private static int firstCodeLine(LangkitAnalysisUnit unit) {
-    return unit.getTriviaManager().getLinesWithTokens().stream().findFirst().orElse(1);
+  private static int firstCodeLine(AnalysisUnit unit) {
+    return tokens(unit).stream()
+      .filter(token -> !token.isTrivia())
+      .mapToInt(token -> token.getSourceLocationRange().start.line)
+      .findFirst()
+      .orElse(1);
+  }
+
+  private static List<Token> tokens(AnalysisUnit unit) {
+    List<Token> result = new ArrayList<>();
+    for (Token token = unit.getFirstToken(); !token.isNone(); token = token.next()) {
+      result.add(token);
+    }
+    return result;
+  }
+
+  private static List<AdaNode> nodes(AdaNode root) {
+    List<AdaNode> result = new ArrayList<>();
+    Deque<AdaNode> pending = new ArrayDeque<>();
+    pending.push(root);
+    while (!pending.isEmpty()) {
+      AdaNode node = pending.pop();
+      result.add(node);
+      AdaNode[] children = node.children();
+      for (int i = children.length - 1; i >= 0; i--) {
+        pending.push(children[i]);
+      }
+    }
+    return result;
+  }
+
+  private static boolean containsInstance(Iterable<? extends AdaNode> nodes, Class<?> type) {
+    for (AdaNode node : nodes) {
+      if (type.isInstance(node)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

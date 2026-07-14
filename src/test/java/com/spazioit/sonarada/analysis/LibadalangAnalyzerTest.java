@@ -125,6 +125,41 @@ class LibadalangAnalyzerTest {
     assertThat(metrics.ncloc()).isEqualTo(8);
   }
 
+  @Test
+  void generatesSyntaxHighlightingForAdaSource() {
+    String source = """
+      pragma Assert (Answer = 42);
+      procedure Demo is
+         Letter  : Character := 'A';
+         Message : String := "Hello";
+         Ready   : Boolean := True;
+      begin
+         null; -- nothing to do
+      end Demo;
+      """;
+
+    AdaAnalysis analysis = analyzer.analyze(source, AdaAnalysisConfig.allRules());
+
+    assertThat(analysis.highlights())
+      .extracting(AdaHighlight::kind)
+      .contains(
+        AdaHighlightKind.PRAGMA,
+        AdaHighlightKind.KEYWORD,
+        AdaHighlightKind.CONSTANT,
+        AdaHighlightKind.STRING,
+        AdaHighlightKind.COMMENT
+      );
+
+    assertThat(highlightedText(source, analysis, AdaHighlightKind.PRAGMA))
+      .containsExactly("pragma", "Assert");
+    assertThat(highlightedText(source, analysis, AdaHighlightKind.CONSTANT))
+      .contains("42", "'A'", "True", "null");
+    assertThat(highlightedText(source, analysis, AdaHighlightKind.STRING))
+      .containsExactly("\"Hello\"");
+    assertThat(highlightedText(source, analysis, AdaHighlightKind.COMMENT))
+      .containsExactly("-- nothing to do");
+  }
+
   /**
    * Helper method to extract rule keys from an analysis result for easier assertions.
    * @param analysis The analysis result.
@@ -132,5 +167,20 @@ class LibadalangAnalyzerTest {
    */
   private static List<String> ruleKeys(AdaAnalysis analysis) {
     return analysis.issues().stream().map(AdaIssue::ruleKey).toList();
+  }
+
+  private static List<String> highlightedText(
+    String source,
+    AdaAnalysis analysis,
+    AdaHighlightKind kind
+  ) {
+    String[] lines = source.split("\\R", -1);
+    return analysis.highlights().stream()
+      .filter(highlight -> highlight.kind() == kind)
+      .map(highlight -> lines[highlight.line() - 1].substring(
+        highlight.startOffset(),
+        highlight.endOffset()
+      ))
+      .toList();
   }
 }

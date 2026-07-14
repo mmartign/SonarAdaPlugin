@@ -28,7 +28,8 @@ public final class AdaPlugin implements Plugin {
       AdaRulesDefinition.class,
       AdaQualityProfile.class,
       AdaSensor.class,
-      com.spazioit.sonarada.adacontrol.AdaControlSensor.class
+      com.spazioit.sonarada.adacontrol.AdaControlSensor.class,
+      com.spazioit.sonarada.adalanganalyzer.AdaLangAnalyzerSensor.class
     );
   }
 }

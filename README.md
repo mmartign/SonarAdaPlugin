@@ -30,8 +30,27 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
 
 ## Build
 
+Building the plugin requires JDK 24 or newer. Verify that Maven uses the
+expected JDK with `mvn --version` before building.
+
+Install the generated Java API from the local Libadalang and Langkit source
+trees into the project-local Maven repository:
+
 ```bash
-mvn -Dmaven.repo.local=.m2/repository clean package
+./scripts/install-local-libadalang.sh \
+  /Users/mmartign/libadalang_26.0.0_75276b8d \
+  /Users/mmartign/langkit_support_26.0.0_1745168f
+```
+
+The plugin resolves `com.adacore:libadalang:0.1` from `.m2/repository`; the
+obsolete remote AdaCore Maven repository is not used.
+
+Libadalang's Java API also requires the native `langkit_sigsegv_handler` and
+`adalang_jni` libraries. They must be built by the local Libadalang toolchain
+and be available through `java.library.path` on the scanner/SonarQube host.
+
+```bash
+mvn clean package
 ```
 
 The plugin JAR is created under `target/`.
@@ -67,11 +86,20 @@ sonar.ada.file.suffixes=.adb,.ads,.ada
 
 Rule thresholds such as line length, file length, and complexity are configured as rule parameters in the Ada quality profile.
 
-## AdaLang_Analyzer reports
+## Spazio IT AdaLang Analyzer
 
-AdaLang_Analyzer is a Spazio IT static analyzer for Ada, similar in role to clang-analyzer, and is under active development. Its report parser is `AdaLangAnalyzerReportParser`.
+AdaLang Analyzer is a Spazio IT static analyzer for Ada, similar in role to clang-analyzer, and is under active development. The plugin can run it directly and publish its findings as Sonar external issues:
 
-Expected AdaLang_Analyzer report fields are:
+```properties
+sonar.ada.adalang.enabled=true
+sonar.ada.adalang.executable=/Users/mmartign/libadalang-tools/adalang_analyzer/bin/adalang_analyzer
+sonar.ada.adalang.checks=*
+sonar.ada.adalang.timeoutSeconds=300
+```
+
+Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. In the current analyzer version, omitting this property leaves all checks disabled. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
+
+The existing `AdaLangAnalyzerReportParser` can also parse pre-generated CSV/CSVX reports. Expected report fields are:
 
 ```text
 file,line,column,key,label,rule,message
