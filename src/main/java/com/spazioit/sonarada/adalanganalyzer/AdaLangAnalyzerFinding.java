@@ -12,7 +12,9 @@ record AdaLangAnalyzerFinding(
   String message,
   String ruleId,
   String ruleDescription,
-  String advice
+  String advice,
+  String softwareQuality,
+  String qualitySeverity
 ) {
   String sonarMessage() {
     StringBuilder result = new StringBuilder(message);

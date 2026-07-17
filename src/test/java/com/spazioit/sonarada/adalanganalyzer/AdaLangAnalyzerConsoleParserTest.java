@@ -18,6 +18,7 @@ class AdaLangAnalyzerConsoleParserTest {
       /project/src/demo.adb:12:7: warning: goto statements are forbidden [No_Goto]
         rule: Avoid unstructured control flow
         advice: Replace goto with structured statements
+        quality: Maintainability (Medium)
         source:
           goto Finished;
           ^^^^^^^^^^^^^^
@@ -30,7 +31,8 @@ class AdaLangAnalyzerConsoleParserTest {
 
     assertThat(findings).containsExactly(new AdaLangAnalyzerFinding(
       "/project/src/demo.adb", 12, 7, "warning", "goto statements are forbidden",
-      "No_Goto", "Avoid unstructured control flow", "Replace goto with structured statements"));
+      "No_Goto", "Avoid unstructured control flow", "Replace goto with structured statements",
+      "Maintainability", "Medium"));
     assertThat(findings.getFirst().sonarMessage())
       .isEqualTo("goto statements are forbidden — Avoid unstructured control flow Advice: Replace goto with structured statements");
   }
@@ -47,6 +49,23 @@ class AdaLangAnalyzerConsoleParserTest {
       .containsExactly(
         org.assertj.core.groups.Tuple.tuple("C:\\src\\demo.adb", "No_Label"),
         org.assertj.core.groups.Tuple.tuple("C:\\src\\demo.adb", "Division_By_Zero"));
+  }
+
+  @Test
+  void parsesQualityMetadataFromCurrentAnalyzerOutput() {
+    String output = """
+      /project/src/demo.adb:15:7: warning: condition is contradictory [Contradictory_Condition]
+        rule: Find boolean expressions of the form X and not X or X or not X.
+        advice: Correct the copied or negated operand.
+        quality: Reliability (High)
+        source:
+          if Flag and then not Flag then
+             ^^^^^^^^^^^^^^^^^^^^^^
+      """;
+
+    assertThat(parser.parse(output).getFirst())
+      .extracting(AdaLangAnalyzerFinding::softwareQuality, AdaLangAnalyzerFinding::qualitySeverity)
+      .containsExactly("Reliability", "High");
   }
 
   @Test

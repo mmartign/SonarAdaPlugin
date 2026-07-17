@@ -323,7 +323,10 @@ public final class LibadalangAnalyzer {
       result.add(node);
       AdaNode[] children = node.children();
       for (int i = children.length - 1; i >= 0; i--) {
-        pending.push(children[i]);
+        AdaNode child = children[i];
+        if (child != null && !child.isNone()) {
+          pending.push(child);
+        }
       }
     }
     return result;

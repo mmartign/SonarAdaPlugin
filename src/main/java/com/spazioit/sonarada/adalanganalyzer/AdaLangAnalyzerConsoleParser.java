@@ -17,6 +17,10 @@ final class AdaLangAnalyzerConsoleParser {
   );
   private static final String RULE_PREFIX = "  rule:";
   private static final String ADVICE_PREFIX = "  advice:";
+  private static final Pattern QUALITY = Pattern.compile(
+    "^\\s*quality:\\s*([^()]+?)\\s*\\(([^()]+)\\)\\s*$",
+    Pattern.CASE_INSENSITIVE
+  );
 
   List<AdaLangAnalyzerFinding> parse(String output) {
     List<AdaLangAnalyzerFinding> findings = new ArrayList<>();
@@ -39,6 +43,12 @@ final class AdaLangAnalyzerConsoleParser {
         pending.ruleDescription = line.substring(RULE_PREFIX.length()).trim();
       } else if (pending != null && line.startsWith(ADVICE_PREFIX)) {
         pending.advice = line.substring(ADVICE_PREFIX.length()).trim();
+      } else if (pending != null) {
+        Matcher qualityMatcher = QUALITY.matcher(line);
+        if (qualityMatcher.matches()) {
+          pending.softwareQuality = qualityMatcher.group(1).trim();
+          pending.qualitySeverity = qualityMatcher.group(2).trim();
+        }
       }
     }
     if (pending != null) {
@@ -56,6 +66,8 @@ final class AdaLangAnalyzerConsoleParser {
     private final String ruleId;
     private String ruleDescription = "";
     private String advice = "";
+    private String softwareQuality = "";
+    private String qualitySeverity = "";
 
     private PendingFinding(String file, int line, int column, String severity, String message, String ruleId) {
       this.file = file;
@@ -67,7 +79,8 @@ final class AdaLangAnalyzerConsoleParser {
     }
 
     private AdaLangAnalyzerFinding toFinding() {
-      return new AdaLangAnalyzerFinding(file, line, column, severity, message, ruleId, ruleDescription, advice);
+      return new AdaLangAnalyzerFinding(
+        file, line, column, severity, message, ruleId, ruleDescription, advice, softwareQuality, qualitySeverity);
     }
   }
 }

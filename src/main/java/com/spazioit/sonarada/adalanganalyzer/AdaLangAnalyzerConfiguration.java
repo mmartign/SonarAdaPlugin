@@ -23,7 +23,7 @@ final class AdaLangAnalyzerConfiguration {
     return configuration.get(AdaProperties.ADALANG_ANALYZER_EXECUTABLE_KEY)
       .map(String::trim)
       .filter(value -> !value.isEmpty())
-      .orElse("adalang-analyzer");
+      .orElse("adalang_analyzer");
   }
 
   java.util.Optional<String> checks() {

@@ -49,6 +49,93 @@ Libadalang's Java API also requires the native `langkit_sigsegv_handler` and
 `adalang_jni` libraries. They must be built by the local Libadalang toolchain
 and be available through `java.library.path` on the scanner/SonarQube host.
 
+### Native libraries on macOS
+
+The generated Libadalang Java Makefile assumes Linux, and a recent macOS SDK
+must be supplied explicitly when using an Alire GNAT toolchain built against an
+older SDK. The following recipe was verified on Apple Silicon with Alire GNAT
+15, Libadalang 26, and JDK 25. Adjust the first two paths for another checkout:
+
+```bash
+libadalang_dir=/Users/mmartign/libadalang_26.0.0_75276b8d
+langkit_dir=/Users/mmartign/langkit_support_26.0.0_1745168f
+sdk_root=$(xcrun --sdk macosx --show-sdk-path)
+java_home="$(brew --prefix openjdk)/libexec/openjdk.jdk/Contents/Home"
+
+cd "$libadalang_dir"
+gnat_prefix=$(alr exec -- sh -c 'printf %s "$GNAT_NATIVE_ALIRE_PREFIX"')
+gnat_lib="$gnat_prefix/lib"
+adalib_library=$(find "$gnat_lib/gcc" -type f -name 'libgnarl-*.dylib' -print -quit)
+adalib_dir=$(dirname "$adalib_library")
+alire_root=$(dirname "$(dirname "$gnat_prefix")")
+alire_builds_dir="$alire_root/builds"
+
+alr exec -- env \
+  SDKROOT="$sdk_root" \
+  LIBRARY_PATH="$sdk_root/usr/lib:$gnat_lib:/opt/homebrew/lib" \
+  gprbuild -p \
+  -P "$langkit_dir/sigsegv_handler/langkit_sigsegv_handler.gpr"
+
+alr exec -- env \
+  SDKROOT="$sdk_root" \
+  C_INCLUDE_PATH="$sdk_root/usr/include:/opt/homebrew/include" \
+  LIBRARY_PATH="$sdk_root/usr/lib:$gnat_lib:/opt/homebrew/lib" \
+  gprbuild -p -P libadalang.gpr \
+  -XLIBADALANG_LIBRARY_TYPE=relocatable \
+  -XLIBADALANG_BUILD_MODE=prod \
+  -XLIBRARY_TYPE=relocatable \
+  -XGPR_LIBRARY_TYPE=relocatable \
+  -XXMLADA_BUILD=relocatable
+```
+
+Generate the JNI header using the project-local Maven repository, then build
+the JNI bridge. Embedding the dependency directories as runtime paths avoids
+relying on `DYLD_LIBRARY_PATH`, which macOS may remove before launching Java:
+
+```bash
+cd /Users/mmartign/SonarAdaPlugin
+
+mvn -f "$libadalang_dir/java/pom.xml" \
+  -Dmaven.repo.local="$PWD/.m2/repository" \
+  -DskipTests compile
+
+rpath_flags=$(find \
+  "$alire_builds_dir" "$gnat_prefix" "$libadalang_dir" \
+  -name '*.dylib' -exec dirname {} \; | sort -u | \
+  awk '{printf " -Wl,-rpath,%s", $0}')
+
+make -B -C "$libadalang_dir/java" \
+  JAVA_HOME="$java_home" \
+  JNI_INCLUDE="$java_home/include/darwin" \
+  LIB_FILE_NAME=libadalang_jni.dylib \
+  C_OPT="-fPIC -g -Wall -O0 -Werror \
+    -I$java_home/include -I$java_home/include/darwin \
+    -I$libadalang_dir/src" \
+  LD_OPT="-dynamiclib -fPIC -Wl,-headerpad_max_install_names \
+    -L$libadalang_dir/lib/relocatable/prod$rpath_flags"
+
+sigsegv_library="$langkit_dir/sigsegv_handler/lib/liblangkit_sigsegv_handler.dylib"
+if ! otool -l "$sigsegv_library" | grep -F "path $adalib_dir " >/dev/null; then
+  install_name_tool -add_rpath "$adalib_dir" "$sigsegv_library"
+fi
+```
+
+Verify the three entry libraries and run tests with their directories exposed
+to the forked test JVM:
+
+```bash
+file \
+  "$langkit_dir/sigsegv_handler/lib/liblangkit_sigsegv_handler.dylib" \
+  "$libadalang_dir/lib/relocatable/prod/libadalang.dylib" \
+  "$libadalang_dir/java/jni/libadalang_jni.dylib"
+
+native_path="$langkit_dir/sigsegv_handler/lib:$libadalang_dir/java/jni:$libadalang_dir/lib/relocatable/prod"
+mvn -DargLine="--enable-native-access=ALL-UNNAMED -Djava.library.path=$native_path" test
+```
+
+Supply the same `java.library.path` directories to the JVM that runs the
+SonarScanner in production.
+
 ```bash
 mvn clean package
 ```

@@ -105,15 +105,15 @@ public final class AdaLangAnalyzerSensor implements Sensor {
   }
 
   private static void saveExternalIssue(SensorContext context, InputFile inputFile, AdaLangAnalyzerFinding finding) {
-    boolean error = "error".equalsIgnoreCase(finding.severity());
+    SoftwareQuality softwareQuality = sonarSoftwareQuality(finding.softwareQuality());
+    org.sonar.api.issue.impact.Severity impactSeverity = sonarImpactSeverity(finding);
     NewExternalIssue issue = context.newExternalIssue()
       .engineId(ENGINE_ID)
       .ruleId(finding.ruleId())
-      .type(RuleType.CODE_SMELL)
+      .type(sonarRuleType(softwareQuality))
       .cleanCodeAttribute(CleanCodeAttribute.CONVENTIONAL)
-      .severity(error ? Severity.MAJOR : Severity.MINOR)
-      .addImpact(SoftwareQuality.MAINTAINABILITY,
-        error ? org.sonar.api.issue.impact.Severity.MEDIUM : org.sonar.api.issue.impact.Severity.LOW)
+      .severity(sonarSeverity(impactSeverity))
+      .addImpact(softwareQuality, impactSeverity)
       .remediationEffortMinutes(10L);
 
     NewIssueLocation location = issue.newLocation().on(inputFile).message(finding.sonarMessage());
@@ -125,6 +125,45 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       location.at(inputFile.selectLine(line));
     }
     issue.at(location).save();
+  }
+
+  private static SoftwareQuality sonarSoftwareQuality(String quality) {
+    if ("security".equalsIgnoreCase(quality)) {
+      return SoftwareQuality.SECURITY;
+    }
+    if ("reliability".equalsIgnoreCase(quality)) {
+      return SoftwareQuality.RELIABILITY;
+    }
+    return SoftwareQuality.MAINTAINABILITY;
+  }
+
+  private static org.sonar.api.issue.impact.Severity sonarImpactSeverity(AdaLangAnalyzerFinding finding) {
+    if ("high".equalsIgnoreCase(finding.qualitySeverity())) {
+      return org.sonar.api.issue.impact.Severity.HIGH;
+    }
+    if ("medium".equalsIgnoreCase(finding.qualitySeverity())
+      || "error".equalsIgnoreCase(finding.severity())) {
+      return org.sonar.api.issue.impact.Severity.MEDIUM;
+    }
+    return org.sonar.api.issue.impact.Severity.LOW;
+  }
+
+  private static Severity sonarSeverity(org.sonar.api.issue.impact.Severity severity) {
+    return switch (severity) {
+      case BLOCKER -> Severity.BLOCKER;
+      case HIGH -> Severity.CRITICAL;
+      case MEDIUM -> Severity.MAJOR;
+      case LOW -> Severity.MINOR;
+      case INFO -> Severity.INFO;
+    };
+  }
+
+  private static RuleType sonarRuleType(SoftwareQuality quality) {
+    return switch (quality) {
+      case SECURITY -> RuleType.VULNERABILITY;
+      case RELIABILITY -> RuleType.BUG;
+      case MAINTAINABILITY -> RuleType.CODE_SMELL;
+    };
   }
 
   private static void handleError(AdaLangAnalyzerConfiguration configuration, String message) {
