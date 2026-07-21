@@ -1,0 +1,4 @@
+file,line,column,key,label,rule,message
+src/main.adb,10,17,Error,Division_By_Zero,EXPRESSIONS,division by zero
+src/main.adb,11,4,Error,No_Goto,STATEMENTS,goto statement used
+src/main.adb,12,4,Found,No_Raise,STATEMENTS,explicit raise statement used

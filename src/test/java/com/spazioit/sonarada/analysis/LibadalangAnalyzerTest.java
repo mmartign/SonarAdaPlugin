@@ -39,10 +39,10 @@ class LibadalangAnalyzerTest {
   void detectsBuiltInIssuesInAdaCode() {
     String source = """
       procedure Demo is
+         use Ada.Text_IO;
       begin
          goto Done; -- TODO: remove
          pragma Suppress(All_Checks);
-         use Ada.Text_IO;
       <<Done>>
          null;
       exception

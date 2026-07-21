@@ -2,8 +2,11 @@ package com.spazioit.sonarada.analysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class AdaLangAnalyzerReportParserTest {
 
@@ -46,5 +49,19 @@ class AdaLangAnalyzerReportParserTest {
 
     assertThat(parsed).isPresent();
     assertThat(parsed.orElseThrow().file()).isEqualTo("src/demo.adb");
+  }
+
+  @Test
+  void readsCsvReportAndSkipsItsHeader(@TempDir Path temporaryDirectory) throws Exception {
+    Path report = temporaryDirectory.resolve("adalang-report.csv");
+    Files.writeString(report, """
+      file,line,column,key,label,rule,message
+      src/main.adb,11,4,Error,No_Goto,STATEMENTS,goto statement used
+      src/main.adb,12,4,Found,No_Raise,STATEMENTS,explicit raise statement used
+      """);
+
+    assertThat(parser.parse(report))
+      .extracting(AdaLangAnalyzerIssue::label)
+      .containsExactly("No_Goto", "No_Raise");
   }
 }

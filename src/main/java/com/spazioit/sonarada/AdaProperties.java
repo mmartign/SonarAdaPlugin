@@ -39,6 +39,7 @@ public final class AdaProperties {
   public static final String ADALANG_ANALYZER_ENABLED_KEY = "sonar.ada.adalang.enabled";
   public static final String ADALANG_ANALYZER_EXECUTABLE_KEY = "sonar.ada.adalang.executable";
   public static final String ADALANG_ANALYZER_CHECKS_KEY = "sonar.ada.adalang.checks";
+  public static final String ADALANG_ANALYZER_REPORT_PATHS_KEY = "sonar.ada.adalang.reportPaths";
   public static final String ADALANG_ANALYZER_TIMEOUT_SECONDS_KEY = "sonar.ada.adalang.timeoutSeconds";
   public static final String ADALANG_ANALYZER_FAIL_ON_ERROR_KEY = "sonar.ada.adalang.failOnError";
 
@@ -137,6 +138,13 @@ public final class AdaProperties {
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)
         .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_REPORT_PATHS_KEY)
+        .name("AdaLang Analyzer report paths")
+        .description("Comma-separated paths to pre-generated AdaLang Analyzer CSV/CSVX reports. Reports should contain file,line,column,key,label,rule,message fields.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .type(PropertyType.STRING)
+        .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_TIMEOUT_SECONDS_KEY)
         .name("AdaLang Analyzer timeout")
         .description("Maximum number of seconds to wait for adalang_analyzer.")
@@ -147,7 +155,7 @@ public final class AdaProperties {
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_FAIL_ON_ERROR_KEY)
         .name("Fail analysis on AdaLang Analyzer execution errors")
-        .description("Fail the Sonar scan when adalang_analyzer cannot start, times out, or exits with an internal error.")
+        .description("Fail the Sonar scan when adalang_analyzer cannot start, times out, exits with an internal error, or a configured report cannot be read.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .defaultValue("true")

@@ -17,7 +17,6 @@
 package com.spazioit.sonarada;
 
 import org.sonar.api.rule.RuleStatus;
-import org.sonar.api.server.rule.RuleDescriptionSection;
 import org.sonar.api.server.rule.RulesDefinition;
 
 public final class AdaRulesDefinition implements RulesDefinition {
@@ -34,10 +33,7 @@ public final class AdaRulesDefinition implements RulesDefinition {
       NewRule rule = repository.createRule(adaRule.key());
       rule
         .setName(adaRule.ruleName())
-        .addDescriptionSection(RuleDescriptionSection.builder()
-          .sectionKey("default")
-          .htmlContent("<p>" + escapeHtml(adaRule.description()) + "</p>")
-          .build())
+        .setHtmlDescription("<p>" + escapeHtml(adaRule.description()) + "</p>")
         .setType(adaRule.type())
         .setSeverity(adaRule.severity())
         .setStatus(RuleStatus.READY)

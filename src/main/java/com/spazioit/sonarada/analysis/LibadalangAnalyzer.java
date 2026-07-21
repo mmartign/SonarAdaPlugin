@@ -64,21 +64,23 @@ public final class LibadalangAnalyzer {
   private static AdaMetrics computeMetrics(AnalysisUnit unit) {
     Set<Integer> codeLines = new HashSet<>();
     Set<Integer> commentLines = new HashSet<>();
+    int lastContentLine = 0;
     for (Token token : tokens(unit)) {
       if (token.getKind() == TokenKind.ADA_COMMENT) {
         commentLines.add(token.getSourceLocationRange().start.line);
-      } else if (!token.isTrivia()) {
+        lastContentLine = Math.max(lastContentLine, token.getSourceLocationRange().end.line);
+      } else if (!token.isTrivia() && token.getKind() != TokenKind.ADA_TERMINATION) {
         codeLines.add(token.getSourceLocationRange().start.line);
+        lastContentLine = Math.max(lastContentLine, token.getSourceLocationRange().end.line);
       }
     }
 
     List<AdaNode> nodes = nodes(unit.getRoot());
-    int lines = unit.getLastToken().getSourceLocationRange().end.line;
     int statements = (int) nodes.stream().filter(NullStmt.class::isInstance).count(); // A rough approximation
     int functions = (int) nodes.stream().filter(SubpBody.class::isInstance).count();
     int complexity = computeComplexity(nodes);
 
-    return new AdaMetrics(lines, codeLines.size(), commentLines.size(), statements, functions, complexity);
+    return new AdaMetrics(lastContentLine, codeLines.size(), commentLines.size(), statements, functions, complexity);
   }
 
   private static int computeComplexity(List<AdaNode> nodes) {

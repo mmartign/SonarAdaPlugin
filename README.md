@@ -30,51 +30,51 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
 
 ## Build
 
-Building the plugin requires JDK 24 or newer. Verify that Maven uses the
-expected JDK with `mvn --version` before building.
+Building the plugin requires JDK 21 or newer and produces Java 21 bytecode.
+Verify that Maven uses the expected JDK with `mvn --version` before building.
 
 Install the generated Java API from the local Libadalang and Langkit source
 trees into the project-local Maven repository:
 
 ```bash
-./scripts/install-local-libadalang.sh \
-  /Users/mmartign/libadalang_26.0.0_75276b8d \
-  /Users/mmartign/langkit_support_26.0.0_1745168f
+./scripts/install-local-libadalang.sh
 ```
 
-The plugin resolves `com.adacore:libadalang:0.1` from `.m2/repository`; the
-obsolete remote AdaCore Maven repository is not used.
+The installation script retargets the generated Langkit and Libadalang Java
+sources to Java 21 before installing them. This includes a compatibility change
+for the UTF-32 charset constants that are only available after Java 21. The
+upstream source trees are not modified. The script is intentionally pinned to
+`/Users/mmartign/libadalang_26.0.0_75276b8d` and
+`/Users/mmartign/langkit_support_26.0.0_1745168f`; it does not accept alternate
+paths or environment-variable overrides. The retargeted artifacts have
+source-specific versions, so Maven cannot confuse them with incompatible or
+older AdaCore artifacts. Maven is configured to use this project's
+`.m2/repository` as its local cache and does not fall back to `~/.m2`.
 
-Libadalang's Java API also requires the native `langkit_sigsegv_handler` and
-`adalang_jni` libraries. They must be built by the local Libadalang toolchain
-and be available through `java.library.path` on the scanner/SonarQube host.
+Libadalang's Java API requires the native `adalang_jni` library. It must be
+built by the local Libadalang toolchain and be available through
+`java.library.path` on the scanner/SonarQube host. The locally installed
+bindings remove the generated `langkit_sigsegv_handler` load on every platform.
+On GNU/Linux this disables Langkit's workaround for possible conflicts between
+the GNAT and JVM signal handlers.
 
 ### Native libraries on macOS
 
 The generated Libadalang Java Makefile assumes Linux, and a recent macOS SDK
 must be supplied explicitly when using an Alire GNAT toolchain built against an
-older SDK. The following recipe was verified on Apple Silicon with Alire GNAT
-15, Libadalang 26, and JDK 25. Adjust the first two paths for another checkout:
+older SDK. The following recipe targets Apple Silicon with Alire GNAT 15,
+Libadalang 26, and JDK 21. Adjust the Libadalang path for another checkout:
 
 ```bash
 libadalang_dir=/Users/mmartign/libadalang_26.0.0_75276b8d
-langkit_dir=/Users/mmartign/langkit_support_26.0.0_1745168f
 sdk_root=$(xcrun --sdk macosx --show-sdk-path)
-java_home="$(brew --prefix openjdk)/libexec/openjdk.jdk/Contents/Home"
+java_home="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
 
 cd "$libadalang_dir"
 gnat_prefix=$(alr exec -- sh -c 'printf %s "$GNAT_NATIVE_ALIRE_PREFIX"')
 gnat_lib="$gnat_prefix/lib"
-adalib_library=$(find "$gnat_lib/gcc" -type f -name 'libgnarl-*.dylib' -print -quit)
-adalib_dir=$(dirname "$adalib_library")
 alire_root=$(dirname "$(dirname "$gnat_prefix")")
 alire_builds_dir="$alire_root/builds"
-
-alr exec -- env \
-  SDKROOT="$sdk_root" \
-  LIBRARY_PATH="$sdk_root/usr/lib:$gnat_lib:/opt/homebrew/lib" \
-  gprbuild -p \
-  -P "$langkit_dir/sigsegv_handler/langkit_sigsegv_handler.gpr"
 
 alr exec -- env \
   SDKROOT="$sdk_root" \
@@ -88,16 +88,14 @@ alr exec -- env \
   -XXMLADA_BUILD=relocatable
 ```
 
-Generate the JNI header using the project-local Maven repository, then build
-the JNI bridge. Embedding the dependency directories as runtime paths avoids
-relying on `DYLD_LIBRARY_PATH`, which macOS may remove before launching Java:
+Build the JNI bridge using JDK 21. The Libadalang distribution normally already
+contains the generated JNI headers under `java/jni`; rerun Libadalang's Java
+generation first if those headers are absent. Embedding the dependency
+directories as runtime paths avoids relying on `DYLD_LIBRARY_PATH`, which macOS
+may remove before launching Java:
 
 ```bash
 cd /Users/mmartign/SonarAdaPlugin
-
-mvn -f "$libadalang_dir/java/pom.xml" \
-  -Dmaven.repo.local="$PWD/.m2/repository" \
-  -DskipTests compile
 
 rpath_flags=$(find \
   "$alire_builds_dir" "$gnat_prefix" "$libadalang_dir" \
@@ -113,23 +111,17 @@ make -B -C "$libadalang_dir/java" \
     -I$libadalang_dir/src" \
   LD_OPT="-dynamiclib -fPIC -Wl,-headerpad_max_install_names \
     -L$libadalang_dir/lib/relocatable/prod$rpath_flags"
-
-sigsegv_library="$langkit_dir/sigsegv_handler/lib/liblangkit_sigsegv_handler.dylib"
-if ! otool -l "$sigsegv_library" | grep -F "path $adalib_dir " >/dev/null; then
-  install_name_tool -add_rpath "$adalib_dir" "$sigsegv_library"
-fi
 ```
 
-Verify the three entry libraries and run tests with their directories exposed
+Verify the two entry libraries and run tests with their directories exposed
 to the forked test JVM:
 
 ```bash
 file \
-  "$langkit_dir/sigsegv_handler/lib/liblangkit_sigsegv_handler.dylib" \
   "$libadalang_dir/lib/relocatable/prod/libadalang.dylib" \
   "$libadalang_dir/java/jni/libadalang_jni.dylib"
 
-native_path="$langkit_dir/sigsegv_handler/lib:$libadalang_dir/java/jni:$libadalang_dir/lib/relocatable/prod"
+native_path="$libadalang_dir/java/jni:$libadalang_dir/lib/relocatable/prod"
 mvn -DargLine="--enable-native-access=ALL-UNNAMED -Djava.library.path=$native_path" test
 ```
 
@@ -137,7 +129,7 @@ Supply the same `java.library.path` directories to the JVM that runs the
 SonarScanner in production.
 
 ```bash
-mvn clean package
+mvn -DargLine="--enable-native-access=ALL-UNNAMED -Djava.library.path=$native_path" clean package
 ```
 
 The plugin JAR is created under `target/`.
@@ -147,7 +139,7 @@ The plugin JAR is created under `target/`.
 Copy the generated JAR to the SonarQube Server plugin directory and restart SonarQube:
 
 ```bash
-cp target/sonar-ada-plugin-0.1.0-SNAPSHOT.jar "$SONARQUBE_HOME/extensions/plugins/"
+cp target/sonar-ada-plugin-0.1.0.jar "$SONARQUBE_HOME/extensions/plugins/"
 ```
 
 ## Analyze an Ada project
@@ -186,11 +178,23 @@ sonar.ada.adalang.timeoutSeconds=300
 
 Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. In the current analyzer version, omitting this property leaves all checks disabled. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
 
-The existing `AdaLangAnalyzerReportParser` can also parse pre-generated CSV/CSVX reports. Expected report fields are:
+Import one or more pre-generated CSV/CSVX reports without running the analyzer:
+
+```properties
+sonar.ada.adalang.reportPaths=build/adalang-report.csv
+```
+
+Multiple report paths can be separated with commas. Relative report paths and
+relative source paths inside reports are resolved from the Sonar project base
+directory. Direct execution and report import can be enabled together.
+Expected report fields are:
 
 ```text
 file,line,column,key,label,rule,message
 ```
+
+A complete sample project is available in
+[`examples/adalang-analyzer-project`](examples/adalang-analyzer-project/README.md).
 
 ## AdaControl integration
 

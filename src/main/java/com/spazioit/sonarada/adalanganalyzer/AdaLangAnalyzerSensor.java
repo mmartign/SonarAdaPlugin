@@ -6,7 +6,10 @@ package com.spazioit.sonarada.adalanganalyzer;
 
 import com.spazioit.sonarada.AdaLanguage;
 import com.spazioit.sonarada.AdaProperties;
+import com.spazioit.sonarada.analysis.AdaLangAnalyzerIssue;
+import com.spazioit.sonarada.analysis.AdaLangAnalyzerReportParser;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -30,6 +33,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
 
   private final AdaLangAnalyzerRunner runner = new AdaLangAnalyzerRunner();
   private final AdaLangAnalyzerConsoleParser parser = new AdaLangAnalyzerConsoleParser();
+  private final AdaLangAnalyzerReportParser reportParser = new AdaLangAnalyzerReportParser();
 
   @Override
   public void describe(SensorDescriptor descriptor) {
@@ -37,20 +41,31 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       .onlyOnLanguage(AdaLanguage.KEY)
       .onlyOnFileType(InputFile.Type.MAIN)
       .onlyWhenConfiguration(configuration ->
-        configuration.getBoolean(AdaProperties.ADALANG_ANALYZER_ENABLED_KEY).orElse(false));
+        configuration.getBoolean(AdaProperties.ADALANG_ANALYZER_ENABLED_KEY).orElse(false)
+          || configuration.hasKey(AdaProperties.ADALANG_ANALYZER_REPORT_PATHS_KEY));
   }
 
   @Override
   public void execute(SensorContext context) {
-    AdaLangAnalyzerConfiguration configuration = new AdaLangAnalyzerConfiguration(context.config());
-    if (!configuration.enabled()) {
-      return;
-    }
+    AdaLangAnalyzerConfiguration configuration = new AdaLangAnalyzerConfiguration(context.config(), context.fileSystem());
     List<InputFile> inputFiles = adaInputFiles(context);
     if (inputFiles.isEmpty()) {
+      LOG.debug("Skipping AdaLang Analyzer because no Ada input files were found");
       return;
     }
 
+    if (configuration.enabled()) {
+      runAnalyzer(context, configuration, inputFiles);
+    }
+
+    importReports(context, configuration, inputFiles);
+  }
+
+  private void runAnalyzer(
+    SensorContext context,
+    AdaLangAnalyzerConfiguration configuration,
+    List<InputFile> inputFiles
+  ) {
     try {
       AdaLangAnalyzerExecutionResult result = runner.run(
         configuration, context.fileSystem().workDir().toPath(), inputFiles);
@@ -72,6 +87,40 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       Thread.currentThread().interrupt();
       handleError(configuration, "AdaLang Analyzer execution was interrupted");
     }
+  }
+
+  private void importReports(
+    SensorContext context,
+    AdaLangAnalyzerConfiguration configuration,
+    List<InputFile> inputFiles
+  ) {
+    List<Path> reportPaths = configuration.reportPaths();
+    if (reportPaths.isEmpty()) {
+      return;
+    }
+
+    AdaLangAnalyzerFileIndex fileIndex = new AdaLangAnalyzerFileIndex(
+      context.fileSystem().baseDir().toPath(), inputFiles);
+    int imported = 0;
+    int unresolved = 0;
+    for (Path reportPath : reportPaths) {
+      try {
+        for (AdaLangAnalyzerIssue issue : reportParser.parse(reportPath)) {
+          java.util.Optional<InputFile> inputFile = fileIndex.find(issue.file());
+          if (inputFile.isPresent()) {
+            saveExternalIssue(context, inputFile.get(), issue);
+            imported++;
+          } else {
+            unresolved++;
+          }
+        }
+      } catch (IOException e) {
+        handleError(configuration, "Unable to read AdaLang Analyzer report '" + reportPath + "': " + e.getMessage());
+      }
+    }
+
+    LOG.info("AdaLang Analyzer report import completed: {} issue(s) imported, {} issue(s) skipped because their file was not indexed by Sonar",
+      imported, unresolved);
   }
 
   private static void publishFindings(
@@ -120,6 +169,30 @@ public final class AdaLangAnalyzerSensor implements Sensor {
     int line = Math.max(1, Math.min(inputFile.lines(), finding.line()));
     try {
       int start = Math.max(0, finding.column() - 1);
+      location.at(inputFile.newRange(line, start, line, start + 1));
+    } catch (RuntimeException invalidRange) {
+      location.at(inputFile.selectLine(line));
+    }
+    issue.at(location).save();
+  }
+
+  private static void saveExternalIssue(SensorContext context, InputFile inputFile, AdaLangAnalyzerIssue importedIssue) {
+    org.sonar.api.issue.impact.Severity impactSeverity = "Error".equalsIgnoreCase(importedIssue.key())
+      ? org.sonar.api.issue.impact.Severity.MEDIUM
+      : org.sonar.api.issue.impact.Severity.LOW;
+    NewExternalIssue issue = context.newExternalIssue()
+      .engineId(ENGINE_ID)
+      .ruleId(importedIssue.ruleId())
+      .type(RuleType.CODE_SMELL)
+      .cleanCodeAttribute(CleanCodeAttribute.CONVENTIONAL)
+      .severity(sonarSeverity(impactSeverity))
+      .addImpact(SoftwareQuality.MAINTAINABILITY, impactSeverity)
+      .remediationEffortMinutes(10L);
+
+    NewIssueLocation location = issue.newLocation().on(inputFile).message(importedIssue.sonarMessage());
+    int line = Math.max(1, Math.min(inputFile.lines(), importedIssue.line()));
+    try {
+      int start = Math.max(0, importedIssue.column() - 1);
       location.at(inputFile.newRange(line, start, line, start + 1));
     } catch (RuntimeException invalidRange) {
       location.at(inputFile.selectLine(line));
