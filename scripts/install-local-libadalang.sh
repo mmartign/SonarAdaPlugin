@@ -76,17 +76,6 @@ if [[ -f "$libadalang_java" ]]; then
   perl -pi -e \
     's/StandardCharsets\.UTF_32BE/Charset.forName("UTF-32BE")/g; s/StandardCharsets\.UTF_32LE/Charset.forName("UTF-32LE")/g' \
     "$libadalang_java"
-
-  # Do not require Langkit's optional dummy SIGSEGV handler. This also disables
-  # its GNAT/runtime signal-handler workaround on Linux.
-  perl -0pi -e \
-    's{\s*if\s*\(OS\.indexOf\("win"\)\s*<\s*0\)\s*\{\s*System\.loadLibrary\("langkit_sigsegv_handler"\);\s*\}}{}' \
-    "$libadalang_java"
-
-  if grep -q 'System.loadLibrary("langkit_sigsegv_handler")' "$libadalang_java"; then
-    echo "Unable to remove the SIGSEGV handler dependency" >&2
-    exit 1
-  fi
 fi
 
 # The generated Makefile builds JNI libraries as part of the Maven package.

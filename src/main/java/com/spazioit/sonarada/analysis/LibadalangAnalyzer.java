@@ -34,6 +34,12 @@ import java.util.regex.Pattern;
  */
 public final class LibadalangAnalyzer {
 
+  static {
+    if (!System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win")) {
+      System.loadLibrary("langkit_sigsegv_handler");
+    }
+  }
+
   private static final Pattern TRAILING_WHITESPACE = Pattern.compile("[ \\t]+$");
   private static final Pattern TODO_COMMENT = Pattern.compile("(?i)\\b(TODO|FIXME)\\b");
   private static final Set<String> KEYWORDS = Set.of(

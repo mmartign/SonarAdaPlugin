@@ -44,19 +44,42 @@ The installation script retargets the generated Langkit and Libadalang Java
 sources to Java 21 before installing them. This includes a compatibility change
 for the UTF-32 charset constants that are only available after Java 21. The
 upstream source trees are not modified. The script is intentionally pinned to
-`/Users/mmartign/libadalang_26.0.0_75276b8d` and
-`/Users/mmartign/langkit_support_26.0.0_1745168f`; it does not accept alternate
+`/opt/libadalang_26.0.0_75276b8d` and
+`/opt/langkit_support_26.0.0_1745168f`; it does not accept alternate
 paths or environment-variable overrides. The retargeted artifacts have
 source-specific versions, so Maven cannot confuse them with incompatible or
 older AdaCore artifacts. Maven is configured to use this project's
 `.m2/repository` as its local cache and does not fall back to `~/.m2`.
 
-Libadalang's Java API requires the native `adalang_jni` library. It must be
-built by the local Libadalang toolchain and be available through
-`java.library.path` on the scanner/SonarQube host. The locally installed
-bindings remove the generated `langkit_sigsegv_handler` load on every platform.
-On GNU/Linux this disables Langkit's workaround for possible conflicts between
-the GNAT and JVM signal handlers.
+Libadalang's Java API requires the native `adalang_jni` library and, on
+non-Windows platforms, Langkit's `langkit_sigsegv_handler` library. Both must be
+built by the matching local toolchain and be available through
+`java.library.path` on the scanner/SonarQube host. The plugin loads the Langkit
+handler after JVM initialization and before `adalang_jni` to avoid GNAT
+replacing the JVM signal handler.
+
+### Native libraries on GNU/Linux
+
+Place `libadalang_jni.so`, `liblangkit_sigsegv_handler.so`, and their native
+dependencies in a common directory such as `/opt/libadalang-jni-libs`. Expose
+that directory to both the Java launcher and the dynamic linker when running
+SonarScanner:
+
+```bash
+env \
+  LD_LIBRARY_PATH=/opt/libadalang-jni-libs \
+  SONAR_SCANNER_OPTS="-Djava.library.path=/opt/libadalang-jni-libs" \
+  sonar-scanner
+```
+
+With the current GNAT/Libadalang 26 native runtime, Sonar's text/secrets and SCM
+phases can still trigger native signal conflicts after Ada analysis. Use these
+project properties as a compatibility workaround:
+
+```properties
+sonar.text.activate=false
+sonar.scm.disabled=true
+```
 
 ### Native libraries on macOS
 
