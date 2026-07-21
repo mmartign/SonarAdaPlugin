@@ -21,6 +21,10 @@ final class AdaLangAnalyzerConsoleParser {
     "^\\s*quality:\\s*([^()]+?)\\s*\\(([^()]+)\\)\\s*$",
     Pattern.CASE_INSENSITIVE
   );
+  private static final Pattern VIOLATION_COUNT = Pattern.compile(
+    "^Violations\\s*:\\s*(\\d+)\\s*$",
+    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+  );
 
   List<AdaLangAnalyzerFinding> parse(String output) {
     List<AdaLangAnalyzerFinding> findings = new ArrayList<>();
@@ -55,6 +59,11 @@ final class AdaLangAnalyzerConsoleParser {
       findings.add(pending.toFinding());
     }
     return List.copyOf(findings);
+  }
+
+  int reportedViolationCount(String output) {
+    Matcher matcher = VIOLATION_COUNT.matcher(output);
+    return matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
   }
 
   private static final class PendingFinding {

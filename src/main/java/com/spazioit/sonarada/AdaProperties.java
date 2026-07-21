@@ -140,7 +140,7 @@ public final class AdaProperties {
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_REPORT_PATHS_KEY)
         .name("AdaLang Analyzer report paths")
-        .description("Comma-separated paths to pre-generated AdaLang Analyzer CSV/CSVX reports. Reports should contain file,line,column,key,label,rule,message fields.")
+        .description("Comma-separated paths to pre-generated AdaLang Analyzer console-text or CSV/CSVX reports.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)
@@ -155,7 +155,7 @@ public final class AdaProperties {
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_FAIL_ON_ERROR_KEY)
         .name("Fail analysis on AdaLang Analyzer execution errors")
-        .description("Fail the Sonar scan when adalang_analyzer cannot start, times out, exits with an internal error, or a configured report cannot be read.")
+        .description("Fail the Sonar scan when adalang_analyzer cannot start, times out, exits with an internal error, or a configured report cannot be read or parsed completely.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .defaultValue("true")

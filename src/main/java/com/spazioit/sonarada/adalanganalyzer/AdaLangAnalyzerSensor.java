@@ -9,6 +9,8 @@ import com.spazioit.sonarada.AdaProperties;
 import com.spazioit.sonarada.analysis.AdaLangAnalyzerIssue;
 import com.spazioit.sonarada.analysis.AdaLangAnalyzerReportParser;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,6 +107,28 @@ public final class AdaLangAnalyzerSensor implements Sensor {
     int unresolved = 0;
     for (Path reportPath : reportPaths) {
       try {
+        String reportContent = Files.readString(reportPath, StandardCharsets.UTF_8);
+        List<AdaLangAnalyzerFinding> findings = parser.parse(reportContent);
+        int reportedViolations = parser.reportedViolationCount(reportContent);
+        if (reportedViolations >= 0 && reportedViolations != findings.size()) {
+          handleError(configuration, "AdaLang Analyzer report '" + reportPath + "' declares "
+            + reportedViolations + " violation(s), but " + findings.size() + " could be parsed");
+          continue;
+        }
+
+        if (reportedViolations >= 0 || !findings.isEmpty()) {
+          for (AdaLangAnalyzerFinding finding : findings) {
+            java.util.Optional<InputFile> inputFile = fileIndex.find(finding.file());
+            if (inputFile.isPresent()) {
+              saveExternalIssue(context, inputFile.get(), finding);
+              imported++;
+            } else {
+              unresolved++;
+            }
+          }
+          continue;
+        }
+
         for (AdaLangAnalyzerIssue issue : reportParser.parse(reportPath)) {
           java.util.Optional<InputFile> inputFile = fileIndex.find(issue.file());
           if (inputFile.isPresent()) {

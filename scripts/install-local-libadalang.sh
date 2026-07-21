@@ -76,6 +76,14 @@ if [[ -f "$libadalang_java" ]]; then
   perl -pi -e \
     's/StandardCharsets\.UTF_32BE/Charset.forName("UTF-32BE")/g; s/StandardCharsets\.UTF_32LE/Charset.forName("UTF-32LE")/g' \
     "$libadalang_java"
+
+  # Linux uses HotSpot's libjsig signal chaining when the scanner JVM starts.
+  # Do not load Langkit's dummy handler there: with Sonar's later SCM phase it
+  # can turn JVM SIGSEGV handling into an endless loop. macOS loads the helper
+  # explicitly from LibadalangAnalyzer.
+  perl -pi -e \
+    's/System\.loadLibrary\("langkit_sigsegv_handler"\);/\/\/ Loaded explicitly where required by the host application./g' \
+    "$libadalang_java"
 fi
 
 # The generated Makefile builds JNI libraries as part of the Maven package.

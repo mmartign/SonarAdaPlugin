@@ -14,6 +14,7 @@ import org.sonar.api.batch.fs.InputFile;
 @SuppressWarnings("deprecation")
 final class AdaLangAnalyzerFileIndex {
   private final Map<String, InputFile> paths = new HashMap<>();
+  private final Map<String, InputFile> relativePaths = new HashMap<>();
   private final Path baseDir;
 
   AdaLangAnalyzerFileIndex(Path baseDir, Iterable<InputFile> inputFiles) {
@@ -22,6 +23,7 @@ final class AdaLangAnalyzerFileIndex {
       IndexedFile indexed = inputFile;
       paths.put(normalize(indexed.absolutePath()), inputFile);
       paths.put(normalize(indexed.relativePath()), inputFile);
+      relativePaths.put(normalize(indexed.relativePath()), inputFile);
     }
   }
 
@@ -34,7 +36,16 @@ final class AdaLangAnalyzerFileIndex {
       return Optional.of(direct);
     }
     Path candidate = Path.of(path);
-    return Optional.ofNullable(paths.get(normalize(candidate.isAbsolute() ? candidate : baseDir.resolve(candidate))));
+    InputFile resolved = paths.get(normalize(candidate.isAbsolute() ? candidate : baseDir.resolve(candidate)));
+    if (resolved != null) {
+      return Optional.of(resolved);
+    }
+
+    String normalized = normalize(path);
+    return relativePaths.entrySet().stream()
+      .filter(entry -> normalized.endsWith("/" + entry.getKey()))
+      .map(Map.Entry::getValue)
+      .findFirst();
   }
 
   private static String normalize(Path path) {

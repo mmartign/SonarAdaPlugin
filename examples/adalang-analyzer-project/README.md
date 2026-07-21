@@ -29,23 +29,27 @@ The findings appear in SonarQube as external issues whose engine is
 ## Import your own report
 
 Replace the included report, or point the scanner to one or more comma-separated
-CSV/CSVX files:
+console-text, CSV, or CSVX files:
 
 ```sh
 sonar-scanner \
   -Dsonar.host.url="$SONAR_HOST_URL" \
   -Dsonar.token="$SONAR_TOKEN" \
-  -Dsonar.ada.adalang.reportPaths=build/first.csv,build/second.csv
+  -Dsonar.ada.adalang.reportPaths=build/adalang_report.txt,build/second.csv
 ```
 
-Each report must use this header and field order:
+Console-text reports are the complete output produced by `adalang_analyzer` and
+include lines such as `file:line:column: warning: message [Check_Name]`, followed
+by rule, advice, and quality details. CSV/CSVX reports use this header and field
+order:
 
 ```csv
 file,line,column,key,label,rule,message
 ```
 
 Paths inside a report can be absolute or relative to the Sonar project base
-directory. Report paths are resolved from that same directory.
+directory. Absolute paths generated in another checkout are matched using their
+project-relative suffix. Report paths are resolved from the project directory.
 
 ## Run the analyzer during the scan
 

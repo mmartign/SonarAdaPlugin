@@ -72,4 +72,34 @@ class AdaLangAnalyzerConsoleParserTest {
   void ignoresSummaryAndUnrelatedDiagnostics() {
     assertThat(parser.parse("Files scanned : 3\nViolations    : 0\nNo violations found.\n")).isEmpty();
   }
+
+  @Test
+  void parsesSavedAnalyzerReportAndValidatesItsSummary() {
+    String report = """
+      adalang-analyzer [INFO]: Reading project with GPR2: demo.gpr
+      /checkout/src/demo.adb:23:13: warning: subprogram has 2 return statements [No_Multiple_Return]
+        rule: Find subprograms with more than one return statement.
+        advice: Restructure the subprogram around a single return statement.
+        quality: Maintainability (Low)
+        source:
+             function Node_Text
+                      ^^^^^^^^^
+      adalang-analyzer [INFO]: skipping checks at <CallExpr demo.adb:30:1-30:4>: unavailable
+      /checkout/src/demo.adb:74:13: warning: assigned value is never read [Dead_Store]
+        rule: Find assignments whose stored value is never read later.
+        advice: Remove the assignment or restore the intended use.
+        quality: Maintainability (Medium)
+
+      Files scanned : 1
+      Violations    : 2
+      Skipped checks: 1 location(s)
+      """;
+
+    List<AdaLangAnalyzerFinding> findings = parser.parse(report);
+
+    assertThat(findings)
+      .extracting(AdaLangAnalyzerFinding::ruleId)
+      .containsExactly("No_Multiple_Return", "Dead_Store");
+    assertThat(parser.reportedViolationCount(report)).isEqualTo(findings.size());
+  }
 }

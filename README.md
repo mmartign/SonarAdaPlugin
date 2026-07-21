@@ -51,35 +51,27 @@ source-specific versions, so Maven cannot confuse them with incompatible or
 older AdaCore artifacts. Maven is configured to use this project's
 `.m2/repository` as its local cache and does not fall back to `~/.m2`.
 
-Libadalang's Java API requires the native `adalang_jni` library and, on
-non-Windows platforms, Langkit's `langkit_sigsegv_handler` library. Both must be
-built by the matching local toolchain and be available through
-`java.library.path` on the scanner/SonarQube host. The plugin loads the Langkit
-handler after JVM initialization and before `adalang_jni` to avoid GNAT
-replacing the JVM signal handler.
+Libadalang's Java API requires the native `adalang_jni` library. It and its
+native dependencies must be built by the matching local toolchain and be
+available through `java.library.path` on the scanner/SonarQube host. On macOS,
+the plugin also loads Langkit's `langkit_sigsegv_handler` before `adalang_jni`.
 
 ### Native libraries on GNU/Linux
 
-Place `libadalang_jni.so`, `liblangkit_sigsegv_handler.so`, and their native
-dependencies in a common directory such as `/opt/libadalang-jni-libs`. Expose
-that directory to both the Java launcher and the dynamic linker when running
-SonarScanner:
+Place `libadalang_jni.so` and its native dependencies in a common directory
+such as `/opt/libadalang-jni-libs`. GNAT and HotSpot both use `SIGSEGV`, so the
+scanner must start with HotSpot's `libjsig.so` signal-chaining library
+preloaded. The included wrapper configures signal chaining and the native
+library paths:
 
 ```bash
-env \
-  LD_LIBRARY_PATH=/opt/libadalang-jni-libs \
-  SONAR_SCANNER_OPTS="-Djava.library.path=/opt/libadalang-jni-libs" \
-  sonar-scanner
+JAVA_HOME=/opt/java \
+SONAR_SCANNER_BIN=/opt/sonar-scanner/bin/sonar-scanner \
+./scripts/sonar-scanner-linux.sh
 ```
 
-With the current GNAT/Libadalang 26 native runtime, Sonar's text/secrets and SCM
-phases can still trigger native signal conflicts after Ada analysis. Use these
-project properties as a compatibility workaround:
-
-```properties
-sonar.text.activate=false
-sonar.scm.disabled=true
-```
+Do not disable `sonar.text.activate` or `sonar.scm`: signal chaining allows the
+Text/Secrets sensor and SCM publisher to run normally after Ada analysis.
 
 ### Native libraries on macOS
 
@@ -201,16 +193,23 @@ sonar.ada.adalang.timeoutSeconds=300
 
 Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. In the current analyzer version, omitting this property leaves all checks disabled. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
 
-Import one or more pre-generated CSV/CSVX reports without running the analyzer:
+Import one or more pre-generated reports without running the analyzer. Both the
+analyzer's complete console-text output and CSV/CSVX are supported:
 
 ```properties
-sonar.ada.adalang.reportPaths=build/adalang-report.csv
+sonar.ada.adalang.reportPaths=build/adalang_report.txt,build/adalang-report.csv
 ```
 
 Multiple report paths can be separated with commas. Relative report paths and
 relative source paths inside reports are resolved from the Sonar project base
-directory. Direct execution and report import can be enabled together.
-Expected report fields are:
+directory. Absolute source paths from another checkout are matched by their
+project-relative suffix. Direct execution and report import can be enabled
+together.
+
+For console reports, the importer preserves the check identifier, rule and
+advice text, software quality, severity, file, line, and column. It also checks
+that the parsed finding count matches the report's `Violations` summary. CSV and
+CSVX reports use these fields:
 
 ```text
 file,line,column,key,label,rule,message
