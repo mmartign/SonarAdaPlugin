@@ -8,8 +8,8 @@ if (( $# != 0 )); then
 fi
 
 project_dir=$(cd "$(dirname "$0")/.." && pwd)
-libadalang_dir=/Users/mmartign/libadalang_26.0.0_75276b8d
-langkit_dir=/Users/mmartign/langkit_support_26.0.0_1745168f
+libadalang_dir=/opt/libadalang_26.0.0_75276b8d
+langkit_dir=/opt/langkit_support_26.0.0_1745168f
 local_repo="$project_dir/.m2/repository"
 staging_dir=$(mktemp -d "${TMPDIR:-/tmp}/sonarada-libadalang.XXXXXX")
 java_release=21
