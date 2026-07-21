@@ -28,6 +28,6 @@ fi
 
 export LD_PRELOAD="$libjsig${LD_PRELOAD:+:$LD_PRELOAD}"
 export LD_LIBRARY_PATH="$native_path${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-export SONAR_SCANNER_OPTS="-Djava.library.path=$native_path${SONAR_SCANNER_OPTS:+ $SONAR_SCANNER_OPTS}"
+export SONAR_SCANNER_OPTS="-XX:+UseSignalChaining -Djava.library.path=$native_path${SONAR_SCANNER_OPTS:+ $SONAR_SCANNER_OPTS}"
 
 exec "$scanner_bin" "$@"

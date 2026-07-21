@@ -61,8 +61,8 @@ the plugin also loads Langkit's `langkit_sigsegv_handler` before `adalang_jni`.
 Place `libadalang_jni.so` and its native dependencies in a common directory
 such as `/opt/libadalang-jni-libs`. GNAT and HotSpot both use `SIGSEGV`, so the
 scanner must start with HotSpot's `libjsig.so` signal-chaining library
-preloaded. The included wrapper configures signal chaining and the native
-library paths:
+preloaded and `-XX:+UseSignalChaining` enabled. The included wrapper configures
+signal chaining and the native library paths:
 
 ```bash
 JAVA_HOME=/opt/java \
