@@ -43,6 +43,9 @@ public final class AdaProperties {
   public static final String ADALANG_ANALYZER_TIMEOUT_SECONDS_KEY = "sonar.ada.adalang.timeoutSeconds";
   public static final String ADALANG_ANALYZER_FAIL_ON_ERROR_KEY = "sonar.ada.adalang.failOnError";
 
+  public static final String GNATTEST_REPORT_PATHS_KEY = "sonar.ada.gnattest.reportPaths";
+  public static final String GNATTEST_FAIL_ON_ERROR_KEY = "sonar.ada.gnattest.failOnError";
+
   private AdaProperties() {
   }
 
@@ -158,6 +161,21 @@ public final class AdaProperties {
         .description("Fail the Sonar scan when adalang_analyzer cannot start, times out, exits with an internal error, or a configured report cannot be read or parsed completely.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
+        .defaultValue("true")
+        .type(PropertyType.BOOLEAN)
+        .build(),
+      PropertyDefinition.builder(GNATTEST_REPORT_PATHS_KEY)
+        .name("GNATtest report paths")
+        .description("Comma-separated paths to GNATtest text reports or AUnit JUnit/XML reports to import.")
+        .category(CATEGORY)
+        .subCategory("GNATtest")
+        .type(PropertyType.STRING)
+        .build(),
+      PropertyDefinition.builder(GNATTEST_FAIL_ON_ERROR_KEY)
+        .name("Fail analysis on GNATtest report errors")
+        .description("Fail the Sonar scan when a configured GNATtest report cannot be read or parsed.")
+        .category(CATEGORY)
+        .subCategory("GNATtest")
         .defaultValue("true")
         .type(PropertyType.BOOLEAN)
         .build()

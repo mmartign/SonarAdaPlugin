@@ -15,6 +15,7 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
   - Run an installed `adactl` executable during analysis.
   - Import pre-generated AdaControl reports.
   - Publish AdaControl findings as Sonar external issues.
+- GNATtest result import for native text, AUnit JUnit XML, and AUnit XML reports.
 - A curated set of eleven built-in checks inspired by common Ada best practices and AdaControl rules. For a more comprehensive analysis, the AdaControl integration is recommended. The built-in rules include:
   - `ADA001`: Lines should not be too long.
   - `ADA002`: Tab characters should not be used.
@@ -65,9 +66,18 @@ preloaded and `-XX:+UseSignalChaining` enabled. The included wrapper configures
 signal chaining and the native library paths:
 
 ```bash
-JAVA_HOME=/opt/java \
-SONAR_SCANNER_BIN=/opt/sonar-scanner/bin/sonar-scanner \
 ./scripts/sonar-scanner-linux.sh
+```
+
+The wrapper automatically uses `/opt/java`, `/opt/sonar-scanner`, and
+`/opt/libadalang-jni-libs` when present. Override these defaults with
+`JAVA_HOME`, `SONAR_SCANNER_BIN`, or `SONAR_ADA_NATIVE_PATH` when needed. It can
+also be linked into a directory on `PATH` to provide a short system-wide
+command:
+
+```bash
+ln -s /opt/SonarAdaPlugin/scripts/sonar-scanner-linux.sh \
+  /usr/local/bin/sonar-scanner-ada
 ```
 
 Do not disable `sonar.text.activate` or `sonar.scm`: signal chaining allows the
@@ -248,6 +258,41 @@ file,line,column,key,label,rule,message
 AdaControl findings are imported as Sonar external issues with engine id `AdaControl`. AdaControl exit code `1` means controls were triggered and does not fail the scan. Execution errors and timeouts fail the scan by default; set `sonar.ada.adacontrol.failOnError=false` to log them as warnings instead.
 
 `sonar.ada.adacontrol.extraArgs` is appended after the input file list, which is why ASIS/compiler options can be supplied as `-- -gnat12`.
+
+## GNATtest integration
+
+Run GNATtest and its generated test driver before SonarScanner, save the test
+output, and configure one or more reports:
+
+```properties
+sonar.ada.gnattest.reportPaths=build/gnattest.txt,build/gnattest-junit.xml
+```
+
+The importer accepts GNATtest's native text reporter, AUnit's JUnit reporter,
+and AUnit's XML reporter. Results are aggregated into Sonar's test count,
+failures, errors (crashed tests), skipped tests, and execution time metrics.
+Relative report paths are resolved from the Sonar project base directory.
+
+For native GNATtest output, redirect the test driver output to a file. Add
+`--test-duration` when generating the harness to include execution times:
+
+```bash
+gnattest -Pexample.gpr --test-duration
+gprbuild -Pobj/gnattest/harness/test_driver.gpr
+obj/gnattest/harness/test_runner > build/gnattest.txt
+```
+
+For JUnit XML, generate the harness with AUnit's JUnit reporter and redirect its
+output instead:
+
+```bash
+gnattest -Pexample.gpr --reporter=JUnit --test-duration
+gprbuild -Pobj/gnattest/harness/test_driver.gpr
+obj/gnattest/harness/test_runner > build/gnattest-junit.xml
+```
+
+Malformed, missing, empty, or inconsistent reports fail the scan by default.
+Set `sonar.ada.gnattest.failOnError=false` to log and skip invalid reports.
 
 Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer. This avoids any direct linking that would conflict with this plugin's GPL-3.0-or-later license.
 

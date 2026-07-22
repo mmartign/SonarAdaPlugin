@@ -11,3 +11,8 @@ sonar.sourceEncoding=UTF-8
 # sonar.ada.adacontrol.projectFile=my_project.gpr
 # sonar.ada.adacontrol.extraArgs=-- -gnat12
 # sonar.ada.adacontrol.reportPaths=build/adacontrol-report.csv
+
+# Optional GNATtest result import. Native text, AUnit JUnit XML, and AUnit XML
+# reports are supported. Generate and run the test harness before SonarScanner.
+# sonar.ada.gnattest.reportPaths=build/gnattest.txt,build/gnattest-junit.xml
+# sonar.ada.gnattest.failOnError=true

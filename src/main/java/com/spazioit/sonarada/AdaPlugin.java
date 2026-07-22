@@ -29,7 +29,8 @@ public final class AdaPlugin implements Plugin {
       AdaQualityProfile.class,
       AdaSensor.class,
       com.spazioit.sonarada.adacontrol.AdaControlSensor.class,
-      com.spazioit.sonarada.adalanganalyzer.AdaLangAnalyzerSensor.class
+      com.spazioit.sonarada.adalanganalyzer.AdaLangAnalyzerSensor.class,
+      com.spazioit.sonarada.gnattest.GnattestSensor.class
     );
   }
 }

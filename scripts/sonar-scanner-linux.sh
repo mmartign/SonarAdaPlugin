@@ -2,10 +2,18 @@
 set -euo pipefail
 
 native_path=${SONAR_ADA_NATIVE_PATH:-/opt/libadalang-jni-libs}
-scanner_bin=${SONAR_SCANNER_BIN:-sonar-scanner}
+if [[ -n "${SONAR_SCANNER_BIN:-}" ]]; then
+  scanner_bin=$SONAR_SCANNER_BIN
+elif [[ -x /opt/sonar-scanner/bin/sonar-scanner ]]; then
+  scanner_bin=/opt/sonar-scanner/bin/sonar-scanner
+else
+  scanner_bin=sonar-scanner
+fi
 
 if [[ -n "${JAVA_HOME:-}" ]]; then
   java_home=$JAVA_HOME
+elif [[ -f /opt/java/lib/libjsig.so ]]; then
+  java_home=/opt/java
 else
   java_bin=$(command -v java || true)
   if [[ -z "$java_bin" ]]; then
