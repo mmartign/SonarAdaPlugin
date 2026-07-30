@@ -217,9 +217,14 @@ project-relative suffix. Direct execution and report import can be enabled
 together.
 
 For console reports, the importer preserves the check identifier, rule and
-advice text, software quality, severity, file, line, and column. It also checks
-that the parsed finding count matches the report's `Violations` summary. CSV and
-CSVX reports use these fields:
+advice text, software quality, severity, file, line, column, and the complete
+source caret span. Structured proof obligations are also imported: unproved
+obligations become reliability issues containing their obligation kind,
+analysis method, reason, and imprecision detail. The importer checks both the
+`Violations` and proof-obligation `Total` summaries against the parsed details.
+It logs the reported file, violation, proof-obligation, and skipped-check
+coverage totals so incomplete semantic analysis remains visible in scanner logs.
+CSV and CSVX reports use these fields:
 
 ```text
 file,line,column,key,label,rule,message

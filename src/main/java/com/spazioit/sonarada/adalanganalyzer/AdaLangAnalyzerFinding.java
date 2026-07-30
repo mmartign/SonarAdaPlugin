@@ -14,7 +14,9 @@ record AdaLangAnalyzerFinding(
   String ruleDescription,
   String advice,
   String softwareQuality,
-  String qualitySeverity
+  String qualitySeverity,
+  String source,
+  int sourceSpanLength
 ) {
   String sonarMessage() {
     StringBuilder result = new StringBuilder(message);
@@ -25,5 +27,9 @@ record AdaLangAnalyzerFinding(
       result.append(" Advice: ").append(advice);
     }
     return result.toString();
+  }
+
+  int highlightLength() {
+    return Math.max(1, sourceSpanLength);
   }
 }

@@ -32,9 +32,10 @@ class AdaLangAnalyzerConsoleParserTest {
     assertThat(findings).containsExactly(new AdaLangAnalyzerFinding(
       "/project/src/demo.adb", 12, 7, "warning", "goto statements are forbidden",
       "No_Goto", "Avoid unstructured control flow", "Replace goto with structured statements",
-      "Maintainability", "Medium"));
+      "Maintainability", "Medium", "goto Finished;", 14));
     assertThat(findings.getFirst().sonarMessage())
       .isEqualTo("goto statements are forbidden — Avoid unstructured control flow Advice: Replace goto with structured statements");
+    assertThat(findings.getFirst().highlightLength()).isEqualTo(14);
   }
 
   @Test
@@ -101,5 +102,60 @@ class AdaLangAnalyzerConsoleParserTest {
       .extracting(AdaLangAnalyzerFinding::ruleId)
       .containsExactly("No_Multiple_Return", "Dead_Store");
     assertThat(parser.reportedViolationCount(report)).isEqualTo(findings.size());
+  }
+
+  @Test
+  void parsesProofObligationsAndEveryDetail() {
+    String report = """
+      Files scanned : 1
+      Violations    : 0
+
+      Proof obligations (enumerated outcomes in current analysis scope; not exhaustive):
+        Total : 2
+        unproved : 2
+        Details:
+          /checkout/src/demo.adb:18:23 [index-check] unproved
+            method: abstract-interpretation
+            why: index-check failure is not established, but absence is not proved
+            imprecision: index and bound ranges remain inconclusive
+          C:\\checkout\\src\\other.adb:9:4 [precondition] unproved
+            method: contract-transfer
+            why: precondition failure is not established, but absence is not proved
+            imprecision: current contract transfer does not certify safety
+      """;
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(obligations).containsExactly(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/src/demo.adb", 18, 23, "index-check", "unproved", "abstract-interpretation",
+        "index-check failure is not established, but absence is not proved",
+        "index and bound ranges remain inconclusive"),
+      new AdaLangAnalyzerProofObligation(
+        "C:\\checkout\\src\\other.adb", 9, 4, "precondition", "unproved", "contract-transfer",
+        "precondition failure is not established, but absence is not proved",
+        "current contract transfer does not certify safety"));
+    assertThat(parser.reportedProofObligationCount(report)).isEqualTo(obligations.size());
+    assertThat(parser.reportedFileCount(report)).isEqualTo(1);
+    assertThat(parser.reportedSkippedCheckCount(report)).isEqualTo(-1);
+    assertThat(obligations.getFirst().ruleId()).isEqualTo("proof-obligation:index-check");
+    assertThat(obligations.getFirst().sonarMessage()).isEqualTo(
+      "Proof obligation [index-check] unproved. Method: abstract-interpretation"
+        + ". Why: index-check failure is not established, but absence is not proved"
+        + ". Imprecision: index and bound ranges remain inconclusive");
+  }
+
+  @Test
+  void parsesAnalysisCoverageSummary() {
+    String report = """
+      Files scanned : 53
+      Violations    : 1719
+      Skipped checks: 5129 location(s) (semantic resolution limits; rerun with -v for details)
+      """;
+
+    assertThat(parser.reportedFileCount(report)).isEqualTo(53);
+    assertThat(parser.reportedViolationCount(report)).isEqualTo(1719);
+    assertThat(parser.reportedSkippedCheckCount(report)).isEqualTo(5129);
+    assertThat(parser.reportedProofObligationCount(report)).isEqualTo(-1);
   }
 }

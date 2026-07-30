@@ -21,8 +21,30 @@ final class AdaLangAnalyzerConsoleParser {
     "^\\s*quality:\\s*([^()]+?)\\s*\\(([^()]+)\\)\\s*$",
     Pattern.CASE_INSENSITIVE
   );
+  private static final String SOURCE_PREFIX = "  source:";
+  private static final Pattern SOURCE_CARET = Pattern.compile("^\\s*(\\^+)\\s*$");
+  private static final Pattern PROOF_OBLIGATION = Pattern.compile(
+    "^\\s{4}(.*):(\\d+):(\\d+)\\s+\\[([^]\\s]+)]\\s+(\\S+)\\s*$",
+    Pattern.CASE_INSENSITIVE
+  );
+  private static final Pattern PROOF_DETAIL = Pattern.compile(
+    "^\\s{6}(method|why|imprecision):\\s*(.*)$",
+    Pattern.CASE_INSENSITIVE
+  );
   private static final Pattern VIOLATION_COUNT = Pattern.compile(
     "^Violations\\s*:\\s*(\\d+)\\s*$",
+    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+  );
+  private static final Pattern FILE_COUNT = Pattern.compile(
+    "^Files scanned\\s*:\\s*(\\d+)\\s*$",
+    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+  );
+  private static final Pattern SKIPPED_CHECK_COUNT = Pattern.compile(
+    "^Skipped checks\\s*:\\s*(\\d+)\\s+location\\(s\\).*$",
+    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+  );
+  private static final Pattern PROOF_OBLIGATION_COUNT = Pattern.compile(
+    "^Proof obligations[^\\r\\n]*\\R\\s*Total\\s*:\\s*(\\d+)\\s*$",
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
   );
 
@@ -47,11 +69,21 @@ final class AdaLangAnalyzerConsoleParser {
         pending.ruleDescription = line.substring(RULE_PREFIX.length()).trim();
       } else if (pending != null && line.startsWith(ADVICE_PREFIX)) {
         pending.advice = line.substring(ADVICE_PREFIX.length()).trim();
+      } else if (pending != null && line.startsWith(SOURCE_PREFIX)) {
+        pending.readingSource = true;
       } else if (pending != null) {
         Matcher qualityMatcher = QUALITY.matcher(line);
         if (qualityMatcher.matches()) {
           pending.softwareQuality = qualityMatcher.group(1).trim();
           pending.qualitySeverity = qualityMatcher.group(2).trim();
+        } else if (pending.readingSource && pending.source.isEmpty()) {
+          pending.source = line.strip();
+        } else if (pending.readingSource) {
+          Matcher caretMatcher = SOURCE_CARET.matcher(line);
+          if (caretMatcher.matches()) {
+            pending.sourceSpanLength = caretMatcher.group(1).length();
+          }
+          pending.readingSource = false;
         }
       }
     }
@@ -61,8 +93,56 @@ final class AdaLangAnalyzerConsoleParser {
     return List.copyOf(findings);
   }
 
+  List<AdaLangAnalyzerProofObligation> parseProofObligations(String output) {
+    List<AdaLangAnalyzerProofObligation> obligations = new ArrayList<>();
+    PendingProofObligation pending = null;
+    for (String line : output.lines().toList()) {
+      Matcher obligationMatcher = PROOF_OBLIGATION.matcher(line);
+      if (obligationMatcher.matches()) {
+        if (pending != null) {
+          obligations.add(pending.toProofObligation());
+        }
+        pending = new PendingProofObligation(
+          obligationMatcher.group(1),
+          Integer.parseInt(obligationMatcher.group(2)),
+          Integer.parseInt(obligationMatcher.group(3)),
+          obligationMatcher.group(4),
+          obligationMatcher.group(5)
+        );
+        continue;
+      }
+
+      if (pending != null) {
+        Matcher detailMatcher = PROOF_DETAIL.matcher(line);
+        if (detailMatcher.matches()) {
+          pending.setDetail(detailMatcher.group(1), detailMatcher.group(2).trim());
+        }
+      }
+    }
+    if (pending != null) {
+      obligations.add(pending.toProofObligation());
+    }
+    return List.copyOf(obligations);
+  }
+
   int reportedViolationCount(String output) {
-    Matcher matcher = VIOLATION_COUNT.matcher(output);
+    return parseCount(VIOLATION_COUNT, output);
+  }
+
+  int reportedFileCount(String output) {
+    return parseCount(FILE_COUNT, output);
+  }
+
+  int reportedSkippedCheckCount(String output) {
+    return parseCount(SKIPPED_CHECK_COUNT, output);
+  }
+
+  int reportedProofObligationCount(String output) {
+    return parseCount(PROOF_OBLIGATION_COUNT, output);
+  }
+
+  private static int parseCount(Pattern pattern, String output) {
+    Matcher matcher = pattern.matcher(output);
     return matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
   }
 
@@ -77,6 +157,9 @@ final class AdaLangAnalyzerConsoleParser {
     private String advice = "";
     private String softwareQuality = "";
     private String qualitySeverity = "";
+    private String source = "";
+    private int sourceSpanLength = 1;
+    private boolean readingSource;
 
     private PendingFinding(String file, int line, int column, String severity, String message, String ruleId) {
       this.file = file;
@@ -89,7 +172,41 @@ final class AdaLangAnalyzerConsoleParser {
 
     private AdaLangAnalyzerFinding toFinding() {
       return new AdaLangAnalyzerFinding(
-        file, line, column, severity, message, ruleId, ruleDescription, advice, softwareQuality, qualitySeverity);
+        file, line, column, severity, message, ruleId, ruleDescription, advice, softwareQuality, qualitySeverity,
+        source, sourceSpanLength);
+    }
+  }
+
+  private static final class PendingProofObligation {
+    private final String file;
+    private final int line;
+    private final int column;
+    private final String kind;
+    private final String outcome;
+    private String method = "";
+    private String why = "";
+    private String imprecision = "";
+
+    private PendingProofObligation(String file, int line, int column, String kind, String outcome) {
+      this.file = file;
+      this.line = line;
+      this.column = column;
+      this.kind = kind;
+      this.outcome = outcome;
+    }
+
+    private void setDetail(String name, String value) {
+      if ("method".equalsIgnoreCase(name)) {
+        method = value;
+      } else if ("why".equalsIgnoreCase(name)) {
+        why = value;
+      } else {
+        imprecision = value;
+      }
+    }
+
+    private AdaLangAnalyzerProofObligation toProofObligation() {
+      return new AdaLangAnalyzerProofObligation(file, line, column, kind, outcome, method, why, imprecision);
     }
   }
 }
