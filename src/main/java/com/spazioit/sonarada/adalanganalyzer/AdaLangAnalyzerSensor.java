@@ -9,6 +9,7 @@ import com.spazioit.sonarada.AdaProperties;
 import com.spazioit.sonarada.analysis.AdaLangAnalyzerIssue;
 import com.spazioit.sonarada.analysis.AdaLangAnalyzerReportParser;
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,7 +84,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
         return;
       }
       List<AdaLangAnalyzerProofObligation> proofObligations = parser.parseProofObligations(result.output());
-      if (!hasConsistentCounts(configuration, "analyzer output", result.output(), findings, proofObligations)) {
+      if (!hasConsistentCounts(configuration, "analyzer output", result.output(), findings, proofObligations, true)) {
         return;
       }
       logReportSummary("analyzer output", result.output());
@@ -111,12 +112,33 @@ public final class AdaLangAnalyzerSensor implements Sensor {
     int imported = 0;
     int unresolved = 0;
     for (Path reportPath : reportPaths) {
+      if (!Files.exists(reportPath)) {
+        LOG.warn("Skipping AdaLang Analyzer report '{}' because the file does not exist", reportPath);
+        continue;
+      }
       try {
-        String reportContent = Files.readString(reportPath, StandardCharsets.UTF_8);
+        if (Files.size(reportPath) == 0) {
+          LOG.warn("Skipping AdaLang Analyzer report '{}' because the file is empty", reportPath);
+          continue;
+        }
+
+        String reportContent;
+        try {
+          reportContent = Files.readString(reportPath, StandardCharsets.UTF_8);
+        } catch (MalformedInputException e) {
+          LOG.warn("Skipping AdaLang Analyzer report '{}' because it is not valid UTF-8 "
+            + "(the file may be truncated or corrupted, e.g. from an interrupted analyzer run)", reportPath);
+          continue;
+        }
+        if (reportContent.isBlank()) {
+          LOG.warn("Skipping AdaLang Analyzer report '{}' because the file is empty", reportPath);
+          continue;
+        }
+
         List<AdaLangAnalyzerFinding> findings = parser.parse(reportContent);
         List<AdaLangAnalyzerProofObligation> proofObligations = parser.parseProofObligations(reportContent);
         if (!hasConsistentCounts(
-          configuration, "report '" + reportPath + "'", reportContent, findings, proofObligations)) {
+          configuration, "report '" + reportPath + "'", reportContent, findings, proofObligations, false)) {
           continue;
         }
         logReportSummary("report '" + reportPath + "'", reportContent);
@@ -159,7 +181,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
           }
         }
       } catch (IOException e) {
-        handleError(configuration, "Unable to read AdaLang Analyzer report '" + reportPath + "': " + e.getMessage());
+        LOG.warn("Skipping AdaLang Analyzer report '{}': unable to read it ({})", reportPath, e.getMessage());
       }
     }
 
@@ -207,19 +229,30 @@ public final class AdaLangAnalyzerSensor implements Sensor {
     String source,
     String reportContent,
     List<AdaLangAnalyzerFinding> findings,
-    List<AdaLangAnalyzerProofObligation> proofObligations
+    List<AdaLangAnalyzerProofObligation> proofObligations,
+    boolean fatal
   ) {
     int reportedViolations = parser.reportedViolationCount(reportContent);
     if (reportedViolations >= 0 && reportedViolations != findings.size()) {
-      handleError(configuration, "AdaLang Analyzer " + source + " declares "
-        + reportedViolations + " violation(s), but " + findings.size() + " could be parsed");
+      String message = "AdaLang Analyzer " + source + " declares "
+        + reportedViolations + " violation(s), but " + findings.size() + " could be parsed";
+      if (fatal) {
+        handleError(configuration, message);
+      } else {
+        LOG.warn(message);
+      }
       return false;
     }
 
     int reportedProofObligations = parser.reportedProofObligationCount(reportContent);
     if (reportedProofObligations >= 0 && reportedProofObligations != proofObligations.size()) {
-      handleError(configuration, "AdaLang Analyzer " + source + " declares "
-        + reportedProofObligations + " proof obligation(s), but " + proofObligations.size() + " could be parsed");
+      String message = "AdaLang Analyzer " + source + " declares "
+        + reportedProofObligations + " proof obligation(s), but " + proofObligations.size() + " could be parsed";
+      if (fatal) {
+        handleError(configuration, message);
+      } else {
+        LOG.warn(message);
+      }
       return false;
     }
     return true;

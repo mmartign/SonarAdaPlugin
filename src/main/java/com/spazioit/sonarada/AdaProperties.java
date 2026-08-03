@@ -158,7 +158,8 @@ public final class AdaProperties {
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_FAIL_ON_ERROR_KEY)
         .name("Fail analysis on AdaLang Analyzer execution errors")
-        .description("Fail the Sonar scan when adalang_analyzer cannot start, times out, exits with an internal error, or a configured report cannot be read or parsed completely.")
+        .description("Fail the Sonar scan when adalang_analyzer cannot start, times out, or exits with an internal error. "
+          + "Problems reading or parsing a configured report (missing, empty, corrupted, or inconsistent) are always logged as a warning and skipped, never fail the scan.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .defaultValue("true")
