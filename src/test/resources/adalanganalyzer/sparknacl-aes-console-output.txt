@@ -1,0 +1,1500 @@
+adalang-analyzer [INFO]: Reading project with GPR2: /opt/SPARKNaCl/sparknacl.gpr
+adalang-analyzer [INFO]: Built 196 subprogram summaries
+adalang-analyzer [INFO]: Parsing: /opt/SPARKNaCl/src/sparknacl-aes.adb
+/opt/SPARKNaCl/src/sparknacl-aes.adb:6:4: warning: pragma used [No_Pragma]
+  rule: Avoid pragmas that may change compiler behavior, runtime behavior, portability, or verification assumptions.
+  advice: Keep only required pragmas, document the reason, and isolate compiler-specific pragmas behind project policy.
+  quality: Maintainability (Low)
+  source:
+       pragma Warnings (GNATProve, Off, "pragma * ignored (not yet supported)");
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:6:4: warning: implementation-defined pragma warnings used [No_Compiler_Extensions]
+  rule: Find implementation-defined pragmas and pragmas that enable compiler language extensions.
+  advice: Use language-defined pragmas, compile with extensions disabled, and isolate any approved vendor dependency.
+  quality: Maintainability (High)
+  source:
+       pragma Warnings (GNATProve, Off, "pragma * ignored (not yet supported)");
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:32:32: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+       function GF2p2p2p2_Inverse (X : in U32) return U32
+                                   ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:78:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       function Construct_State (Input : in Bytes_16) return Cipher_State
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:80:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          State : Cipher_State;
+          ^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:80:7: warning: declaration shadows an object in an enclosing subprogram [Shadowed_Declaration]
+  rule: Find local object declarations that hide an object or parameter declared by an enclosing subprogram.
+  advice: Rename the inner declaration so references clearly identify the intended object.
+  quality: Reliability (Medium)
+  source:
+          State : Cipher_State;
+          ^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:83:10-83:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:83:23-83:67>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:83:47: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             State (I) := Big_Endian_Pack (Input (4 * I .. 4 * I + 3));
+                                                  ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:83:56: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             State (I) := Big_Endian_Pack (Input (4 * I .. 4 * I + 3));
+                                                           ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:83:64: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             State (I) := Big_Endian_Pack (Input (4 * I .. 4 * I + 3));
+                                                                   ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:89:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       procedure Serialize_State (Output :    out Bytes_16;
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:89:31: warning: out parameter 'Output' is not initialized on every normal return path [Uninitialized_Output]
+  rule: Find out parameters whose complete initialization cannot be established on every normal return path.
+  advice: Assign the complete out parameter on every path before the subprogram returns.
+  quality: Reliability (High)
+  source:
+       procedure Serialize_State (Output :    out Bytes_16;
+                                  ^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:89:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find SPARK subprograms with outputs but no explicit Depends contract.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Serialize_State (Output :    out Bytes_16;
+                 ^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:93:7: warning: loop has a Loop_Invariant pragma but no Loop_Variant pragma [Missing_Loop_Variant]
+  rule: Find loops that carry a Loop_Invariant pragma but no Loop_Variant pragma, so GNATprove cannot prove termination.
+  advice: Add a Loop_Variant pragma identifying an expression that strictly decreases or increases on every iteration.
+  quality: Maintainability (Medium)
+  source:
+          for I in Cipher_State'Range loop
+          ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:94:10-94:68>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:94:37: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             Big_Endian_Unpack (Output (4 * I .. 4 * I + 3), State (I));
+                                        ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:94:46: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             Big_Endian_Unpack (Output (4 * I .. 4 * I + 3), State (I));
+                                                 ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:94:54: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             Big_Endian_Unpack (Output (4 * I .. 4 * I + 3), State (I));
+                                                         ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:94:58-94:67>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:96:10: warning: pragma used [No_Pragma]
+  rule: Avoid pragmas that may change compiler behavior, runtime behavior, portability, or verification assumptions.
+  advice: Keep only required pragmas, document the reason, and isolate compiler-specific pragmas behind project policy.
+  quality: Maintainability (Low)
+  source:
+             pragma Loop_Invariant (Output (0 .. 4 * I + 3)'Initialized);
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:96:10: warning: implementation-defined pragma loop-invariant used [No_Compiler_Extensions]
+  rule: Find implementation-defined pragmas and pragmas that enable compiler language extensions.
+  advice: Use language-defined pragmas, compile with extensions disabled, and isolate any approved vendor dependency.
+  quality: Maintainability (High)
+  source:
+             pragma Loop_Invariant (Output (0 .. 4 * I + 3)'Initialized);
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:96:46: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             pragma Loop_Invariant (Output (0 .. 4 * I + 3)'Initialized);
+                                                 ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:96:54: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             pragma Loop_Invariant (Output (0 .. 4 * I + 3)'Initialized);
+                                                         ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:100:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       procedure Add_Round_Key (State : in out Cipher_State;
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:100:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find SPARK subprograms with outputs but no explicit Depends contract.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Add_Round_Key (State : in out Cipher_State;
+                 ^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:105:10-105:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:105:23-105:32>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:105:37-105:44>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:109:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       function GF2p2p2p2_Inverse (X : in U32) return U32
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:109:32: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+       function GF2p2p2p2_Inverse (X : in U32) return U32
+                                   ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:123:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          A, B, Result : U32;
+          ^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:123:7: warning: one-character identifier 'A' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          A, B, Result : U32;
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:123:10: warning: one-character identifier 'B' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          A, B, Result : U32;
+             ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:125:32: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2_Multiply (U : in U32;
+                                   ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:126:32: warning: one-character identifier 'V' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+                                   V : in U32) return U32
+                                   ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:131:31: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2_Inverse (U : in U32) return U32
+                                  ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:136:34: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2p2_Multiply (U : in U32;
+                                     ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:137:34: warning: one-character identifier 'V' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+                                     V : in U32) return U32
+                                     ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:142:33: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2p2_Inverse (U : in U32) return U32
+                                    ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:147:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function GF2p2_Multiply (U : in U32;
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:153:34: warning: global 'Upper_Nyp_Half_Mask' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := Shift_Right (P and Upper_Nyp_Half_Mask, Half_Nyp_Shift) xor P;
+                                     ^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:153:55: warning: global 'Half_Nyp_Shift' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := Shift_Right (P and Upper_Nyp_Half_Mask, Half_Nyp_Shift) xor P;
+                                                          ^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:156:30: warning: global 'Lower_Nyp_Half_Mask' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+               Shift_Left (U and Lower_Nyp_Half_Mask, Half_Nyp_Shift);
+                                 ^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:147:32: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2_Multiply (U : in U32;
+                                   ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:148:32: warning: one-character identifier 'V' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+                                   V : in U32) return U32
+                                   ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:150:10: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+             P, Q, Return_Value : U32;
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:150:10: warning: one-character identifier 'P' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             P, Q, Return_Value : U32;
+             ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:150:13: warning: one-character identifier 'Q' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             P, Q, Return_Value : U32;
+                ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:153:15-153:70>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:155:15-155:70>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:156:12-156:66>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:158:16-158:46>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:165:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function GF2p2_Inverse (U : in U32) return U32
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:169:34: warning: global 'Upper_Nyp_Half_Mask' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := Shift_Right (U and Upper_Nyp_Half_Mask, Half_Nyp_Shift);
+                                     ^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:169:55: warning: global 'Half_Nyp_Shift' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := Shift_Right (U and Upper_Nyp_Half_Mask, Half_Nyp_Shift);
+                                                          ^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:165:31: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2_Inverse (U : in U32) return U32
+                                  ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:167:10: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+             P, Return_Value : U32;
+             ^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:167:10: warning: one-character identifier 'P' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             P, Return_Value : U32;
+             ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:169:15-169:70>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:175:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function GF2p2p2_Multiply (U : in U32;
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:186:34: warning: global 'Phi' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := GF2p2_Multiply (P, Phi);
+                                     ^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:189:31: warning: global 'Half_Nybble_Shift' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := Shift_Right (P, Half_Nybble_Shift) xor P;
+                                  ^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:191:21: warning: global 'Lower_Nybble_Half_Mask' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := P and Lower_Nybble_Half_Mask;
+                        ^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:175:34: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2p2_Multiply (U : in U32;
+                                     ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:176:34: warning: one-character identifier 'V' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+                                     V : in U32) return U32
+                                     ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:178:10: warning: one-character identifier 'R' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             R : constant U32 := U xor Shift_Right (U, Half_Nybble_Shift);
+             ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:178:36-178:70>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:179:10: warning: one-character identifier 'S' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             S : constant U32 := V xor Shift_Right (V, Half_Nybble_Shift);
+             ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:179:36-179:70>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:181:10: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+             P, Q, Return_Value : U32;
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:181:10: warning: one-character identifier 'P' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             P, Q, Return_Value : U32;
+             ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:181:13: warning: one-character identifier 'Q' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             P, Q, Return_Value : U32;
+                ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:183:15-183:36>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:185:15-185:36>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:186:15-186:38>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:189:15-189:49>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:192:15-192:75>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:199:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function GF2p2p2_Inverse (U : in U32) return U32
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:203:31: warning: global 'Half_Nybble_Shift' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := Shift_Right (U, Half_Nybble_Shift) and Lower_Nybble_Half_Mask;
+                                  ^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:203:54: warning: global 'Lower_Nybble_Half_Mask' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             P := Shift_Right (U, Half_Nybble_Shift) and Lower_Nybble_Half_Mask;
+                                                         ^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:207:34: warning: global 'Phi' is read but its Global contract mode does not allow it [Global_Contract_Mismatch]
+  rule: Find global reads or writes that are omitted from a SPARK Global contract or declared with an incompatible mode.
+  advice: Make the Global contract agree with the implementation's actual reads and writes.
+  quality: Reliability (High)
+  source:
+             Q := GF2p2_Multiply (Q, Phi);
+                                     ^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:199:33: warning: one-character identifier 'U' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function GF2p2p2_Inverse (U : in U32) return U32
+                                    ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:201:10: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+             P, Q, Return_Value : U32;
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:201:10: warning: one-character identifier 'P' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             P, Q, Return_Value : U32;
+             ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:201:13: warning: one-character identifier 'Q' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             P, Q, Return_Value : U32;
+                ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:203:15-203:49>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:206:15-206:36>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:207:15-207:38>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:209:21-209:55>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:210:15-210:32>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:213:20-213:53>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:215:26-215:47>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:220:19-220:51>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:222:12-222:35>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:223:12-223:40>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:225:19-225:51>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:226:12-226:31>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:229:17-229:48>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:231:17-231:40>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:236:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       function Sbox (Input : in U32) return U32
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:238:29: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Forward_Map (X : in U32) return U32
+                                ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:241:30: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Backward_Map (X : in U32) return U32
+                                 ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:244:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function Forward_Map (X : in U32) return U32
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:244:29: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Forward_Map (X : in U32) return U32
+                                ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:250:10: warning: one-character identifier 'R' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             R : U32 := X and Column (Column'First);
+             ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:250:27-250:48>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:252:22-252:50>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:252:55-252:65>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:253:22-253:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:253:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:253:55-253:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:253:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:254:22-254:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:254:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:254:55-254:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:254:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:255:22-255:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:255:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:255:55-255:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:255:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:256:22-256:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:256:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:256:55-256:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:256:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:257:22-257:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:257:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:257:55-257:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:257:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:258:22-258:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:258:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:258:55-258:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:258:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                                  ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:263:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function Backward_Map (X : in U32) return U32
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:263:30: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Backward_Map (X : in U32) return U32
+                                 ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:269:10: warning: one-character identifier 'R' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             R : U32 := 16#63_63_63_63#;
+             ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:269:21: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R : U32 := 16#63_63_63_63#;
+                        ^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:271:22-271:50>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:271:55-271:65>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:272:22-272:50>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:272:55-272:65>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:273:22-273:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:273:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:273:55-273:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:273:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:274:22-274:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:274:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:274:55-274:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:274:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:275:22-275:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:275:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:275:55-275:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:275:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:276:22-276:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:276:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:276:55-276:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:276:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:277:22-277:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:277:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:277:55-277:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:277:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:278:22-278:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:278:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:278:55-278:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:278:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:284:9-284:63>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:284:23-284:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:284:42-284:61>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:289:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       function Inv_Sbox (Input : in U32) return U32
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:291:29: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Forward_Map (X : in U32) return U32
+                                ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:294:30: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Backward_Map (X : in U32) return U32
+                                 ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:297:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function Forward_Map (X : in U32) return U32
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:297:29: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Forward_Map (X : in U32) return U32
+                                ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:303:10: warning: one-character identifier 'R' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             R : U32 := 16#7d_7d_7d_7d#;
+             ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:303:21: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R : U32 := 16#7d_7d_7d_7d#;
+                        ^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:305:22-305:50>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:305:55-305:65>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:306:22-306:50>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:306:55-306:65>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:307:22-307:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:307:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:307:55-307:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:307:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:308:22-308:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:308:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:308:55-308:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:308:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:309:22-309:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:309:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:309:55-309:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:309:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:310:22-310:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:310:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:310:55-310:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:310:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:311:22-311:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:311:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:311:55-311:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:311:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:312:22-312:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:312:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:312:55-312:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:312:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                                  ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:317:7: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+          function Backward_Map (X : in U32) return U32
+          ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:317:30: warning: one-character identifier 'X' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+          function Backward_Map (X : in U32) return U32
+                                 ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:323:10: warning: one-character identifier 'R' used [Naming_Convention]
+  rule: Find one-character defining identifiers outside conventional loop-index declarations.
+  advice: Use descriptive identifiers; single-letter loop indices remain permitted.
+  quality: Maintainability (Low)
+  source:
+             R : U32 := X and Column (Column'First);
+             ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:323:27-323:48>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:325:22-325:50>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:325:55-325:65>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:326:22-326:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:326:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:326:55-326:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:326:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 2) and Column (2));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:327:22-327:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:327:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:327:55-327:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:327:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 3) and Column (3));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:328:22-328:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:328:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:328:55-328:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:328:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 4) and Column (4));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:329:22-329:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:329:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:329:55-329:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:329:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 5) and Column (5));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:330:22-330:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:330:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:330:55-330:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:330:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 6) and Column (6));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:331:22-331:50>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:331:48: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                   ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:331:55-331:65>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:331:63: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+             R := R xor (Broadcast_Bit_To_Byte (X, 7) and Column (7));
+                                                                  ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:337:9-337:63>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:337:23-337:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:337:42-337:61>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:342:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       procedure Sub_Bytes (State : in out Cipher_State)
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:342:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find SPARK subprograms with outputs but no explicit Depends contract.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Sub_Bytes (State : in out Cipher_State)
+                 ^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:346:10: warning: pragma used [No_Pragma]
+  rule: Avoid pragmas that may change compiler behavior, runtime behavior, portability, or verification assumptions.
+  advice: Keep only required pragmas, document the reason, and isolate compiler-specific pragmas behind project policy.
+  quality: Maintainability (Low)
+  source:
+             pragma Loop_Optimize (No_Unroll);
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:346:10: warning: implementation-defined pragma loop-optimize used [No_Compiler_Extensions]
+  rule: Find implementation-defined pragmas and pragmas that enable compiler language extensions.
+  advice: Use language-defined pragmas, compile with extensions disabled, and isolate any approved vendor dependency.
+  quality: Maintainability (High)
+  source:
+             pragma Loop_Optimize (No_Unroll);
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:347:10-347:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:347:23-347:39>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:347:29-347:38>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:351:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       procedure Inv_Sub_Bytes (State : in out Cipher_State)
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:351:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find SPARK subprograms with outputs but no explicit Depends contract.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Inv_Sub_Bytes (State : in out Cipher_State)
+                 ^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:355:10: warning: pragma used [No_Pragma]
+  rule: Avoid pragmas that may change compiler behavior, runtime behavior, portability, or verification assumptions.
+  advice: Keep only required pragmas, document the reason, and isolate compiler-specific pragmas behind project policy.
+  quality: Maintainability (Low)
+  source:
+             pragma Loop_Optimize (No_Unroll);
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:355:10: warning: implementation-defined pragma loop-optimize used [No_Compiler_Extensions]
+  rule: Find implementation-defined pragmas and pragmas that enable compiler language extensions.
+  advice: Use language-defined pragmas, compile with extensions disabled, and isolate any approved vendor dependency.
+  quality: Maintainability (High)
+  source:
+             pragma Loop_Optimize (No_Unroll);
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:356:10-356:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:356:23-356:43>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:356:33-356:42>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:360:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       procedure Shift_Rows (State : in out Cipher_State)
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:360:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find SPARK subprograms with outputs but no explicit Depends contract.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Shift_Rows (State : in out Cipher_State)
+                 ^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:362:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          Column_Old : Bytes_4;
+          ^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:364:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          Column_0, Column_1 : Bytes_4 with Relaxed_Initialization;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:365:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          Column_2, Column_3 : Bytes_4 with Relaxed_Initialization;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:367:7-367:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:367:38-367:61>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:367:45: warning: identity operand has no effect on the expression result [Ineffective_Operation]
+  rule: Find arithmetic or boolean operations whose identity operand cannot affect the result.
+  advice: Remove the ineffective operation or correct a constant or operand that was entered incorrectly.
+  quality: Maintainability (Low)
+  source:
+          Big_Endian_Unpack (Column_Old, State (State'First + 0));
+                                                ^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:368:7-368:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:368:23-368:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:369:7-369:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:369:23-369:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:370:7-370:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:370:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_2 (2) := Column_Old (2);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:370:23-370:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:370:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_2 (2) := Column_Old (2);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:371:7-371:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:371:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_1 (3) := Column_Old (3);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:371:23-371:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:371:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_1 (3) := Column_Old (3);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:373:7-373:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:373:38-373:61>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:374:7-374:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:374:23-374:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:375:7-375:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:375:23-375:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:376:7-376:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:376:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (2) := Column_Old (2);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:376:23-376:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:376:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (2) := Column_Old (2);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:377:7-377:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:377:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_2 (3) := Column_Old (3);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:377:23-377:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:377:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_2 (3) := Column_Old (3);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:379:7-379:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:379:38-379:61>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:379:59: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Big_Endian_Unpack (Column_Old, State (State'First + 2));
+                                                              ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:380:7-380:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:380:23-380:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:381:7-381:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:381:23-381:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:382:7-382:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:382:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (2) := Column_Old (2);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:382:23-382:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:382:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (2) := Column_Old (2);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:383:7-383:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:383:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (3) := Column_Old (3);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:383:23-383:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:383:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (3) := Column_Old (3);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:385:7-385:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:385:38-385:61>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:385:59: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Big_Endian_Unpack (Column_Old, State (State'First + 3));
+                                                              ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:386:7-386:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:386:23-386:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:387:7-387:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:387:23-387:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:388:7-388:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:388:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_1 (2) := Column_Old (2);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:388:23-388:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:388:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_1 (2) := Column_Old (2);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:389:7-389:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:389:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (3) := Column_Old (3);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:389:23-389:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:389:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (3) := Column_Old (3);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:391:7-391:30>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:391:14: warning: identity operand has no effect on the expression result [Ineffective_Operation]
+  rule: Find arithmetic or boolean operations whose identity operand cannot affect the result.
+  advice: Remove the ineffective operation or correct a constant or operand that was entered incorrectly.
+  quality: Maintainability (Low)
+  source:
+          State (State'First + 0) := Big_Endian_Pack (Column_0);
+                 ^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:391:34-391:60>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:392:7-392:30>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:392:34-392:60>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:393:7-393:30>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:393:28: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          State (State'First + 2) := Big_Endian_Pack (Column_2);
+                               ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:393:34-393:60>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:394:7-394:30>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:394:28: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          State (State'First + 3) := Big_Endian_Pack (Column_3);
+                               ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:394:34-394:60>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:397:4: warning: subprogram has no DO-178C low-level requirement trace [Missing_Requirement_Trace]
+  rule: Find subprogram bodies without a nearby DO-178C low-level requirement identifier.
+  advice: Add '--  do-178c: req <identifier>' on the subprogram line or within the three immediately preceding lines.
+  quality: Reliability (High)
+  source:
+       procedure Inv_Shift_Rows (State : in out Cipher_State)
+       ^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:397:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find SPARK subprograms with outputs but no explicit Depends contract.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Inv_Shift_Rows (State : in out Cipher_State)
+                 ^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:399:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          Column_Old : Bytes_4;
+          ^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:401:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          Column_0, Column_1 : Bytes_4 with Relaxed_Initialization;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/SPARKNaCl/src/sparknacl-aes.adb:402:7: warning: object has no explicit initializer [Complete_Initialization]
+  rule: Find objects and record components without an explicit default value.
+  advice: Initialize every object and component explicitly at its declaration, using a complete aggregate where appropriate.
+  quality: Reliability (High)
+  source:
+          Column_2, Column_3 : Bytes_4 with Relaxed_Initialization;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:404:7-404:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:404:38-404:61>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:404:45: warning: identity operand has no effect on the expression result [Ineffective_Operation]
+  rule: Find arithmetic or boolean operations whose identity operand cannot affect the result.
+  advice: Remove the ineffective operation or correct a constant or operand that was entered incorrectly.
+  quality: Maintainability (Low)
+  source:
+          Big_Endian_Unpack (Column_Old, State (State'First + 0));
+                                                ^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:405:7-405:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:405:23-405:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:406:7-406:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:406:23-406:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:407:7-407:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:407:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_2 (2) := Column_Old (2);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:407:23-407:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:407:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_2 (2) := Column_Old (2);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:408:7-408:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:408:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (3) := Column_Old (3);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:408:23-408:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:408:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (3) := Column_Old (3);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:410:7-410:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:410:38-410:61>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:411:7-411:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:411:23-411:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:412:7-412:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:412:23-412:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:413:7-413:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:413:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (2) := Column_Old (2);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:413:23-413:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:413:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_3 (2) := Column_Old (2);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:414:7-414:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:414:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (3) := Column_Old (3);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:414:23-414:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:414:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (3) := Column_Old (3);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:416:7-416:62>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:416:38-416:61>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:416:59: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Big_Endian_Unpack (Column_Old, State (State'First + 2));
+                                                              ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:417:7-417:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:417:23-417:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:418:7-418:19>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:418:23-418:37>: null node argument
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:419:7-419:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:419:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (2) := Column_Old (2);
+                    ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:419:23-419:37>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:419:35: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)
+  source:
+          Column_0 (2) := Column_Old (2);
+                                      ^
+adalang-analyzer [INFO]: skipping checks at <CallExpr sparknacl-aes.adb:420:7-420:19>: null node argument
+/opt/SPARKNaCl/src/sparknacl-aes.adb:420:17: warning: numeric literal should be replaced by a named constant [Magic_Number]
+  rule: Find unexplained numeric literals other than 0, 1, and -1 that are not part of a named constant declaration.
+  advice: Introduce a descriptively named constant so the value's meaning and maintenance policy are explicit.
+  quality: Maintainability (Low)

@@ -6,6 +6,10 @@ package com.spazioit.sonarada.adalanganalyzer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -157,5 +161,34 @@ class AdaLangAnalyzerConsoleParserTest {
     assertThat(parser.reportedViolationCount(report)).isEqualTo(1719);
     assertThat(parser.reportedSkippedCheckCount(report)).isEqualTo(5129);
     assertThat(parser.reportedProofObligationCount(report)).isEqualTo(-1);
+  }
+
+  @Test
+  void parsesRealAnalyzerConsoleOutputEvenWhenTruncatedMidFinding() {
+    String report = readResource("adalanganalyzer/sparknacl-aes-console-output.txt");
+
+    List<AdaLangAnalyzerFinding> findings = parser.parse(report);
+
+    assertThat(findings).isNotEmpty();
+    assertThat(findings)
+      .extracting(AdaLangAnalyzerFinding::file)
+      .allMatch(file -> file.equals("/opt/SPARKNaCl/src/sparknacl-aes.adb"));
+    assertThat(findings.getFirst())
+      .extracting(AdaLangAnalyzerFinding::ruleId, AdaLangAnalyzerFinding::line, AdaLangAnalyzerFinding::column)
+      .containsExactly("No_Pragma", 6, 4);
+    assertThat(findings.getLast().ruleId()).isEqualTo("Magic_Number");
+    assertThat(parser.reportedFileCount(report)).isEqualTo(-1);
+    assertThat(parser.reportedViolationCount(report)).isEqualTo(-1);
+  }
+
+  private static String readResource(String name) {
+    try (InputStream stream = AdaLangAnalyzerConsoleParserTest.class.getClassLoader().getResourceAsStream(name)) {
+      if (stream == null) {
+        throw new IllegalStateException("Missing test resource: " + name);
+      }
+      return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }
