@@ -164,7 +164,7 @@ The plugin JAR is created under `target/`.
 Copy the generated JAR to the SonarQube Server plugin directory and restart SonarQube:
 
 ```bash
-cp target/sonar-ada-plugin-1.0.1-rc.jar "$SONARQUBE_HOME/extensions/plugins/"
+cp target/sonar-ada-plugin-1.0.0-rc.jar "$SONARQUBE_HOME/extensions/plugins/"
 ```
 
 ## Analyze an Ada project
