@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir=$(cd "$(dirname "$0")" && pwd)
 native_path=${SONAR_ADA_NATIVE_PATH:-/opt/libadalang-jni-libs}
 if [[ -n "${SONAR_SCANNER_BIN:-}" ]]; then
   scanner_bin=$SONAR_SCANNER_BIN
@@ -33,6 +34,8 @@ if [[ ! -d "$native_path" ]]; then
   echo "Unable to locate Ada native library directory: $native_path" >&2
   exit 1
 fi
+
+SONAR_ADA_NATIVE_PATH="$native_path" "$script_dir/ensure-libiconv-linux.sh"
 
 export LD_PRELOAD="$libjsig${LD_PRELOAD:+:$LD_PRELOAD}"
 export LD_LIBRARY_PATH="$native_path${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"

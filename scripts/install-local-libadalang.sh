@@ -103,6 +103,8 @@ mvn -f "$staging_dir/libadalang/pom.xml" \
   -DskipShade=true \
   install
 
+"$project_dir/scripts/ensure-libiconv-linux.sh"
+
 echo "Installed Java $java_release bindings from:"
 echo "  $libadalang_dir ($libadalang_version)"
 echo "  $langkit_dir ($langkit_version)"

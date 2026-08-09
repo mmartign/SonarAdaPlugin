@@ -65,6 +65,16 @@ scanner must start with HotSpot's `libjsig.so` signal-chaining library
 preloaded and `-XX:+UseSignalChaining` enabled. The included wrapper configures
 signal chaining and the native library paths:
 
+Some GNAT toolchains link `libadalang_jni.so` against GNU libiconv, whose
+headers redefine `iconv_open()` to `libiconv_open()`. glibc provides
+`iconv_open()` itself but not that symbol, so hosts without GNU libiconv
+installed fail to load the library. `scripts/ensure-libiconv-linux.sh` copies
+whichever `libiconv` the JNI library actually needs into the native library
+directory so this no longer depends on what a given host has installed.
+`scripts/install-local-libadalang.sh` runs it once during setup, and
+`scripts/sonar-scanner-linux.sh` runs it again before every scan so the bundle
+stays current if the native libraries are updated afterwards.
+
 ```bash
 ./scripts/sonar-scanner-linux.sh
 ```
