@@ -32,8 +32,14 @@ record AdaLangAnalyzerProofObligation(
     return result.toString();
   }
 
-  boolean isUnproved() {
-    return "unproved".equalsIgnoreCase(outcome);
+  /**
+   * True for statuses that represent a concrete risk worth surfacing as an issue:
+   * an outcome that is proved to fail ("definite-error") or one that could not be
+   * ruled out ("unproved"). "proved-safe" is good news, and "unreachable"/"unsupported"
+   * mean the check does not apply or could not run, so neither is a finding.
+   */
+  boolean isActionable() {
+    return "unproved".equalsIgnoreCase(outcome) || "definite-error".equalsIgnoreCase(outcome);
   }
 
   private static void appendDetail(StringBuilder result, String label, String value) {

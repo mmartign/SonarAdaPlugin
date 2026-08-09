@@ -35,11 +35,33 @@ class AdaLangAnalyzerConsoleParserTest {
 
     assertThat(findings).containsExactly(new AdaLangAnalyzerFinding(
       "/project/src/demo.adb", 12, 7, "warning", "goto statements are forbidden",
-      "No_Goto", "Avoid unstructured control flow", "Replace goto with structured statements",
+      "No_Goto", "Avoid unstructured control flow", "Replace goto with structured statements", "", "",
       "Maintainability", "Medium", "goto Finished;", 14));
     assertThat(findings.getFirst().sonarMessage())
       .isEqualTo("goto statements are forbidden — Avoid unstructured control flow Advice: Replace goto with structured statements");
     assertThat(findings.getFirst().highlightLength()).isEqualTo(14);
+  }
+
+  @Test
+  void parsesExplanationAndEvidenceWhenPresent() {
+    String output = """
+      /project/src/demo.adb:9:3: warning: division may fail [Division_By_Zero]
+        rule: Find divisions whose divisor may be zero.
+        advice: Guard the division or prove the divisor is non-zero.
+        why: the divisor is not bounded away from zero on this path
+        evidence: Divisor = Count - Limit
+        quality: Reliability (High)
+      """;
+
+    AdaLangAnalyzerFinding finding = parser.parse(output).getFirst();
+
+    assertThat(finding.explanation()).isEqualTo("the divisor is not bounded away from zero on this path");
+    assertThat(finding.evidence()).isEqualTo("Divisor = Count - Limit");
+    assertThat(finding.sonarMessage()).isEqualTo(
+      "division may fail — Find divisions whose divisor may be zero."
+        + " Advice: Guard the division or prove the divisor is non-zero."
+        + " Why: the divisor is not bounded away from zero on this path"
+        + " Evidence: Divisor = Count - Limit");
   }
 
   @Test

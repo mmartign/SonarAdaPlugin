@@ -29,19 +29,22 @@ The findings appear in SonarQube as external issues whose engine is
 ## Import your own report
 
 Replace the included report, or point the scanner to one or more comma-separated
-console-text, CSV, or CSVX files:
+console-text, JSON, SARIF, CSV, or CSVX files. The importer detects each report's
+format automatically:
 
 ```sh
 sonar-scanner \
   -Dsonar.host.url="$SONAR_HOST_URL" \
   -Dsonar.token="$SONAR_TOKEN" \
-  -Dsonar.ada.adalang.reportPaths=build/adalang_report.txt,build/second.csv
+  -Dsonar.ada.adalang.reportPaths=build/adalang_report.json,build/second.csv
 ```
 
 Console-text reports are the complete output produced by `adalang_analyzer` and
 include lines such as `file:line:column: warning: message [Check_Name]`, followed
-by rule, advice, and quality details. CSV/CSVX reports use this header and field
-order:
+by rule, advice, and quality details. JSON reports (`--format=json`) and SARIF
+reports (`--format=sarif`) carry the same findings, plus (JSON only) proof
+obligations and self-reported summary counts. CSV/CSVX reports use this header
+and field order:
 
 ```csv
 file,line,column,key,label,rule,message
@@ -71,7 +74,8 @@ finding may then be published twice.
 
 The integration settings are in [`sonar-project.properties`](sonar-project.properties):
 
-- `sonar.ada.adalang.reportPaths` selects comma-separated CSV/CSVX reports.
+- `sonar.ada.adalang.reportPaths` selects comma-separated console-text, JSON,
+  SARIF, or CSV/CSVX reports.
 - `sonar.ada.adalang.enabled=false` prevents the analyzer from also running.
 - `sonar.ada.adalang.failOnError=true` makes missing or unreadable reports fail
   the Sonar scan.

@@ -10,7 +10,7 @@ This repository contains a SonarQube Server plugin that adds static analysis sup
 - Basic source metrics: lines, non-comment lines, comment lines, functions, and cyclomatic complexity.
 - Syntax highlighting for comments, strings, Ada keywords, constants, and pragmas.
 - CPD token generation for duplicate-code detection.
-- AdaLang_Analyzer report parsing for CSV/CSVX findings produced by Spazio IT's external Ada analyzer.
+- AdaLang_Analyzer integration: run the analyzer directly, or import its console-text, JSON, SARIF, or legacy CSV/CSVX reports.
 - Optional AdaControl integration:
   - Run an installed `adactl` executable during analysis.
   - Import pre-generated AdaControl reports.
@@ -213,27 +213,40 @@ sonar.ada.adalang.timeoutSeconds=300
 
 Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. In the current analyzer version, omitting this property leaves all checks disabled. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
 
-Import one or more pre-generated reports without running the analyzer. Both the
-analyzer's complete console-text output and CSV/CSVX are supported:
+Import one or more pre-generated reports without running the analyzer. The
+analyzer's complete console-text output, `--format=json`, `--format=sarif`,
+and legacy CSV/CSVX are all supported; the importer detects the format of each
+report automatically:
 
 ```properties
-sonar.ada.adalang.reportPaths=build/adalang_report.txt,build/adalang-report.csv
+sonar.ada.adalang.reportPaths=build/adalang_report.json,build/adalang_report.txt
 ```
 
 Multiple report paths can be separated with commas. Relative report paths and
 relative source paths inside reports are resolved from the Sonar project base
 directory. Absolute source paths from another checkout are matched by their
-project-relative suffix. Direct execution and report import can be enabled
-together.
+project-relative suffix. SARIF locations are percent-decoded before matching.
+Direct execution and report import can be enabled together.
 
-For console reports, the importer preserves the check identifier, rule and
-advice text, software quality, severity, file, line, column, and the complete
-source caret span. Structured proof obligations are also imported: unproved
-obligations become reliability issues containing their obligation kind,
-analysis method, reason, and imprecision detail. The importer checks both the
-`Violations` and proof-obligation `Total` summaries against the parsed details.
-It logs the reported file, violation, proof-obligation, and skipped-check
-coverage totals so incomplete semantic analysis remains visible in scanner logs.
+For console and SARIF reports, the importer preserves the check identifier,
+rule and advice text (SARIF: from the run's rule catalog), software quality,
+severity, file, line, column, and (console only) the complete source caret
+span. All three structured formats also carry the analyzer's `why`/`evidence`
+explanation for a finding, when present. JSON reports additionally carry
+`explanation`/`evidence` per finding directly. Findings already matching the
+analyzer's `--baseline` are excluded from every format, the same way
+console-text output hides them.
+
+Structured proof obligations are imported from console-text and JSON reports
+(SARIF has no slot for them). Both `definite-error` (a proven failure) and
+`unproved` (an undetermined risk) obligations become reliability issues
+containing their obligation kind, analysis method, reason, and imprecision
+detail; `proved-safe`, `unreachable`, and `unsupported` obligations are not
+findings and are not imported. The importer checks both the `Violations` (or
+JSON's `newViolations`) and proof-obligation `Total` summaries against the
+parsed details, when the format reports them. It logs the reported file,
+violation, proof-obligation, and skipped-check coverage totals so incomplete
+semantic analysis remains visible in scanner logs.
 CSV and CSVX reports use these fields:
 
 ```text

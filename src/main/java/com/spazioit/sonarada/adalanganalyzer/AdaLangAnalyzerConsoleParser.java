@@ -17,6 +17,8 @@ final class AdaLangAnalyzerConsoleParser {
   );
   private static final String RULE_PREFIX = "  rule:";
   private static final String ADVICE_PREFIX = "  advice:";
+  private static final String WHY_PREFIX = "  why:";
+  private static final String EVIDENCE_PREFIX = "  evidence:";
   private static final Pattern QUALITY = Pattern.compile(
     "^\\s*quality:\\s*([^()]+?)\\s*\\(([^()]+)\\)\\s*$",
     Pattern.CASE_INSENSITIVE
@@ -69,6 +71,10 @@ final class AdaLangAnalyzerConsoleParser {
         pending.ruleDescription = line.substring(RULE_PREFIX.length()).trim();
       } else if (pending != null && line.startsWith(ADVICE_PREFIX)) {
         pending.advice = line.substring(ADVICE_PREFIX.length()).trim();
+      } else if (pending != null && line.startsWith(WHY_PREFIX)) {
+        pending.explanation = line.substring(WHY_PREFIX.length()).trim();
+      } else if (pending != null && line.startsWith(EVIDENCE_PREFIX)) {
+        pending.evidence = line.substring(EVIDENCE_PREFIX.length()).trim();
       } else if (pending != null && line.startsWith(SOURCE_PREFIX)) {
         pending.readingSource = true;
       } else if (pending != null) {
@@ -155,6 +161,8 @@ final class AdaLangAnalyzerConsoleParser {
     private final String ruleId;
     private String ruleDescription = "";
     private String advice = "";
+    private String explanation = "";
+    private String evidence = "";
     private String softwareQuality = "";
     private String qualitySeverity = "";
     private String source = "";
@@ -172,8 +180,8 @@ final class AdaLangAnalyzerConsoleParser {
 
     private AdaLangAnalyzerFinding toFinding() {
       return new AdaLangAnalyzerFinding(
-        file, line, column, severity, message, ruleId, ruleDescription, advice, softwareQuality, qualitySeverity,
-        source, sourceSpanLength);
+        file, line, column, severity, message, ruleId, ruleDescription, advice, explanation, evidence,
+        softwareQuality, qualitySeverity, source, sourceSpanLength);
     }
   }
 

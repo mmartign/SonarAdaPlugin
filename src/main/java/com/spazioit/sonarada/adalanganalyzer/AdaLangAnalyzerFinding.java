@@ -13,6 +13,8 @@ record AdaLangAnalyzerFinding(
   String ruleId,
   String ruleDescription,
   String advice,
+  String explanation,
+  String evidence,
   String softwareQuality,
   String qualitySeverity,
   String source,
@@ -25,6 +27,12 @@ record AdaLangAnalyzerFinding(
     }
     if (!advice.isBlank()) {
       result.append(" Advice: ").append(advice);
+    }
+    if (!explanation.isBlank()) {
+      result.append(" Why: ").append(explanation);
+    }
+    if (!evidence.isBlank()) {
+      result.append(" Evidence: ").append(evidence);
     }
     return result.toString();
   }

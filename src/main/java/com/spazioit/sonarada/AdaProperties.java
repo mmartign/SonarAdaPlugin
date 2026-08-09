@@ -143,7 +143,7 @@ public final class AdaProperties {
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_REPORT_PATHS_KEY)
         .name("AdaLang Analyzer report paths")
-        .description("Comma-separated paths to pre-generated AdaLang Analyzer console-text or CSV/CSVX reports.")
+        .description("Comma-separated paths to pre-generated AdaLang Analyzer reports, in console-text, JSON, SARIF, or CSV/CSVX format.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)

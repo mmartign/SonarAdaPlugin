@@ -36,6 +36,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
 
   private final AdaLangAnalyzerRunner runner = new AdaLangAnalyzerRunner();
   private final AdaLangAnalyzerConsoleParser parser = new AdaLangAnalyzerConsoleParser();
+  private final AdaLangAnalyzerStructuredReportParser structuredReportParser = new AdaLangAnalyzerStructuredReportParser();
   private final AdaLangAnalyzerReportParser reportParser = new AdaLangAnalyzerReportParser();
 
   @Override
@@ -78,17 +79,16 @@ public final class AdaLangAnalyzerSensor implements Sensor {
           : result.output());
         return;
       }
-      List<AdaLangAnalyzerFinding> findings = parser.parse(result.output());
-      if (result.exitCode() == FINDINGS_EXIT_CODE && findings.isEmpty()) {
+      AdaLangAnalyzerReport report = textReport(result.output());
+      if (result.exitCode() == FINDINGS_EXIT_CODE && report.findings().isEmpty()) {
         handleError(configuration, "AdaLang Analyzer exited with code 1 but produced no parseable findings. " + result.output());
         return;
       }
-      List<AdaLangAnalyzerProofObligation> proofObligations = parser.parseProofObligations(result.output());
-      if (!hasConsistentCounts(configuration, "analyzer output", result.output(), findings, proofObligations, true)) {
+      if (!hasConsistentCounts(configuration, "analyzer output", report, true)) {
         return;
       }
-      logReportSummary("analyzer output", result.output());
-      publishFindings(context, inputFiles, findings, proofObligations);
+      logReportSummary("analyzer output", report);
+      publishFindings(context, inputFiles, report);
     } catch (IOException e) {
       handleError(configuration, "Unable to run AdaLang Analyzer: " + e.getMessage());
     } catch (InterruptedException e) {
@@ -135,19 +135,19 @@ public final class AdaLangAnalyzerSensor implements Sensor {
           continue;
         }
 
-        List<AdaLangAnalyzerFinding> findings = parser.parse(reportContent);
-        List<AdaLangAnalyzerProofObligation> proofObligations = parser.parseProofObligations(reportContent);
-        if (!hasConsistentCounts(
-          configuration, "report '" + reportPath + "'", reportContent, findings, proofObligations, false)) {
+        java.util.Optional<AdaLangAnalyzerReport> structured = structuredReportParser.parse(reportContent);
+        AdaLangAnalyzerReport report = structured.orElseGet(() -> textReport(reportContent));
+        if (!hasConsistentCounts(configuration, "report '" + reportPath + "'", report, false)) {
           continue;
         }
-        logReportSummary("report '" + reportPath + "'", reportContent);
+        logReportSummary("report '" + reportPath + "'", report);
 
-        if (parser.reportedViolationCount(reportContent) >= 0
-          || parser.reportedProofObligationCount(reportContent) >= 0
-          || !findings.isEmpty()
-          || !proofObligations.isEmpty()) {
-          for (AdaLangAnalyzerFinding finding : findings) {
+        if (structured.isPresent()
+          || report.violationCount() >= 0
+          || report.proofObligationCount() >= 0
+          || !report.findings().isEmpty()
+          || !report.proofObligations().isEmpty()) {
+          for (AdaLangAnalyzerFinding finding : report.findings()) {
             java.util.Optional<InputFile> inputFile = fileIndex.find(finding.file());
             if (inputFile.isPresent()) {
               saveExternalIssue(context, inputFile.get(), finding);
@@ -156,8 +156,8 @@ public final class AdaLangAnalyzerSensor implements Sensor {
               unresolved++;
             }
           }
-          for (AdaLangAnalyzerProofObligation proofObligation : proofObligations) {
-            if (!proofObligation.isUnproved()) {
+          for (AdaLangAnalyzerProofObligation proofObligation : report.proofObligations()) {
+            if (!proofObligation.isActionable()) {
               continue;
             }
             java.util.Optional<InputFile> inputFile = fileIndex.find(proofObligation.file());
@@ -189,17 +189,26 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       imported, unresolved);
   }
 
+  private AdaLangAnalyzerReport textReport(String output) {
+    return new AdaLangAnalyzerReport(
+      parser.parse(output),
+      parser.parseProofObligations(output),
+      parser.reportedFileCount(output),
+      parser.reportedViolationCount(output),
+      parser.reportedProofObligationCount(output),
+      parser.reportedSkippedCheckCount(output));
+  }
+
   private static void publishFindings(
     SensorContext context,
     List<InputFile> inputFiles,
-    List<AdaLangAnalyzerFinding> findings,
-    List<AdaLangAnalyzerProofObligation> proofObligations
+    AdaLangAnalyzerReport report
   ) {
     AdaLangAnalyzerFileIndex fileIndex = new AdaLangAnalyzerFileIndex(
       context.fileSystem().baseDir().toPath(), inputFiles);
     int imported = 0;
     int unresolved = 0;
-    for (AdaLangAnalyzerFinding finding : findings) {
+    for (AdaLangAnalyzerFinding finding : report.findings()) {
       java.util.Optional<InputFile> inputFile = fileIndex.find(finding.file());
       if (inputFile.isPresent()) {
         saveExternalIssue(context, inputFile.get(), finding);
@@ -208,8 +217,8 @@ public final class AdaLangAnalyzerSensor implements Sensor {
         unresolved++;
       }
     }
-    for (AdaLangAnalyzerProofObligation proofObligation : proofObligations) {
-      if (!proofObligation.isUnproved()) {
+    for (AdaLangAnalyzerProofObligation proofObligation : report.proofObligations()) {
+      if (!proofObligation.isActionable()) {
         continue;
       }
       java.util.Optional<InputFile> inputFile = fileIndex.find(proofObligation.file());
@@ -227,15 +236,13 @@ public final class AdaLangAnalyzerSensor implements Sensor {
   private boolean hasConsistentCounts(
     AdaLangAnalyzerConfiguration configuration,
     String source,
-    String reportContent,
-    List<AdaLangAnalyzerFinding> findings,
-    List<AdaLangAnalyzerProofObligation> proofObligations,
+    AdaLangAnalyzerReport report,
     boolean fatal
   ) {
-    int reportedViolations = parser.reportedViolationCount(reportContent);
-    if (reportedViolations >= 0 && reportedViolations != findings.size()) {
+    int reportedViolations = report.violationCount();
+    if (reportedViolations >= 0 && reportedViolations != report.findings().size()) {
       String message = "AdaLang Analyzer " + source + " declares "
-        + reportedViolations + " violation(s), but " + findings.size() + " could be parsed";
+        + reportedViolations + " violation(s), but " + report.findings().size() + " could be parsed";
       if (fatal) {
         handleError(configuration, message);
       } else {
@@ -244,10 +251,10 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       return false;
     }
 
-    int reportedProofObligations = parser.reportedProofObligationCount(reportContent);
-    if (reportedProofObligations >= 0 && reportedProofObligations != proofObligations.size()) {
+    int reportedProofObligations = report.proofObligationCount();
+    if (reportedProofObligations >= 0 && reportedProofObligations != report.proofObligations().size()) {
       String message = "AdaLang Analyzer " + source + " declares "
-        + reportedProofObligations + " proof obligation(s), but " + proofObligations.size() + " could be parsed";
+        + reportedProofObligations + " proof obligation(s), but " + report.proofObligations().size() + " could be parsed";
       if (fatal) {
         handleError(configuration, message);
       } else {
@@ -258,11 +265,11 @@ public final class AdaLangAnalyzerSensor implements Sensor {
     return true;
   }
 
-  private void logReportSummary(String source, String reportContent) {
-    int files = parser.reportedFileCount(reportContent);
-    int violations = parser.reportedViolationCount(reportContent);
-    int proofObligations = parser.reportedProofObligationCount(reportContent);
-    int skippedChecks = parser.reportedSkippedCheckCount(reportContent);
+  private void logReportSummary(String source, AdaLangAnalyzerReport report) {
+    int files = report.fileCount();
+    int violations = report.violationCount();
+    int proofObligations = report.proofObligationCount();
+    int skippedChecks = report.skippedCheckCount();
     if (files >= 0 || violations >= 0 || proofObligations >= 0 || skippedChecks >= 0) {
       LOG.info(
         "AdaLang Analyzer {} summary: {} file(s) scanned, {} violation(s), {} proof obligation(s), "
@@ -316,7 +323,9 @@ public final class AdaLangAnalyzerSensor implements Sensor {
     InputFile inputFile,
     AdaLangAnalyzerProofObligation proofObligation
   ) {
-    org.sonar.api.issue.impact.Severity impactSeverity = org.sonar.api.issue.impact.Severity.MEDIUM;
+    org.sonar.api.issue.impact.Severity impactSeverity = "definite-error".equalsIgnoreCase(proofObligation.outcome())
+      ? org.sonar.api.issue.impact.Severity.HIGH
+      : org.sonar.api.issue.impact.Severity.MEDIUM;
     NewExternalIssue issue = context.newExternalIssue()
       .engineId(ENGINE_ID)
       .ruleId(proofObligation.ruleId())
