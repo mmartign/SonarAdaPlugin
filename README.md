@@ -2,6 +2,8 @@
 
 This repository contains a SonarQube Server plugin that adds static analysis support for Ada source files. The native analysis engine is based on libadalang, with a built-in rule set inspired by the popular AdaControl tool.
 
+This plugin and [AdaLang_Analyzer](https://github.com/mmartign/AdaLang_Analyzer) are packaged and distributed together as part of the [Spazio IT SAFe Toolset](https://spazioit.com/pages_en/sol_inf_en/code_quality_en/safe-toolset-en/), a ready-to-run static analysis environment for safety-critical C, C++, and Ada codebases.
+
 ## Features
 
 - Ada language registration for `.adb`, `.ads`, and `.ada` files.
