@@ -113,4 +113,30 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!--
+      Skips LibadalangAnalyzerTest, the only test that loads the native
+      adalang_jni/langkit_sigsegv_handler libraries. Used by CI runners that
+      have the libadalang Java bindings on the compile classpath but not the
+      native libraries described in the README's "Libadalang's Java API"
+      section. Local builds are unaffected: `mvn test` still runs everything.
+    -->
+    <profile>
+      <id>skip-native-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludes>
+                <exclude>**/LibadalangAnalyzerTest.java</exclude>
+              </excludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

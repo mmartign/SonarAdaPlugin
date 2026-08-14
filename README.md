@@ -1,5 +1,8 @@
 # SonarQube Ada Plugin
 
+[![CI](https://github.com/mmartign/SonarAdaPlugin/actions/workflows/ci.yml/badge.svg)](https://github.com/mmartign/SonarAdaPlugin/actions/workflows/ci.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 This repository contains a SonarQube Server plugin that adds static analysis support for Ada source files. The native analysis engine is based on libadalang, with a built-in rule set inspired by the popular AdaControl tool.
 
 This plugin and [AdaLang_Analyzer](https://github.com/mmartign/AdaLang_Analyzer) are packaged and distributed together as part of the [Spazio IT SAFe Toolset](https://spazioit.com/pages_en/sol_inf_en/code_quality_en/safe-toolset-en/), a ready-to-run static analysis environment for safety-critical C, C++, and Ada codebases.
@@ -170,6 +173,24 @@ mvn -DargLine="--enable-native-access=ALL-UNNAMED -Djava.library.path=$native_pa
 ```
 
 The plugin JAR is created under `target/`.
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) builds and tests the
+plugin on every push and pull request, except for the native libadalang/JNI
+path: `LibadalangAnalyzerTest` is excluded via the `skip-native-tests` Maven
+profile, since the CI runner has the libadalang Java bindings on the compile
+classpath but not the native `adalang_jni`/`langkit_sigsegv_handler`
+libraries described above. Every other unit test runs for real. Locally,
+`mvn test` still runs the full suite, native tests included, once the native
+libraries are set up per this README.
+
+The libadalang/langkit_support Java bindings jars are published as assets on
+the [`ci-deps-libadalang-26.0.0-75276b8d-java21`](https://github.com/mmartign/SonarAdaPlugin/releases/tag/ci-deps-libadalang-26.0.0-75276b8d-java21)
+release for the workflow to download. When `libadalang.version` in `pom.xml`
+changes, rebuild the bindings locally per this README, publish a new release
+with the new jars, and update the version/tag in
+`.github/workflows/ci.yml` to match.
 
 ## Install
 

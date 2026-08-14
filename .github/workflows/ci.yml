@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# This CI builds and tests everything except the native libadalang/JNI path.
+#
+# The main module compiles against com.adacore:libadalang, whose Java
+# bindings jar isn't published anywhere CI can fetch it from directly (see
+# the README's "Libadalang's Java API" section for how it's built locally).
+# We publish that jar (Java bindings only, no native .so/.dylib) as a GitHub
+# Release asset so CI can install it into the local Maven repo before
+# building. That's enough to *compile* everything, including
+# LibadalangAnalyzer.
+#
+# What we don't have in CI is the native adalang_jni / langkit_sigsegv_handler
+# libraries, so LibadalangAnalyzerTest (the only test that exercises them) is
+# excluded via the `skip-native-tests` Maven profile. Every other test in the
+# suite runs for real.
+#
+# If libadalang.version or langkit_support's version in pom.xml changes,
+# rebuild the bindings locally per the README, publish a new release with
+# `gh release create`, and update LIBADALANG_VERSION/LANGKIT_SUPPORT_VERSION
+# below to match.
+env:
+  LIBADALANG_VERSION: 26.0.0-75276b8d-java21
+  LANGKIT_SUPPORT_VERSION: 26.0.0-1745168f-java21
+  CI_DEPS_RELEASE_TAG: ci-deps-libadalang-26.0.0-75276b8d-java21
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v4
+        with:
+          path: .m2/repository
+          key: maven-${{ hashFiles('pom.xml') }}
+          restore-keys: |
+            maven-
+
+      - name: Install libadalang Java bindings
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          libadalang_jar=".m2/repository/com/adacore/libadalang/${LIBADALANG_VERSION}/libadalang-${LIBADALANG_VERSION}.jar"
+          if [[ -f "$libadalang_jar" ]]; then
+            echo "libadalang bindings already present in cache, skipping download."
+            exit 0
+          fi
+
+          staging_dir=$(mktemp -d)
+          gh release download "$CI_DEPS_RELEASE_TAG" \
+            --repo "${{ github.repository }}" \
+            --dir "$staging_dir" \
+            --pattern "libadalang-*" \
+            --pattern "langkit_support-*"
+
+          libadalang_dir=".m2/repository/com/adacore/libadalang/${LIBADALANG_VERSION}"
+          langkit_dir=".m2/repository/com/adacore/langkit_support/${LANGKIT_SUPPORT_VERSION}"
+          mkdir -p "$libadalang_dir" "$langkit_dir"
+          mv "$staging_dir"/libadalang-*.jar "$staging_dir"/libadalang-*.pom "$libadalang_dir"/
+          mv "$staging_dir"/langkit_support-*.jar "$staging_dir"/langkit_support-*.pom "$langkit_dir"/
+          rm -rf "$staging_dir"
+
+      - name: Run tests (excluding native libadalang tests)
+        run: mvn -B -P skip-native-tests test
+
+      - name: Build plugin package
+        run: mvn -B -P skip-native-tests -DskipTests package
