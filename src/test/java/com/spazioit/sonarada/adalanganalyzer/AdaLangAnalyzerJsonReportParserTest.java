@@ -40,14 +40,16 @@ class AdaLangAnalyzerJsonReportParserTest {
           {"id": "proof/v1/abc", "kind": "division-by-zero-check", "status": "definite-error", \
       "method": "static-evaluation", "file": "/project/src/demo.adb", "line": 20, "column": 3, "operation": "X / Y", \
       "assumptions": "", "abstractState": "Y = 0", "explanation": "divisor is always zero", "imprecisionSource": "", \
+      "reasonCode": "constant-propagation", "blockingExpression": "X / Y", "inlinePath": "demo.adb:5 -> demo.adb:20", \
       "configurationId": ""},
           {"id": "proof/v1/def", "kind": "range-check", "status": "unproved", "method": "abstract-interpretation", \
       "file": "/project/src/demo.adb", "line": 30, "column": 5, "operation": "A(I)", "assumptions": "", \
       "abstractState": "", "explanation": "bound not established", "imprecisionSource": "loop widening", \
-      "configurationId": ""},
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": ""},
           {"id": "proof/v1/ghi", "kind": "index-check", "status": "proved-safe", "method": "flow-analysis", \
       "file": "/project/src/demo.adb", "line": 40, "column": 2, "operation": "B(J)", "assumptions": "", \
-      "abstractState": "", "explanation": "", "imprecisionSource": "", "configurationId": ""}
+      "abstractState": "", "explanation": "", "imprecisionSource": "", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": ""}
         ]
       }
       """;
@@ -75,6 +77,10 @@ class AdaLangAnalyzerJsonReportParserTest {
     assertThat(definiteError.kind()).isEqualTo("division-by-zero-check");
     assertThat(definiteError.outcome()).isEqualTo("definite-error");
     assertThat(definiteError.isActionable()).isTrue();
+    assertThat(definiteError.evidence()).isEqualTo("Y = 0");
+    assertThat(definiteError.reasonCode()).isEqualTo("constant-propagation");
+    assertThat(definiteError.blockingExpression()).isEqualTo("X / Y");
+    assertThat(definiteError.inlinePath()).isEqualTo("demo.adb:5 -> demo.adb:20");
     assertThat(report.proofObligations().get(2).isActionable()).isFalse();
 
     assertThat(report.fileCount()).isEqualTo(1);

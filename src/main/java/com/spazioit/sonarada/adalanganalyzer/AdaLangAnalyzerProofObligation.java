@@ -14,8 +14,18 @@ record AdaLangAnalyzerProofObligation(
   String outcome,
   String method,
   String why,
-  String imprecision
+  String imprecision,
+  String evidence,
+  String reasonCode,
+  String blockingExpression,
+  String inlinePath
 ) {
+  AdaLangAnalyzerProofObligation(
+    String file, int line, int column, String kind, String outcome, String method, String why, String imprecision
+  ) {
+    this(file, line, column, kind, outcome, method, why, imprecision, "", "", "", "");
+  }
+
   String ruleId() {
     String sanitizedKind = kind.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.-]+", "_");
     return "proof-obligation:" + (sanitizedKind.isBlank() ? "unknown" : sanitizedKind);
@@ -28,7 +38,11 @@ record AdaLangAnalyzerProofObligation(
       .append(outcome);
     appendDetail(result, "Method", method);
     appendDetail(result, "Why", why);
+    appendDetail(result, "Evidence", evidence);
     appendDetail(result, "Imprecision", imprecision);
+    appendDetail(result, "Reason", reasonCode);
+    appendDetail(result, "Blocked at", blockingExpression);
+    appendDetail(result, "Inline path", inlinePath);
     return result.toString();
   }
 

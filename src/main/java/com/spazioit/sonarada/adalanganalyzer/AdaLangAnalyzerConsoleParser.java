@@ -6,6 +6,7 @@ package com.spazioit.sonarada.adalanganalyzer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,7 +31,7 @@ final class AdaLangAnalyzerConsoleParser {
     Pattern.CASE_INSENSITIVE
   );
   private static final Pattern PROOF_DETAIL = Pattern.compile(
-    "^\\s{6}(method|why|imprecision):\\s*(.*)$",
+    "^\\s{6}(method|why|evidence|imprecision|reason|blocked at|inline path):\\s*(.*)$",
     Pattern.CASE_INSENSITIVE
   );
   private static final Pattern VIOLATION_COUNT = Pattern.compile(
@@ -194,6 +195,10 @@ final class AdaLangAnalyzerConsoleParser {
     private String method = "";
     private String why = "";
     private String imprecision = "";
+    private String evidence = "";
+    private String reasonCode = "";
+    private String blockingExpression = "";
+    private String inlinePath = "";
 
     private PendingProofObligation(String file, int line, int column, String kind, String outcome) {
       this.file = file;
@@ -204,17 +209,20 @@ final class AdaLangAnalyzerConsoleParser {
     }
 
     private void setDetail(String name, String value) {
-      if ("method".equalsIgnoreCase(name)) {
-        method = value;
-      } else if ("why".equalsIgnoreCase(name)) {
-        why = value;
-      } else {
-        imprecision = value;
+      switch (name.toLowerCase(Locale.ROOT)) {
+        case "method" -> method = value;
+        case "why" -> why = value;
+        case "evidence" -> evidence = value;
+        case "reason" -> reasonCode = value;
+        case "blocked at" -> blockingExpression = value;
+        case "inline path" -> inlinePath = value;
+        default -> imprecision = value;
       }
     }
 
     private AdaLangAnalyzerProofObligation toProofObligation() {
-      return new AdaLangAnalyzerProofObligation(file, line, column, kind, outcome, method, why, imprecision);
+      return new AdaLangAnalyzerProofObligation(
+        file, line, column, kind, outcome, method, why, imprecision, evidence, reasonCode, blockingExpression, inlinePath);
     }
   }
 }

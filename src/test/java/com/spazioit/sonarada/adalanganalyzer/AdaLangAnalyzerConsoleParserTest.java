@@ -143,7 +143,11 @@ class AdaLangAnalyzerConsoleParserTest {
           /checkout/src/demo.adb:18:23 [index-check] unproved
             method: abstract-interpretation
             why: index-check failure is not established, but absence is not proved
+            evidence: Index in 1 .. N
             imprecision: index and bound ranges remain inconclusive
+            reason: widening-at-loop-header
+            blocked at: A (I)
+            inline path: demo.adb:12 -> demo.adb:18
           C:\\checkout\\src\\other.adb:9:4 [precondition] unproved
             method: contract-transfer
             why: precondition failure is not established, but absence is not proved
@@ -156,11 +160,12 @@ class AdaLangAnalyzerConsoleParserTest {
       new AdaLangAnalyzerProofObligation(
         "/checkout/src/demo.adb", 18, 23, "index-check", "unproved", "abstract-interpretation",
         "index-check failure is not established, but absence is not proved",
-        "index and bound ranges remain inconclusive"),
+        "index and bound ranges remain inconclusive",
+        "Index in 1 .. N", "widening-at-loop-header", "A (I)", "demo.adb:12 -> demo.adb:18"),
       new AdaLangAnalyzerProofObligation(
         "C:\\checkout\\src\\other.adb", 9, 4, "precondition", "unproved", "contract-transfer",
         "precondition failure is not established, but absence is not proved",
-        "current contract transfer does not certify safety"));
+        "current contract transfer does not certify safety", "", "", "", ""));
     assertThat(parser.reportedProofObligationCount(report)).isEqualTo(obligations.size());
     assertThat(parser.reportedFileCount(report)).isEqualTo(1);
     assertThat(parser.reportedSkippedCheckCount(report)).isEqualTo(-1);
@@ -168,7 +173,11 @@ class AdaLangAnalyzerConsoleParserTest {
     assertThat(obligations.getFirst().sonarMessage()).isEqualTo(
       "Proof obligation [index-check] unproved. Method: abstract-interpretation"
         + ". Why: index-check failure is not established, but absence is not proved"
-        + ". Imprecision: index and bound ranges remain inconclusive");
+        + ". Evidence: Index in 1 .. N"
+        + ". Imprecision: index and bound ranges remain inconclusive"
+        + ". Reason: widening-at-loop-header"
+        + ". Blocked at: A (I)"
+        + ". Inline path: demo.adb:12 -> demo.adb:18");
   }
 
   @Test

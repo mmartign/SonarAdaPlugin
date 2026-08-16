@@ -52,6 +52,13 @@ final class AdaLangAnalyzerRunner {
   static List<String> buildCommand(AdaLangAnalyzerConfiguration configuration, List<InputFile> inputFiles) {
     List<String> command = new ArrayList<>();
     command.add(configuration.executable());
+    // Without -v, AdaLang Analyzer's text summary suppresses per-obligation detail lines
+    // (just prints the totals), which AdaLangAnalyzerConsoleParser cannot turn into
+    // individual findings. The resulting mismatch between the reported proof obligation
+    // count and the zero obligations actually parsed then fails the whole scan (see
+    // AdaLangAnalyzerSensor#hasConsistentCounts), so -v is required whenever any
+    // proof-obligation-producing check is enabled.
+    command.add("-v");
     configuration.checks().ifPresent(checks -> command.add("-checks=" + checks));
     inputFiles.stream()
       .map(IndexedFile.class::cast)
