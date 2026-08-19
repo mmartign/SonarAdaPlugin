@@ -14,9 +14,13 @@ import java.util.Map;
 
 /**
  * Reads AdaLang Analyzer's {@code --format=sarif} report: a single {@code runs[0]} with a
- * {@code tool.driver.rules} catalog and a {@code results} array. SARIF has no slot for proof
- * obligations, so only findings come out of it (see {@code Adalang_Analyzer.Report.Emit_SARIF}
- * and {@code Adalang_Analyzer.Report.Emit_JSON} for the format that does carry them).
+ * {@code tool.driver.rules} catalog and a {@code results} array. SARIF's result-oriented schema
+ * has no slot for a located proof obligation, so {@code results} carries only findings; proof
+ * obligations instead appear as an unlocated {@code properties.proofObligations} summary array
+ * (id/kind/status/reasonCode/blockingExpression/inlinePath, no file/line/column) that this parser
+ * turns into obligations with an empty location so they still count towards the total but cannot
+ * be resolved to an input file (see {@code Adalang_Analyzer.Report.Emit_SARIF} and {@code
+ * Adalang_Analyzer.Report.Emit_JSON} for the format that carries fully located obligations).
  */
 final class AdaLangAnalyzerSarifReportParser {
 
@@ -65,8 +69,34 @@ final class AdaLangAnalyzerSarifReportParser {
         1));
     }
 
-    // SARIF carries no proof obligations and no self-reported summary counts.
-    return new AdaLangAnalyzerReport(List.copyOf(findings), List.of(), -1, -1, -1, -1);
+    List<AdaLangAnalyzerProofObligation> proofObligations = proofObligations(run);
+
+    // SARIF reports no file/violation/skipped-check summary counts, only the proof-obligation
+    // total implied by the properties.proofObligations array.
+    return new AdaLangAnalyzerReport(
+      List.copyOf(findings), proofObligations, -1, -1, proofObligations.size(), -1);
+  }
+
+  private static List<AdaLangAnalyzerProofObligation> proofObligations(Map<String, Object> run) {
+    Map<String, Object> properties = AdaLangAnalyzerJson.mapOf(run.get("properties"));
+    List<AdaLangAnalyzerProofObligation> proofObligations = new ArrayList<>();
+    for (Object item : AdaLangAnalyzerJson.listOf(properties.get("proofObligations"))) {
+      Map<String, Object> obligation = AdaLangAnalyzerJson.mapOf(item);
+      proofObligations.add(new AdaLangAnalyzerProofObligation(
+        "",
+        0,
+        0,
+        AdaLangAnalyzerJson.stringOf(obligation, "kind"),
+        AdaLangAnalyzerJson.stringOf(obligation, "status"),
+        "",
+        "",
+        "",
+        "",
+        AdaLangAnalyzerJson.stringOf(obligation, "reasonCode"),
+        AdaLangAnalyzerJson.stringOf(obligation, "blockingExpression"),
+        AdaLangAnalyzerJson.stringOf(obligation, "inlinePath")));
+    }
+    return proofObligations;
   }
 
   private static Map<String, RuleMetadata> ruleCatalog(Map<String, Object> run) {

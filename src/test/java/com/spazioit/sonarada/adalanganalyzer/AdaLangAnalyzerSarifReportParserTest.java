@@ -25,6 +25,12 @@ class AdaLangAnalyzerSarifReportParserTest {
             {"id": "Division_By_Zero", "shortDescription": {"text": "Find divisions whose divisor may be zero"}, \
       "help": {"text": "Guard the division"}}
           ]}},
+          "properties": {"proofObligations": [
+            {"id": "proof/v1/abc", "kind": "division-by-zero-check", "status": "definite-error", \
+      "reasonCode": "constant-propagation", "blockingExpression": "X / Y", "inlinePath": "demo.adb:5 -> demo.adb:20"},
+            {"id": "proof/v1/def", "kind": "range-check", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""}
+          ]},
           "results": [
             {"ruleId": "No_Goto", "level": "warning", "message": {"text": "goto statements are forbidden"}, \
       "baselineState": "new", "properties": {"explanation": "control flow becomes unstructured", "evidence": "goto Finished;"}, \
@@ -62,11 +68,23 @@ class AdaLangAnalyzerSarifReportParserTest {
     assertThat(second.file()).isEqualTo("src/other file.adb");
     assertThat(second.qualitySeverity()).isEqualTo("High");
 
-    // SARIF has no slot for proof obligations or self-reported summary counts.
-    assertThat(report.proofObligations()).isEmpty();
+    // SARIF's properties.proofObligations summary array has no file/line/column, so obligations
+    // count towards the total but carry an empty location.
+    assertThat(report.proofObligations()).hasSize(2);
+    AdaLangAnalyzerProofObligation definiteError = report.proofObligations().getFirst();
+    assertThat(definiteError.file()).isEmpty();
+    assertThat(definiteError.kind()).isEqualTo("division-by-zero-check");
+    assertThat(definiteError.outcome()).isEqualTo("definite-error");
+    assertThat(definiteError.reasonCode()).isEqualTo("constant-propagation");
+    assertThat(definiteError.blockingExpression()).isEqualTo("X / Y");
+    assertThat(definiteError.inlinePath()).isEqualTo("demo.adb:5 -> demo.adb:20");
+    assertThat(definiteError.isActionable()).isTrue();
+    assertThat(report.proofObligations().get(1).isActionable()).isFalse();
+
+    // SARIF reports no file/violation/skipped-check summary counts.
     assertThat(report.fileCount()).isEqualTo(-1);
     assertThat(report.violationCount()).isEqualTo(-1);
-    assertThat(report.proofObligationCount()).isEqualTo(-1);
+    assertThat(report.proofObligationCount()).isEqualTo(2);
     assertThat(report.skippedCheckCount()).isEqualTo(-1);
   }
 
