@@ -72,7 +72,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
   ) {
     try {
       AdaLangAnalyzerExecutionResult result = runner.run(
-        configuration, context.fileSystem().workDir().toPath(), inputFiles);
+        configuration, context.fileSystem().baseDir().toPath(), inputFiles);
       if (result.timedOut() || result.exitCode() > FINDINGS_EXIT_CODE) {
         handleError(configuration, result.output().isBlank()
           ? "AdaLang Analyzer exited with code " + result.exitCode()
@@ -381,6 +381,9 @@ public final class AdaLangAnalyzerSensor implements Sensor {
   }
 
   private static org.sonar.api.issue.impact.Severity sonarImpactSeverity(AdaLangAnalyzerFinding finding) {
+    if ("blocker".equalsIgnoreCase(finding.qualitySeverity())) {
+      return org.sonar.api.issue.impact.Severity.BLOCKER;
+    }
     if ("high".equalsIgnoreCase(finding.qualitySeverity())) {
       return org.sonar.api.issue.impact.Severity.HIGH;
     }

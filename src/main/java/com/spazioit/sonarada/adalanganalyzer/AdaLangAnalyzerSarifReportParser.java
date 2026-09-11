@@ -63,8 +63,8 @@ final class AdaLangAnalyzerSarifReportParser {
         rule.help(),
         AdaLangAnalyzerJson.stringOf(properties, "explanation"),
         AdaLangAnalyzerJson.stringOf(properties, "evidence"),
-        "",
-        qualitySeverity(AdaLangAnalyzerJson.stringOf(result, "level")),
+        AdaLangAnalyzerJson.stringOf(properties, "quality"),
+        qualitySeverity(properties, AdaLangAnalyzerJson.stringOf(result, "level")),
         "",
         1));
     }
@@ -113,7 +113,15 @@ final class AdaLangAnalyzerSarifReportParser {
     return catalog;
   }
 
-  private static String qualitySeverity(String level) {
+  private static String qualitySeverity(Map<String, Object> properties, String level) {
+    // Newer analyzer versions carry the raw Blocker/High/Medium/Low severity in
+    // properties.severity, matching the JSON report. SARIF's own "level" enum
+    // (error/warning/note) cannot distinguish Blocker from High, so fall back to
+    // it only for reports produced by an analyzer version that predates that field.
+    String rawSeverity = AdaLangAnalyzerJson.stringOf(properties, "severity");
+    if (!rawSeverity.isBlank()) {
+      return rawSeverity;
+    }
     return switch (level.toLowerCase(Locale.ROOT)) {
       case "error" -> "High";
       case "warning" -> "Medium";

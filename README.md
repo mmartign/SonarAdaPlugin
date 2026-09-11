@@ -236,12 +236,14 @@ sonar.ada.adalang.checks=*
 sonar.ada.adalang.timeoutSeconds=300
 ```
 
-Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. In the current analyzer version, omitting this property leaves all checks disabled. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
+Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. AdaLang Analyzer enables no checks by default, so omitting this property runs it with `--recommended` instead of silently analyzing nothing. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
+
+The analyzer is run from the Sonar project's base directory, so an `adalang_analyzer.cfg` file placed at the project root is auto-discovered the same way it would be from a manual command-line run.
 
 Import one or more pre-generated reports without running the analyzer. The
-analyzer's complete console-text output, `--format=json`, `--format=sarif`,
-and legacy CSV/CSVX are all supported; the importer detects the format of each
-report automatically:
+analyzer's complete console-text output, `--format=json`, and `--format=sarif`
+are all supported, plus the legacy semicolon-separated CSV/CSVX format shared
+with AdaControl; the importer detects the format of each report automatically:
 
 ```properties
 sonar.ada.adalang.reportPaths=build/adalang_report.json,build/adalang_report.txt
@@ -266,8 +268,9 @@ Structured proof obligations are imported from console-text and JSON reports
 (SARIF has no slot for them). Both `definite-error` (a proven failure) and
 `unproved` (an undetermined risk) obligations become reliability issues
 containing their obligation kind, analysis method, reason, and imprecision
-detail; `proved-safe`, `unreachable`, and `unsupported` obligations are not
-findings and are not imported. The importer checks both the `Violations` (or
+detail; JSON reports additionally carry the checked operation and any
+assumptions the proof relied on. `proved-safe`, `unreachable`, and
+`unsupported` obligations are not findings and are not imported. The importer checks both the `Violations` (or
 JSON's `newViolations`) and proof-obligation `Total` summaries against the
 parsed details, when the format reports them. It logs the reported file,
 violation, proof-obligation, and skipped-check coverage totals so incomplete

@@ -136,14 +136,16 @@ public final class AdaProperties {
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_CHECKS_KEY)
         .name("AdaLang Analyzer checks")
-        .description("Optional comma-separated check names passed to adalang_analyzer with -checks=.")
+        .description("Optional comma-separated check names passed to adalang_analyzer with -checks=. "
+          + "When unset, adalang_analyzer is run with --recommended, since it otherwise enables no checks by default.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_REPORT_PATHS_KEY)
         .name("AdaLang Analyzer report paths")
-        .description("Comma-separated paths to pre-generated AdaLang Analyzer reports, in console-text, JSON, SARIF, or CSV/CSVX format.")
+        .description("Comma-separated paths to pre-generated AdaLang Analyzer reports, in console-text, JSON, or SARIF format "
+          + "(the formats adalang_analyzer itself produces), or in the legacy semicolon-separated CSV/CSVX format shared with AdaControl.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)

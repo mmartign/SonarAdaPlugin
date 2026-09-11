@@ -24,13 +24,16 @@ final class AdaLangAnalyzerRunner {
 
   AdaLangAnalyzerExecutionResult run(
     AdaLangAnalyzerConfiguration configuration,
-    Path workDir,
+    Path baseDir,
     List<InputFile> inputFiles
   ) throws IOException, InterruptedException {
-    Files.createDirectories(workDir);
+    Files.createDirectories(baseDir);
     List<String> command = buildCommand(configuration, inputFiles);
+    // Run from the project base directory, not the scanner's work directory, so AdaLang
+    // Analyzer's auto-discovery of adalang_analyzer.cfg (current working directory only,
+    // no upward search) can find a config file placed at the project root.
     ProcessBuilder processBuilder = new ProcessBuilder(command)
-      .directory(workDir.toFile())
+      .directory(baseDir.toFile())
       .redirectErrorStream(true);
 
     Process process = processBuilder.start();
@@ -59,7 +62,15 @@ final class AdaLangAnalyzerRunner {
     // AdaLangAnalyzerSensor#hasConsistentCounts), so -v is required whenever any
     // proof-obligation-producing check is enabled.
     command.add("-v");
-    configuration.checks().ifPresent(checks -> command.add("-checks=" + checks));
+    // AdaLang Analyzer enables no checks by default (see Adalang_Analyzer.Config.Rule_States),
+    // so running it with no explicit selection is a silent no-op that reports zero findings.
+    // Fall back to --recommended when the user has not configured sonar.ada.adalang.checks.
+    java.util.Optional<String> checks = configuration.checks();
+    if (checks.isPresent()) {
+      command.add("-checks=" + checks.get());
+    } else {
+      command.add("--recommended");
+    }
     inputFiles.stream()
       .map(IndexedFile.class::cast)
       .map(IndexedFile::absolutePath)

@@ -18,12 +18,23 @@ record AdaLangAnalyzerProofObligation(
   String evidence,
   String reasonCode,
   String blockingExpression,
-  String inlinePath
+  String inlinePath,
+  String operation,
+  String assumptions,
+  String configurationId
 ) {
   AdaLangAnalyzerProofObligation(
     String file, int line, int column, String kind, String outcome, String method, String why, String imprecision
   ) {
-    this(file, line, column, kind, outcome, method, why, imprecision, "", "", "", "");
+    this(file, line, column, kind, outcome, method, why, imprecision, "", "", "", "", "", "", "");
+  }
+
+  AdaLangAnalyzerProofObligation(
+    String file, int line, int column, String kind, String outcome, String method, String why, String imprecision,
+    String evidence, String reasonCode, String blockingExpression, String inlinePath
+  ) {
+    this(file, line, column, kind, outcome, method, why, imprecision, evidence, reasonCode, blockingExpression,
+      inlinePath, "", "", "");
   }
 
   String ruleId() {
@@ -36,10 +47,12 @@ record AdaLangAnalyzerProofObligation(
       .append(kind)
       .append("] ")
       .append(outcome);
+    appendDetail(result, "Operation", operation);
     appendDetail(result, "Method", method);
     appendDetail(result, "Why", why);
     appendDetail(result, "Evidence", evidence);
     appendDetail(result, "Imprecision", imprecision);
+    appendDetail(result, "Assumptions", assumptions);
     appendDetail(result, "Reason", reasonCode);
     appendDetail(result, "Blocked at", blockingExpression);
     appendDetail(result, "Inline path", inlinePath);

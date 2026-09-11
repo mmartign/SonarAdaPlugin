@@ -56,7 +56,10 @@ final class AdaLangAnalyzerJsonReportParser {
         AdaLangAnalyzerJson.stringOf(obligation, "abstractState"),
         AdaLangAnalyzerJson.stringOf(obligation, "reasonCode"),
         AdaLangAnalyzerJson.stringOf(obligation, "blockingExpression"),
-        AdaLangAnalyzerJson.stringOf(obligation, "inlinePath")));
+        AdaLangAnalyzerJson.stringOf(obligation, "inlinePath"),
+        AdaLangAnalyzerJson.stringOf(obligation, "operation"),
+        AdaLangAnalyzerJson.stringOf(obligation, "assumptions"),
+        AdaLangAnalyzerJson.stringOf(obligation, "configurationId")));
     }
 
     Map<String, Object> analysisConfiguration = AdaLangAnalyzerJson.mapOf(root.get("analysisConfiguration"));
