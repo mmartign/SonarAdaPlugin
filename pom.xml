@@ -6,7 +6,7 @@
 
   <groupId>com.spazioit.sonarada</groupId>
   <artifactId>sonar-ada-plugin</artifactId>
-  <version>1.5.1</version>
+  <version>1.5.2</version>
   <packaging>sonar-plugin</packaging>
 
   <name>SonarQube Ada Plugin</name>
