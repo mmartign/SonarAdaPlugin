@@ -102,4 +102,62 @@ class AdaLangAnalyzerJsonReportParserTest {
     assertThat(report.proofObligationCount()).isEqualTo(-1);
     assertThat(report.skippedCheckCount()).isEqualTo(-1);
   }
+
+  @Test
+  void importsAdaLangAnalyzer160ProofObligationShapes() {
+    // Obligations copied verbatim from an AdaLang Analyzer 1.6.0 --verify JSON report:
+    // the new branch-budget-exceeded reason code, a discriminant check proved safe by
+    // the new static-constraint proof path and its definite-error sibling, and an
+    // obligation of a subprogram whose analysis failed partway, which 1.6.0 reports as
+    // unsupported (1.5.x reported unreachable).
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.6.0"},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 4, "provedSafe": 1, "definiteError": 1, "unproved": 1, "unreachable": 0, "unsupported": 1},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/b632fd5101e68983", "kind": "loop-invariant-preservation", "status": "unproved", \
+      "method": "abstract-interpretation", "file": "tests/verification_loop_branch_third_conditional_unsupported.adb", \
+      "line": 14, "column": 10, "operation": "I >= 0 and then I <= 3 and then Y = X + I and then Extra >= 0", \
+      "assumptions": "", "abstractState": "", "explanation": "the loop body does not establish invariant preservation", \
+      "imprecisionSource": "the loop path has more independent conditionals than the branch budget folds", \
+      "reasonCode": "branch-budget-exceeded", "blockingExpression": "X = 1", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/59b448246f406e5e", "kind": "discriminant-check", "status": "proved-safe", \
+      "method": "static-evaluation", "file": "tests/verification_pp_discriminant.adb", "line": 34, "column": 12, \
+      "operation": "Sized.Small", "assumptions": "", "abstractState": "selected variant declares the referenced component", \
+      "explanation": "the object's discriminant constraint selects the component's variant", "imprecisionSource": "", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/514d61e337d963dd", "kind": "discriminant-check", "status": "definite-error", \
+      "method": "static-evaluation", "file": "tests/verification_pp_discriminant.adb", "line": 35, "column": 12, \
+      "operation": "Sized.Big", "assumptions": "", "abstractState": "selected variant excludes the referenced component", \
+      "explanation": "component belongs to a variant excluded by the object's discriminant constraint", \
+      "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/f125c6c436db4ede", "kind": "integer-overflow", "status": "unsupported", "method": "none", \
+      "file": "tests/verification_fp084_missing_spec.adb", "line": 9, "column": 15, "operation": "Z.F + 1", \
+      "assumptions": "", "abstractState": "", "explanation": "overflow safety has not been established", \
+      "imprecisionSource": "outside bounded verification subset", "reasonCode": "", "blockingExpression": "", \
+      "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligationCount()).isEqualTo(4);
+    assertThat(report.proofObligations()).hasSize(4);
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::isActionable)
+      .containsExactly(true, false, true, false);
+
+    AdaLangAnalyzerProofObligation budget = report.proofObligations().get(0);
+    assertThat(budget.reasonCode()).isEqualTo("branch-budget-exceeded");
+    assertThat(budget.sonarMessage())
+      .contains("Reason: branch-budget-exceeded")
+      .contains("Blocked at: X = 1");
+
+    AdaLangAnalyzerProofObligation excluded = report.proofObligations().get(2);
+    assertThat(excluded.ruleId()).isEqualTo("proof-obligation:discriminant-check");
+    assertThat(excluded.outcome()).isEqualTo("definite-error");
+  }
 }
