@@ -34,6 +34,11 @@ final class AdaLangAnalyzerConsoleParser {
     "^\\s{6}(method|why|evidence|imprecision|reason|blocked at|inline path):\\s*(.*)$",
     Pattern.CASE_INSENSITIVE
   );
+  private static final Pattern PROOF_SCOPE = Pattern.compile(
+    "^Proof obligations\\s*\\((.*)\\):\\s*$",
+    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
+  );
+  private static final String WARNING_PREFIX = "adalang-analyzer: warning:";
   private static final Pattern VIOLATION_COUNT = Pattern.compile(
     "^Violations\\s*:\\s*(\\d+)\\s*$",
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
@@ -132,6 +137,18 @@ final class AdaLangAnalyzerConsoleParser {
     return List.copyOf(obligations);
   }
 
+  /**
+   * The analyzer's own warnings about the run as a whole, such as no check being enabled or no
+   * GNAT toolchain being found to resolve the runtime packages. They are not findings: each one
+   * says that the analysis covered less than the configuration asked for.
+   */
+  List<String> warnings(String output) {
+    return output.lines()
+      .filter(line -> line.startsWith(WARNING_PREFIX))
+      .map(line -> line.substring(WARNING_PREFIX.length()).trim())
+      .toList();
+  }
+
   int reportedViolationCount(String output) {
     return parseCount(VIOLATION_COUNT, output);
   }
@@ -146,6 +163,12 @@ final class AdaLangAnalyzerConsoleParser {
 
   int reportedProofObligationCount(String output) {
     return parseCount(PROOF_OBLIGATION_COUNT, output);
+  }
+
+  /** The scope the proof-obligation summary header states in parentheses, or empty. */
+  String reportedProofScope(String output) {
+    Matcher matcher = PROOF_SCOPE.matcher(output);
+    return matcher.find() ? matcher.group(1).trim() : "";
   }
 
   private static int parseCount(Pattern pattern, String output) {

@@ -160,4 +160,70 @@ class AdaLangAnalyzerJsonReportParserTest {
     assertThat(excluded.ruleId()).isEqualTo("proof-obligation:discriminant-check");
     assertThat(excluded.outcome()).isEqualTo("definite-error");
   }
+
+  @Test
+  void importsAdaLangAnalyzer162ProofObligationShapes() {
+    // Finding and obligations copied verbatim from an AdaLang Analyzer 1.6.2 --verify JSON
+    // report. 1.6.1 stopped deciding an index check against the index subtype of an array
+    // whose bounds no declaration fixes: such a check is proved only by the new own-range
+    // proof path and is otherwise unproved with the missing-static-bounds reason code. An
+    // index outside the object's own static constraint, proved safe up to 1.6.0, is now a
+    // definite error that Known_Index_Check_Failure reports as a finding as well.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.6.2", "selectedPreset": "verify", "skippedChecks": 0},
+        "filesScanned": 1,
+        "newViolations": 1,
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 3, "provedSafe": 1, "definiteError": 1, "unproved": 1, "unreachable": 0, "unsupported": 0},
+        "findings": [
+          {"ruleId": "Known_Index_Check_Failure", "message": "index is outside the array index subtype", \
+      "explanation": "Abstract interpretation found that every represented index value is outside the array bounds.", \
+      "evidence": "index range is outside the array bounds", "file": "src/bounds.adb", "line": 11, "column": 12, \
+      "severity": "High", "quality": "Reliability", "fingerprint": "8bbcc0532a457a26", "baseline": false}
+        ],
+        "proofObligations": [
+          {"id": "proof/v1/9d48c1d46761b9f2", "kind": "index-check", "status": "proved-safe", \
+      "method": "static-evaluation", "file": "src/bounds.adb", "line": 7, "column": 10, "operation": "J", \
+      "assumptions": "", "abstractState": "loop parameter ranges over the indexed object's bounds", \
+      "explanation": "index is the parameter of a loop over this array's own range", "imprecisionSource": "", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/9a6a579df9875a90", "kind": "index-check", "status": "unproved", \
+      "method": "abstract-interpretation", "file": "src/bounds.adb", "line": 10, "column": 7, "operation": "N", \
+      "assumptions": "", "abstractState": "", \
+      "explanation": "index-check failure is not established, but absence is not proved", \
+      "imprecisionSource": "the required bounds are not statically known", "reasonCode": "missing-static-bounds", \
+      "blockingExpression": "N", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/764d69392f924c45", "kind": "index-check", "status": "definite-error", \
+      "method": "abstract-interpretation", "file": "src/bounds.adb", "line": 11, "column": 12, "operation": "20", \
+      "assumptions": "", "abstractState": "index range is outside the array bounds", \
+      "explanation": "index is outside the array index subtype", "imprecisionSource": "", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.violationCount()).isEqualTo(1);
+    assertThat(report.findings()).hasSize(1);
+    assertThat(report.proofObligationCount()).isEqualTo(3);
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::isActionable)
+      .containsExactly(false, true, true);
+
+    assertThat(report.proofScope()).isEqualTo("bounded scalar verification; unsupported boundaries are explicit");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true, true);
+
+    AdaLangAnalyzerProofObligation unknownBounds = report.proofObligations().get(1);
+    assertThat(unknownBounds.sonarMessage())
+      .contains("Imprecision: the required bounds are not statically known")
+      .contains("Reason: missing-static-bounds")
+      .contains("Blocked at: N");
+
+    AdaLangAnalyzerProofObligation outsideConstraint = report.proofObligations().get(2);
+    assertThat(outsideConstraint.outcome()).isEqualTo("definite-error");
+    assertThat(outsideConstraint.line()).isEqualTo(report.findings().getFirst().line());
+    assertThat(outsideConstraint.sonarMessage()).contains("Evidence: index range is outside the array bounds");
+  }
 }

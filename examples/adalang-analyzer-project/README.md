@@ -67,6 +67,10 @@ sonar.ada.adalang.checks=No_Goto,No_Raise,Division_By_Zero
 
 The executable must support the `-checks=` option and `file:line:column`
 diagnostic output. Exit code `1` is accepted when findings were produced.
+Replace the `checks` line with `sonar.ada.adalang.preset=verify` to run the
+analyzer's bounded verification instead, and add
+`sonar.ada.adalang.projectFile=example.gpr` to analyze the sources of the GNAT
+project.
 Report import and direct execution can be enabled together, although the same
 finding may then be published twice.
 

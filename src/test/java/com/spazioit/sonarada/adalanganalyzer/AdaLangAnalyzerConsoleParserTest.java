@@ -222,4 +222,55 @@ class AdaLangAnalyzerConsoleParserTest {
       throw new UncheckedIOException(e);
     }
   }
+
+  @Test
+  void extractsTheAnalyzersOwnRunWarnings() {
+    // Lines copied verbatim from AdaLang Analyzer 1.6.2 output.
+    String output = """
+      adalang-analyzer: warning: no checks are enabled; pass -checks=<list>, --recommended, --spark, --verify, \
+      --automotive, or --do178c=<level> to actually analyze the source
+      adalang-analyzer: warning: no 'gnatls' found on PATH; types from with'd runtime packages (Interfaces, Ada.*, \
+      System, ...) will not resolve, which silently degrades some checks (see known_analysis_issues.tsv, FP-029); \
+      add a GNAT toolchain to PATH to avoid this
+      adalang-analyzer [INFO]: Built 1 subprogram summaries
+      adalang-analyzer [INFO]: Parsing: p.adb
+      /project/src/demo.adb:12:7: warning: goto statements are forbidden [No_Goto]
+
+      Files scanned : 1
+      Violations    : 1
+      """;
+
+    List<String> warnings = parser.warnings(output);
+
+    assertThat(warnings).hasSize(2);
+    assertThat(warnings.get(0)).startsWith("no checks are enabled; pass -checks=<list>");
+    assertThat(warnings.get(1)).startsWith("no 'gnatls' found on PATH");
+    assertThat(parser.parse(output)).hasSize(1);
+  }
+
+  @Test
+  void readsTheProofScopeThatTellsAVerificationRunFromAnEnumeration() {
+    // Summary headers copied verbatim from AdaLang Analyzer 1.6.2 output, with and without --verify.
+    String verified = """
+      Files scanned : 1
+      Violations    : 0
+
+      Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+        Total : 1
+        unproved : 1
+        Details:
+          /project/src/demo.adb:10:7 [index-check] unproved
+            method: abstract-interpretation
+      """;
+    String enumerated = verified.replace(
+      "bounded scalar verification; unsupported boundaries are explicit",
+      "enumerated outcomes in current analysis scope; not exhaustive");
+
+    assertThat(parser.reportedProofScope(verified))
+      .isEqualTo("bounded scalar verification; unsupported boundaries are explicit");
+    assertThat(parser.reportedProofScope(enumerated))
+      .isEqualTo("enumerated outcomes in current analysis scope; not exhaustive");
+    assertThat(parser.reportedProofScope("Files scanned : 1\n")).isEmpty();
+    assertThat(parser.reportedProofObligationCount(enumerated)).isEqualTo(1);
+  }
 }

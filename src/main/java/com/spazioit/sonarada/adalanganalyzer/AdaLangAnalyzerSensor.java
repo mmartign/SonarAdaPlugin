@@ -70,9 +70,16 @@ public final class AdaLangAnalyzerSensor implements Sensor {
     AdaLangAnalyzerConfiguration configuration,
     List<InputFile> inputFiles
   ) {
+    java.util.Optional<Path> projectFile = configuration.projectFile();
+    if (projectFile.isPresent() && !Files.isRegularFile(projectFile.get())) {
+      // The analyzer only prints a diagnostic and goes on without the project.
+      handleError(configuration, "AdaLang Analyzer project file '" + projectFile.get() + "' does not exist");
+      return;
+    }
     try {
       AdaLangAnalyzerExecutionResult result = runner.run(
         configuration, context.fileSystem().baseDir().toPath(), inputFiles);
+      parser.warnings(result.output()).forEach(warning -> LOG.warn("AdaLang Analyzer: {}", warning));
       if (result.timedOut() || result.exitCode() > FINDINGS_EXIT_CODE) {
         handleError(configuration, result.output().isBlank()
           ? "AdaLang Analyzer exited with code " + result.exitCode()
@@ -157,7 +164,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
             }
           }
           for (AdaLangAnalyzerProofObligation proofObligation : report.proofObligations()) {
-            if (!proofObligation.isActionable()) {
+            if (!report.isIssue(proofObligation)) {
               continue;
             }
             java.util.Optional<InputFile> inputFile = fileIndex.find(proofObligation.file());
@@ -196,7 +203,8 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       parser.reportedFileCount(output),
       parser.reportedViolationCount(output),
       parser.reportedProofObligationCount(output),
-      parser.reportedSkippedCheckCount(output));
+      parser.reportedSkippedCheckCount(output),
+      parser.reportedProofScope(output));
   }
 
   private static void publishFindings(
@@ -218,7 +226,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       }
     }
     for (AdaLangAnalyzerProofObligation proofObligation : report.proofObligations()) {
-      if (!proofObligation.isActionable()) {
+      if (!report.isIssue(proofObligation)) {
         continue;
       }
       java.util.Optional<InputFile> inputFile = fileIndex.find(proofObligation.file());
@@ -280,6 +288,21 @@ public final class AdaLangAnalyzerSensor implements Sensor {
         displayCount(proofObligations),
         displayCount(skippedChecks)
       );
+    }
+    if (!report.proofObligations().isEmpty()) {
+      // Only unproved and definite-error obligations become issues, so this is where
+      // the proved-safe, unreachable, and unsupported ones remain visible.
+      java.util.Map<String, Integer> outcomes = new java.util.TreeMap<>();
+      for (AdaLangAnalyzerProofObligation proofObligation : report.proofObligations()) {
+        outcomes.merge(proofObligation.outcome(), 1, Integer::sum);
+      }
+      LOG.info("AdaLang Analyzer {} proof obligations by outcome: {}", source, outcomes);
+      long unattempted = report.unattemptedProofCount();
+      if (unattempted > 0) {
+        LOG.info("AdaLang Analyzer {}: {} unproved proof obligation(s) not imported, because the analyzer ran "
+          + "without --verify and attempted no proof; set {}=verify to have them classified",
+          source, unattempted, AdaProperties.ADALANG_ANALYZER_PRESET_KEY);
+      }
     }
   }
 

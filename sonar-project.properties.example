@@ -12,6 +12,16 @@ sonar.sourceEncoding=UTF-8
 # sonar.ada.adacontrol.extraArgs=-- -gnat12
 # sonar.ada.adacontrol.reportPaths=build/adacontrol-report.csv
 
+# Optional AdaLang Analyzer integration.
+# adalang_analyzer must be installed separately on the scanner machine.
+# sonar.ada.adalang.enabled=true
+# sonar.ada.adalang.executable=/path/to/adalang_analyzer
+# sonar.ada.adalang.preset=verify
+# sonar.ada.adalang.checks=-Missing_Depends_Contract
+# sonar.ada.adalang.projectFile=my_project.gpr
+# sonar.ada.adalang.extraArgs=-XBUILD_MODE=release
+# sonar.ada.adalang.reportPaths=build/adalang_report.json
+
 # Optional GNATtest result import. Native text, AUnit JUnit XML, and AUnit XML
 # reports are supported. Generate and run the test harness before SonarScanner.
 # sonar.ada.gnattest.reportPaths=build/gnattest.txt,build/gnattest-junit.xml

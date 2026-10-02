@@ -38,7 +38,10 @@ public final class AdaProperties {
 
   public static final String ADALANG_ANALYZER_ENABLED_KEY = "sonar.ada.adalang.enabled";
   public static final String ADALANG_ANALYZER_EXECUTABLE_KEY = "sonar.ada.adalang.executable";
+  public static final String ADALANG_ANALYZER_PRESET_KEY = "sonar.ada.adalang.preset";
   public static final String ADALANG_ANALYZER_CHECKS_KEY = "sonar.ada.adalang.checks";
+  public static final String ADALANG_ANALYZER_PROJECT_FILE_KEY = "sonar.ada.adalang.projectFile";
+  public static final String ADALANG_ANALYZER_EXTRA_ARGS_KEY = "sonar.ada.adalang.extraArgs";
   public static final String ADALANG_ANALYZER_REPORT_PATHS_KEY = "sonar.ada.adalang.reportPaths";
   public static final String ADALANG_ANALYZER_TIMEOUT_SECONDS_KEY = "sonar.ada.adalang.timeoutSeconds";
   public static final String ADALANG_ANALYZER_FAIL_ON_ERROR_KEY = "sonar.ada.adalang.failOnError";
@@ -134,10 +137,37 @@ public final class AdaProperties {
         .defaultValue("adalang_analyzer")
         .type(PropertyType.STRING)
         .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_PRESET_KEY)
+        .name("AdaLang Analyzer preset")
+        .description("Optional adalang_analyzer preset: recommended, spark, verify, automotive, or do178c=<A|B|C|D>. "
+          + "verify runs the bounded scalar verification that classifies proof obligations as proved safe, "
+          + "definite error, or unproved. When neither a preset nor checks are set, adalang_analyzer is run with "
+          + "--recommended, unless an adalang_analyzer.cfg file at the project root selects the analysis.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .type(PropertyType.STRING)
+        .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_CHECKS_KEY)
         .name("AdaLang Analyzer checks")
         .description("Optional comma-separated check names passed to adalang_analyzer with -checks=. "
-          + "When unset, adalang_analyzer is run with --recommended, since it otherwise enables no checks by default.")
+          + "Combined with a preset, the list refines it, for example -No_Goto to disable one of its checks.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .type(PropertyType.STRING)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_PROJECT_FILE_KEY)
+        .name("AdaLang Analyzer project file")
+        .description("Optional GNAT .gpr project file passed with -P. Its sources are analyzed together with the "
+          + "Ada files indexed by Sonar, and its configuration pragmas (such as SPARK_Mode) are taken into account.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .type(PropertyType.STRING)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_EXTRA_ARGS_KEY)
+        .name("AdaLang Analyzer extra arguments")
+        .description("Additional command-line arguments passed before the input files, for example "
+          + "-XBUILD_MODE=release, -complexity-threshold=15, or --baseline=adalang.baseline. "
+          + "Do not pass --format, --output, or -q: the plugin reads the analyzer's verbose text output.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)

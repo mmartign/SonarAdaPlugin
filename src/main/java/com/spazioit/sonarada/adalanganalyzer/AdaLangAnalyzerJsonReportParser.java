@@ -71,6 +71,7 @@ final class AdaLangAnalyzerJsonReportParser {
       AdaLangAnalyzerJson.intOf(root, "filesScanned"),
       AdaLangAnalyzerJson.intOf(root, "newViolations"),
       AdaLangAnalyzerJson.intOf(proofSummary, "total"),
-      AdaLangAnalyzerJson.intOf(analysisConfiguration, "skippedChecks"));
+      AdaLangAnalyzerJson.intOf(analysisConfiguration, "skippedChecks"),
+      AdaLangAnalyzerJson.stringOf(proofSummary, "scope"));
   }
 }

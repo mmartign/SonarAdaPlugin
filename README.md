@@ -236,9 +236,25 @@ sonar.ada.adalang.checks=*
 sonar.ada.adalang.timeoutSeconds=300
 ```
 
-Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. AdaLang Analyzer enables no checks by default, so omitting this property runs it with `--recommended` instead of silently analyzing nothing. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
+Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
 
-The analyzer is run from the Sonar project's base directory, so an `adalang_analyzer.cfg` file placed at the project root is auto-discovered the same way it would be from a manual command-line run.
+Select one of the analyzer's presets with `sonar.ada.adalang.preset`: `recommended`, `spark`, `verify`, `automotive`, or `do178c=<A|B|C|D>`. The value is passed as `--<preset>`. `verify` runs the analyzer's bounded scalar verification, which classifies each proof obligation as proved safe, definite error, unproved, unreachable, or unsupported; with any other preset nothing is proved, and every obligation that is not a known failure is reported as unproved. A `checks` list given together with a preset refines it, for example `-Missing_Depends_Contract` to disable one of its checks:
+
+```properties
+sonar.ada.adalang.enabled=true
+sonar.ada.adalang.preset=verify
+sonar.ada.adalang.checks=-Missing_Depends_Contract
+sonar.ada.adalang.projectFile=my_project.gpr
+sonar.ada.adalang.extraArgs=-XBUILD_MODE=release -complexity-threshold=15
+```
+
+AdaLang Analyzer enables no checks by default, so when neither `preset` nor `checks` is set the plugin runs it with `--recommended` instead of silently analyzing nothing.
+
+`sonar.ada.adalang.projectFile` passes a GNAT project file with `-P`. The project's sources are analyzed together with the Ada files indexed by Sonar, and `--verify` takes the project's configuration pragmas into account: a function in a project whose configuration pragmas set `SPARK_Mode` is treated as free of side effects. `sonar.ada.adalang.extraArgs` passes further arguments before the input files, such as `-X<name>=<value>` scenario variables, thresholds, or `--baseline=<file>`. Do not pass `--format`, `--output`, or `-q` there: the plugin reads the analyzer's verbose text output.
+
+The analyzer is run from the Sonar project's base directory, so an `adalang_analyzer.cfg` file placed at the project root is auto-discovered the same way it would be from a manual command-line run. When that file exists, or `extraArgs` names one with `--config=<file>`, the plugin does not add `--recommended`: the analyzer reads the file's flags before the command line, and a preset on the command line would reset the checks and the `--verify` mode the file selected. A `preset` set in Sonar still overrides the file's, and `checks` still refines it.
+
+The analyzer's own warnings about a run, such as no check being enabled or no `gnatls` being found on `PATH` (which degrades the checks that need the Ada runtime packages), are repeated as warnings in the scanner log.
 
 Import one or more pre-generated reports without running the analyzer. The
 analyzer's complete console-text output, `--format=json`, and `--format=sarif`
@@ -270,11 +286,28 @@ Structured proof obligations are imported from console-text and JSON reports
 containing their obligation kind, analysis method, reason, and imprecision
 detail; JSON reports additionally carry the checked operation and any
 assumptions the proof relied on. `proved-safe`, `unreachable`, and
-`unsupported` obligations are not findings and are not imported. The importer checks both the `Violations` (or
+`unsupported` obligations are not findings and are not imported.
+
+`unproved` obligations are imported only from a `--verify` run. Without
+`--verify` the analyzer attempts no proof and reports every obligation that is
+not a known failure as `unproved`, which says nothing about the code; the
+report states this as the scope `enumerated outcomes in current analysis scope;
+not exhaustive`. Those obligations are counted in the scanner log instead, and
+`definite-error` obligations are still imported.
+
+The importer checks both the `Violations` (or
 JSON's `newViolations`) and proof-obligation `Total` summaries against the
 parsed details, when the format reports them. It logs the reported file,
 violation, proof-obligation, and skipped-check coverage totals so incomplete
-semantic analysis remains visible in scanner logs.
+semantic analysis remains visible in scanner logs, followed by the number of
+proof obligations with each outcome.
+
+Reports of AdaLang Analyzer 1.6.2 are supported in all three formats. Its
+`--verify` results differ from those of 1.6.0 and earlier, which could report
+an obligation as proved safe that a legal execution violates (see the
+analyzer's changelog for 1.6.1). Regenerate imported `--verify` reports with
+1.6.1 or later: obligations that were wrongly proved safe then appear as
+unproved or definite-error issues.
 CSV and CSVX reports use these fields:
 
 ```text

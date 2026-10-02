@@ -63,14 +63,21 @@ final class AdaLangAnalyzerRunner {
     // proof-obligation-producing check is enabled.
     command.add("-v");
     // AdaLang Analyzer enables no checks by default (see Adalang_Analyzer.Config.Rule_States),
-    // so running it with no explicit selection is a silent no-op that reports zero findings.
-    // Fall back to --recommended when the user has not configured sonar.ada.adalang.checks.
+    // so running it with no selection is a silent no-op that reports zero findings: fall back
+    // to --recommended. A config file is the exception. The analyzer reads its flags before
+    // the command line, and a preset given here resets every check and the verification mode
+    // they selected, so the plugin must not add one of its own.
+    java.util.Optional<String> preset = configuration.preset();
     java.util.Optional<String> checks = configuration.checks();
-    if (checks.isPresent()) {
-      command.add("-checks=" + checks.get());
-    } else {
+    if (preset.isPresent()) {
+      command.add("--" + preset.get());
+    } else if (checks.isEmpty() && !configuration.usesConfigFile()) {
       command.add("--recommended");
     }
+    // After the preset, so that the list refines it instead of being reset by it.
+    checks.ifPresent(value -> command.add("-checks=" + value));
+    configuration.projectFile().ifPresent(projectFile -> command.add("-P" + projectFile));
+    command.addAll(configuration.extraArguments());
     inputFiles.stream()
       .map(IndexedFile.class::cast)
       .map(IndexedFile::absolutePath)
