@@ -226,4 +226,56 @@ class AdaLangAnalyzerJsonReportParserTest {
     assertThat(outsideConstraint.line()).isEqualTo(report.findings().getFirst().line());
     assertThat(outsideConstraint.sonarMessage()).contains("Evidence: index range is outside the array bounds");
   }
+
+  @Test
+  void importsFindingsOfTheCodingStandardChecks() {
+    // Findings copied verbatim from an AdaLang Analyzer JSON report produced with the
+    // opt-in coding-standard checks and -rule-param: one located at a token rather than
+    // a syntax node (End_Of_Line_Comment, Maximum_Lines), one whose message carries a
+    // check parameter (Identifier_Casing), and two located at a node.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.7.0", "selectedPreset": "none", \
+      "enabledRules": ["No_Use_Package_Clause", "End_Of_Line_Comment", "Maximum_Lines", "Positional_Parameter", \
+      "Identifier_Casing"], "skippedChecks": 0},
+        "findings": [
+          {"ruleId": "Maximum_Lines", "message": "file has 26 lines, more than 5", "explanation": "", "evidence": "", \
+      "file": "tests/precision_positional_pkg.ads", "line": 25, "column": 30, "severity": "Medium", \
+      "quality": "Maintainability", "fingerprint": "7b70b98e09db3c5b", "baseline": false},
+          {"ruleId": "Identifier_Casing", "message": "Zero does not have the casing required for constants (upper)", \
+      "explanation": "", "evidence": "", "file": "tests/precision_positional_pkg.ads", "line": 8, "column": 7, \
+      "severity": "Low", "quality": "Maintainability", "fingerprint": "9013cc96973ed580", "baseline": false},
+          {"ruleId": "No_Use_Package_Clause", "message": "use clause for a package", "explanation": "", "evidence": "", \
+      "file": "tests/precision_positional_parameter_finding.adb", "line": 1, "column": 32, "severity": "Low", \
+      "quality": "Maintainability", "fingerprint": "c2b263bc13438136", "baseline": false},
+          {"ruleId": "Positional_Parameter", "message": "positional parameter association", "explanation": "", \
+      "evidence": "", "file": "tests/precision_positional_parameter_finding.adb", "line": 5, "column": 10, \
+      "severity": "Low", "quality": "Maintainability", "fingerprint": "c40806d5f782f215", "baseline": false},
+          {"ruleId": "End_Of_Line_Comment", "message": "end of line comment", "explanation": "", "evidence": "", \
+      "file": "tests/precision_end_of_line_comment_finding.adb", "line": 3, "column": 11, "severity": "Low", \
+      "quality": "Maintainability", "fingerprint": "7fe1bd00517f8611", "baseline": false}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.findings())
+      .extracting(AdaLangAnalyzerFinding::ruleId)
+      .containsExactly(
+        "Maximum_Lines", "Identifier_Casing", "No_Use_Package_Clause", "Positional_Parameter", "End_Of_Line_Comment");
+    assertThat(report.skippedCheckCount()).isZero();
+
+    AdaLangAnalyzerFinding casing = report.findings().get(1);
+    assertThat(casing.file()).isEqualTo("tests/precision_positional_pkg.ads");
+    assertThat(casing.line()).isEqualTo(8);
+    assertThat(casing.column()).isEqualTo(7);
+    assertThat(casing.softwareQuality()).isEqualTo("Maintainability");
+    assertThat(casing.qualitySeverity()).isEqualTo("Low");
+    assertThat(casing.sonarMessage()).isEqualTo("Zero does not have the casing required for constants (upper)");
+
+    AdaLangAnalyzerFinding fileLength = report.findings().getFirst();
+    assertThat(fileLength.qualitySeverity()).isEqualTo("Medium");
+    assertThat(fileLength.line()).isEqualTo(25);
+  }
 }

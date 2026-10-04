@@ -248,6 +248,17 @@ sonar.ada.adalang.projectFile=my_project.gpr
 sonar.ada.adalang.extraArgs=-XBUILD_MODE=release -complexity-threshold=15
 ```
 
+AdaLang Analyzer also offers opt-in coding-standard checks: naming conventions, layout, restricted constructs, object-oriented design, representation items, and complexity limits. No preset enables them. Name the ones your coding standard requires in `sonar.ada.adalang.checks`, alone or after a preset, and give their limits and conventions with `-rule-param=<check>.<name>=<value>` in `sonar.ada.adalang.extraArgs`:
+
+```properties
+sonar.ada.adalang.enabled=true
+sonar.ada.adalang.preset=recommended
+sonar.ada.adalang.checks=Identifier_Casing,Maximum_Subprogram_Lines,Forbidden_Attribute
+sonar.ada.adalang.extraArgs=-rule-param=Identifier_Casing.type=mixed -rule-param=Maximum_Subprogram_Lines.n=200 -rule-param=Forbidden_Attribute.forbidden=Address,Unchecked_Access
+```
+
+Their findings are imported like any other AdaLang Analyzer finding, under the check's name. With these checks in the catalogue, `sonar.ada.adalang.checks=*` enables every one of them as well, including pairs that contradict each other by design (for example `Use_If_Expression`, which suggests if expressions, and `Conditional_Expression`, which forbids them); prefer a preset plus an explicit list. Run `adalang_analyzer -list-checks` for the catalogue.
+
 AdaLang Analyzer enables no checks by default, so when neither `preset` nor `checks` is set the plugin runs it with `--recommended` instead of silently analyzing nothing.
 
 `sonar.ada.adalang.projectFile` passes a GNAT project file with `-P`. The project's sources are analyzed together with the Ada files indexed by Sonar, and `--verify` takes the project's configuration pragmas into account: a function in a project whose configuration pragmas set `SPARK_Mode` is treated as free of side effects. `sonar.ada.adalang.extraArgs` passes further arguments before the input files, such as `-X<name>=<value>` scenario variables, thresholds, or `--baseline=<file>`. Do not pass `--format`, `--output`, or `-q` there: the plugin reads the analyzer's verbose text output.

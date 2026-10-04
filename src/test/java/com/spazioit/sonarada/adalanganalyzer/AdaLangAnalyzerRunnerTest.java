@@ -86,6 +86,25 @@ class AdaLangAnalyzerRunnerTest {
         "/project/src/a.adb", "/project/src/b.adb");
   }
 
+  @Test
+  void passesCheckParametersForTheCodingStandardChecks(@TempDir Path projectDirectory) {
+    // The opt-in coding-standard checks belong to no preset and take their limits and
+    // conventions from -rule-param, which travels through the extra arguments.
+    assertThat(command(projectDirectory, Map.of(
+      AdaProperties.ADALANG_ANALYZER_PRESET_KEY, "recommended",
+      AdaProperties.ADALANG_ANALYZER_CHECKS_KEY, "Identifier_Casing,Maximum_Subprogram_Lines,Forbidden_Attribute",
+      AdaProperties.ADALANG_ANALYZER_EXTRA_ARGS_KEY,
+      "-rule-param=Identifier_Casing.type=mixed -rule-param=Maximum_Subprogram_Lines.n=200 "
+        + "-rule-param=Forbidden_Attribute.forbidden=Address,Unchecked_Access")))
+      .containsExactly(
+        "adalang_analyzer", "-v", "--recommended",
+        "-checks=Identifier_Casing,Maximum_Subprogram_Lines,Forbidden_Attribute",
+        "-rule-param=Identifier_Casing.type=mixed",
+        "-rule-param=Maximum_Subprogram_Lines.n=200",
+        "-rule-param=Forbidden_Attribute.forbidden=Address,Unchecked_Access",
+        "/project/src/a.adb", "/project/src/b.adb");
+  }
+
   private static List<String> command(Path baseDir, Map<String, String> values) {
     return AdaLangAnalyzerRunner.buildCommand(
       new AdaLangAnalyzerConfiguration(settings(values), fileSystem(baseDir)),
