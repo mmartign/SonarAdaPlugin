@@ -87,6 +87,31 @@ class AdaLangAnalyzerRunnerTest {
   }
 
   @Test
+  void passesEachGnatproveLogResolvedAgainstTheProjectDirectory(@TempDir Path projectDirectory) {
+    // --gnatprove-log is repeatable: the flow and the proof run of one project, for instance.
+    Path absoluteLog = projectDirectory.resolveSibling("proof.log").toAbsolutePath().normalize();
+
+    assertThat(command(projectDirectory, Map.of(
+      AdaProperties.ADALANG_ANALYZER_PRESET_KEY, "verify",
+      AdaProperties.ADALANG_ANALYZER_PROJECT_FILE_KEY, "my_project.gpr",
+      AdaProperties.ADALANG_ANALYZER_GNATPROVE_LOG_PATHS_KEY, " build/flow.log, " + absoluteLog + " ",
+      AdaProperties.ADALANG_ANALYZER_EXTRA_ARGS_KEY, "-XBUILD_MODE=release")))
+      .containsExactly(
+        "adalang_analyzer", "-v", "--verify",
+        "-P" + projectDirectory.resolve("my_project.gpr"),
+        "--gnatprove-log=" + projectDirectory.resolve("build/flow.log"),
+        "--gnatprove-log=" + absoluteLog,
+        "-XBUILD_MODE=release",
+        "/project/src/a.adb", "/project/src/b.adb");
+  }
+
+  @Test
+  void passesNoGnatproveLogUnlessOneIsConfigured(@TempDir Path projectDirectory) {
+    assertThat(command(projectDirectory, Map.of(AdaProperties.ADALANG_ANALYZER_PRESET_KEY, "verify")))
+      .noneMatch(argument -> argument.startsWith("--gnatprove-log"));
+  }
+
+  @Test
   void passesCheckParametersForTheCodingStandardChecks(@TempDir Path projectDirectory) {
     // The opt-in coding-standard checks belong to no preset and take their limits and
     // conventions from -rule-param, which travels through the extra arguments.

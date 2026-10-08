@@ -7,6 +7,7 @@ package com.spazioit.sonarada.adalanganalyzer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +32,7 @@ final class AdaLangAnalyzerConsoleParser {
     Pattern.CASE_INSENSITIVE
   );
   private static final Pattern PROOF_DETAIL = Pattern.compile(
-    "^\\s{6}(method|why|evidence|imprecision|reason|blocked at|inline path):\\s*(.*)$",
+    "^\\s{6}(method|GNATprove|why|evidence|imprecision|reason|blocked at|inline path):\\s*(.*)$",
     Pattern.CASE_INSENSITIVE
   );
   private static final Pattern PROOF_SCOPE = Pattern.compile(
@@ -39,6 +40,24 @@ final class AdaLangAnalyzerConsoleParser {
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
   );
   private static final String WARNING_PREFIX = "adalang-analyzer: warning:";
+  // The counts printed after the proof obligations when a GNATprove log was given
+  // (Adalang_Analyzer.CLI.Put_Gnatprove_Summary).
+  private static final Pattern GNATPROVE_LOGS = summaryLine(
+    "GNATprove verdicts \\(read from (\\d+) logs?;.*");
+  private static final Pattern GNATPROVE_CHECKS = summaryLine(
+    "\\s*Checks in the log\\s*:\\s*(\\d+)\\s*\\((\\d+) proved, (\\d+) justified, (\\d+) not proved\\)\\s*");
+  private static final Pattern GNATPROVE_PROVED_BY_BOTH = summaryLine(
+    "\\s*proved by AdaLang too\\s*:\\s*(\\d+)\\s*");
+  private static final Pattern GNATPROVE_ON_OBLIGATION = summaryLine(
+    "\\s*GNATprove's verdict alone, on an AdaLang obligation\\s*:\\s*(\\d+)\\s*");
+  private static final Pattern GNATPROVE_WITHOUT_OBLIGATION = summaryLine(
+    "\\s*GNATprove's verdict alone, no AdaLang obligation\\s*:\\s*(\\d+)\\s*");
+  private static final Pattern GNATPROVE_ERROR_WHERE_PROVED = summaryLine(
+    "\\s*a definite error for AdaLang\\s*:\\s*(\\d+)\\s*");
+  private static final Pattern GNATPROVE_PROVED_WHERE_NOT_PROVED = summaryLine(
+    "\\s*Proved by AdaLang where GNATprove did not prove\\s*:\\s*(\\d+)\\s*");
+  private static final Pattern GNATPROVE_OBLIGATIONS_WITH_VERDICT = summaryLine(
+    "\\s*Obligations with a GNATprove verdict\\s*:\\s*(\\d+) of \\d+\\s*");
   private static final Pattern VIOLATION_COUNT = Pattern.compile(
     "^Violations\\s*:\\s*(\\d+)\\s*$",
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
@@ -171,6 +190,32 @@ final class AdaLangAnalyzerConsoleParser {
     return matcher.find() ? matcher.group(1).trim() : "";
   }
 
+  /** The counts of the GNATprove verdicts, or empty when the analyzer was given no GNATprove log. */
+  Optional<AdaLangAnalyzerGnatproveSummary> reportedGnatproveSummary(String output) {
+    int logs = parseCount(GNATPROVE_LOGS, output);
+    if (logs < 0) {
+      return Optional.empty();
+    }
+    Matcher checks = GNATPROVE_CHECKS.matcher(output);
+    boolean hasChecks = checks.find();
+    return Optional.of(new AdaLangAnalyzerGnatproveSummary(
+      logs,
+      hasChecks ? Integer.parseInt(checks.group(1)) : -1,
+      hasChecks ? Integer.parseInt(checks.group(2)) : -1,
+      hasChecks ? Integer.parseInt(checks.group(3)) : -1,
+      hasChecks ? Integer.parseInt(checks.group(4)) : -1,
+      parseCount(GNATPROVE_PROVED_BY_BOTH, output),
+      parseCount(GNATPROVE_ON_OBLIGATION, output),
+      parseCount(GNATPROVE_WITHOUT_OBLIGATION, output),
+      parseCount(GNATPROVE_ERROR_WHERE_PROVED, output),
+      parseCount(GNATPROVE_PROVED_WHERE_NOT_PROVED, output),
+      parseCount(GNATPROVE_OBLIGATIONS_WITH_VERDICT, output)));
+  }
+
+  private static Pattern summaryLine(String regex) {
+    return Pattern.compile("^" + regex + "$", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+  }
+
   private static int parseCount(Pattern pattern, String output) {
     Matcher matcher = pattern.matcher(output);
     return matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
@@ -216,6 +261,7 @@ final class AdaLangAnalyzerConsoleParser {
     private final String kind;
     private final String outcome;
     private String method = "";
+    private String gnatprove = "";
     private String why = "";
     private String imprecision = "";
     private String evidence = "";
@@ -234,6 +280,7 @@ final class AdaLangAnalyzerConsoleParser {
     private void setDetail(String name, String value) {
       switch (name.toLowerCase(Locale.ROOT)) {
         case "method" -> method = value;
+        case "gnatprove" -> gnatprove = value;
         case "why" -> why = value;
         case "evidence" -> evidence = value;
         case "reason" -> reasonCode = value;
@@ -245,7 +292,8 @@ final class AdaLangAnalyzerConsoleParser {
 
     private AdaLangAnalyzerProofObligation toProofObligation() {
       return new AdaLangAnalyzerProofObligation(
-        file, line, column, kind, outcome, method, why, imprecision, evidence, reasonCode, blockingExpression, inlinePath);
+        file, line, column, kind, outcome, method, why, imprecision, evidence, reasonCode, blockingExpression, inlinePath)
+        .withGnatprove(gnatprove);
     }
   }
 }

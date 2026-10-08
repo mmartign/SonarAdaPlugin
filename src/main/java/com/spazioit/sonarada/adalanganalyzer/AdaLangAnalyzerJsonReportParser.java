@@ -7,12 +7,16 @@ package com.spazioit.sonarada.adalanganalyzer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Reads AdaLang Analyzer's native {@code --format=json} report: a top-level {@code findings}
  * array and {@code proofObligations} array, alongside {@code filesScanned}, {@code
  * newViolations}, {@code proofSummary.total}, and {@code analysisConfiguration.skippedChecks}
- * summary figures. See AdaLang Analyzer's {@code Adalang_Analyzer.Report.Emit_JSON}.
+ * summary figures. A report of a run that was given a GNATprove log also has a {@code
+ * gnatprove} verdict on the obligations a check of the log is paired with and the counts in
+ * {@code gnatproveImport}; its {@code gnatproveChecks} array, every check of the log, is not
+ * read. See AdaLang Analyzer's {@code Adalang_Analyzer.Report.Emit_JSON}.
  */
 final class AdaLangAnalyzerJsonReportParser {
 
@@ -44,6 +48,8 @@ final class AdaLangAnalyzerJsonReportParser {
     List<AdaLangAnalyzerProofObligation> proofObligations = new ArrayList<>();
     for (Object item : AdaLangAnalyzerJson.listOf(root.get("proofObligations"))) {
       Map<String, Object> obligation = AdaLangAnalyzerJson.mapOf(item);
+      // The declaration an initialization obligation is about, when it has one.
+      Map<String, Object> subject = AdaLangAnalyzerJson.mapOf(obligation.get("subject"));
       proofObligations.add(new AdaLangAnalyzerProofObligation(
         AdaLangAnalyzerJson.stringOf(obligation, "file"),
         AdaLangAnalyzerJson.intOf(obligation, "line"),
@@ -59,7 +65,11 @@ final class AdaLangAnalyzerJsonReportParser {
         AdaLangAnalyzerJson.stringOf(obligation, "inlinePath"),
         AdaLangAnalyzerJson.stringOf(obligation, "operation"),
         AdaLangAnalyzerJson.stringOf(obligation, "assumptions"),
-        AdaLangAnalyzerJson.stringOf(obligation, "configurationId")));
+        AdaLangAnalyzerJson.stringOf(obligation, "configurationId"),
+        AdaLangAnalyzerJson.stringOf(obligation, "gnatprove"),
+        AdaLangAnalyzerJson.stringOf(subject, "file"),
+        AdaLangAnalyzerJson.intOf(subject, "line"),
+        AdaLangAnalyzerJson.intOf(subject, "column")));
     }
 
     Map<String, Object> analysisConfiguration = AdaLangAnalyzerJson.mapOf(root.get("analysisConfiguration"));
@@ -72,6 +82,9 @@ final class AdaLangAnalyzerJsonReportParser {
       AdaLangAnalyzerJson.intOf(root, "newViolations"),
       AdaLangAnalyzerJson.intOf(proofSummary, "total"),
       AdaLangAnalyzerJson.intOf(analysisConfiguration, "skippedChecks"),
-      AdaLangAnalyzerJson.stringOf(proofSummary, "scope"));
+      AdaLangAnalyzerJson.stringOf(proofSummary, "scope"),
+      root.containsKey("gnatproveImport")
+        ? Optional.of(AdaLangAnalyzerGnatproveSummary.of(AdaLangAnalyzerJson.mapOf(root.get("gnatproveImport"))))
+        : Optional.empty());
   }
 }

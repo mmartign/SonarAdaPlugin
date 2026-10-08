@@ -6,6 +6,10 @@ package com.spazioit.sonarada.adalanganalyzer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -277,5 +281,213 @@ class AdaLangAnalyzerJsonReportParserTest {
     AdaLangAnalyzerFinding fileLength = report.findings().getFirst();
     assertThat(fileLength.qualitySeverity()).isEqualTo("Medium");
     assertThat(fileLength.line()).isEqualTo(25);
+  }
+
+  @Test
+  void importsTheObligationsAboutASubprogramAsAWhole() {
+    // Obligations copied verbatim from an AdaLang Analyzer 1.8.3 --verify JSON report: the
+    // termination, data-dependencies, and flow-dependencies kinds 1.8.1 added. A
+    // flow-dependencies obligation is always unproved, with the method none: no route proves a
+    // Depends aspect yet. It is an issue like the other unproved ones.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.3", "selectedPreset": "verify", "skippedChecks": 0},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 5, "provedSafe": 2, "definiteError": 0, "unproved": 3, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/611ab10cb7c6015d", "kind": "termination", "status": "proved-safe", \
+      "method": "flow-analysis", "file": "tests/verification_actual_range.adb", "line": 22, "column": 13, \
+      "operation": "Twice", "assumptions": "", \
+      "abstractState": "no unbounded loop, no recursion, every callee terminates", \
+      "explanation": "the subprogram returns: its loops are bounded, it is not recursive and what it calls returns", \
+      "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/cc2b6caa7911fe47", "kind": "termination", "status": "unproved", \
+      "method": "flow-analysis", "file": "tests/verification_mutation_call_effects.adb", "line": 65, "column": 13, \
+      "operation": "In_Loop", "assumptions": "", "abstractState": "", \
+      "explanation": "the subprogram is not shown to return", \
+      "imprecisionSource": "a loop that is not a for loop is not shown to end", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/ec08c9dd2d3fbb44", "kind": "data-dependencies", "status": "proved-safe", \
+      "method": "flow-analysis", "file": "tests/verification_actual_range.adb", "line": 16, "column": 24, \
+      "operation": "Global of Take", "assumptions": "", \
+      "abstractState": "every object the body may read or write is allowed by the aspect", \
+      "explanation": "the subprogram reads and writes no outside object its Global aspect does not allow", \
+      "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/81a79a11ac05d76a", "kind": "data-dependencies", "status": "unproved", \
+      "method": "flow-analysis", "file": "tests/verification_global_aspect_reference_clean.adb", "line": 5, \
+      "column": 11, "operation": "Global of Bump", "assumptions": "", "abstractState": "", \
+      "explanation": "the Global aspect is not shown to cover what the subprogram reads and writes", \
+      "imprecisionSource": "Arg is used and is not listed", "reasonCode": "", "blockingExpression": "", \
+      "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/dda1f8dd910d3305", "kind": "flow-dependencies", "status": "unproved", "method": "none", \
+      "file": "tests/verification_flow_contracts.adb", "line": 40, "column": 11, "operation": "Depends of Scaled", \
+      "assumptions": "", "abstractState": "", \
+      "explanation": "the Depends aspect is not shown to be the dependencies of the subprogram", \
+      "imprecisionSource": "information flow is not yet analyzed to the point of proof", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly(
+        "proof-obligation:termination", "proof-obligation:termination", "proof-obligation:data-dependencies",
+        "proof-obligation:data-dependencies", "proof-obligation:flow-dependencies");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true, false, true, true);
+    assertThat(report.unattemptedProofCount()).isZero();
+    assertThat(report.gnatproveSummary()).isEmpty();
+    assertThat(report.proofObligations().get(4).sonarMessage()).isEqualTo(
+      "Proof obligation [flow-dependencies] unproved. Operation: Depends of Scaled. Method: none"
+        + ". Why: the Depends aspect is not shown to be the dependencies of the subprogram"
+        + ". Imprecision: information flow is not yet analyzed to the point of proof");
+
+    assertThat(report.proofObligations().get(3).sonarMessage()).isEqualTo(
+      "Proof obligation [data-dependencies] unproved. Operation: Global of Bump. Method: flow-analysis"
+        + ". Why: the Global aspect is not shown to cover what the subprogram reads and writes"
+        + ". Imprecision: Arg is used and is not listed");
+  }
+
+  @Test
+  void importsGnatproveVerdictsAndSubjectsFromARealReport() {
+    // The complete --format=json report of AdaLang Analyzer 1.8.3 run with --verify
+    // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
+      AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
+
+    assertThat(report.findings()).hasSize(3).hasSize(report.violationCount());
+    assertThat(report.proofObligations()).hasSize(26).hasSize(report.proofObligationCount());
+    assertThat(report.gnatproveSummary()).contains(
+      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 9, 1, 1, 0, 0, 13));
+    assertThat(report.proofObligations())
+      .filteredOn(obligation -> !obligation.gnatprove().isBlank())
+      .hasSize(report.gnatproveSummary().orElseThrow().obligationsWithVerdict());
+
+    // The addition only GNATprove proves keeps the analyzer's own status, and stays an issue
+    // that says what GNATprove said.
+    AdaLangAnalyzerProofObligation overflow = report.proofObligations().get(9);
+    assertThat(overflow.kind()).isEqualTo("integer-overflow");
+    assertThat(overflow.outcome()).isEqualTo("unproved");
+    assertThat(overflow.gnatprove()).isEqualTo("proved");
+    assertThat(report.isIssue(overflow)).isTrue();
+    assertThat(overflow.sonarMessage())
+      .startsWith("Proof obligation [integer-overflow] unproved. Operation: Data (Data'First) + Data (Data'Last)"
+        + ". Method: abstract-interpretation. GNATprove: proved. Why: ");
+
+    // Every unproved obligation and the definite error are issues, with or without a verdict.
+    assertThat(report.proofObligations())
+      .filteredOn(report::isIssue)
+      .extracting(AdaLangAnalyzerProofObligation::outcome, AdaLangAnalyzerProofObligation::gnatprove)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("unproved", "not-proved"),
+        org.assertj.core.groups.Tuple.tuple("unproved", "not-proved"),
+        org.assertj.core.groups.Tuple.tuple("unproved", "proved"),
+        org.assertj.core.groups.Tuple.tuple("definite-error", "not-proved"),
+        org.assertj.core.groups.Tuple.tuple("unproved", ""),
+        org.assertj.core.groups.Tuple.tuple("unproved", ""),
+        org.assertj.core.groups.Tuple.tuple("unproved", ""));
+    assertThat(report.proofObligations().get(4).sonarMessage()).isEqualTo(
+      "Proof obligation [integer-overflow] unproved. Operation: Left / Right. Method: abstract-interpretation"
+        + ". GNATprove: not-proved"
+        + ". Why: overflow is not established, but absence is not proved"
+        + ". Imprecision: Ada division semantics require a provably nonzero divisor"
+        + ". Reason: unsafe-divisor-semantics"
+        + ". Blocked at: Left / Right");
+
+    // An initialization check is located at a read and names the declaration of the object read.
+    AdaLangAnalyzerProofObligation read = report.proofObligations().get(18);
+    assertThat(read.kind()).isEqualTo("initialization-check");
+    assertThat(read.file()).isEqualTo("tests/gnatprove_import/sample.adb");
+    assertThat(read.line()).isEqualTo(5);
+    assertThat(read.column()).isEqualTo(17);
+    assertThat(read.subjectFile()).isEqualTo("tests/gnatprove_import/sample.adb");
+    assertThat(read.subjectLine()).isEqualTo(3);
+    assertThat(read.subjectColumn()).isEqualTo(20);
+    assertThat(read.hasSeparateSubject()).isTrue();
+
+    // An out parameter checked at its subprogram's exit is located at its own declaration.
+    AdaLangAnalyzerProofObligation outParameter = report.proofObligations().get(20);
+    assertThat(outParameter.operation()).isEqualTo("Target");
+    assertThat(outParameter.subjectLine()).isEqualTo(outParameter.line());
+    assertThat(outParameter.hasSeparateSubject()).isFalse();
+
+    // Only initialization checks have a subject.
+    assertThat(report.proofObligations())
+      .filteredOn(obligation -> !obligation.subjectFile().isBlank())
+      .hasSize(10)
+      .allMatch(obligation -> obligation.kind().equals("initialization-check"));
+  }
+
+  @Test
+  void keepsTheAnalyzersOwnResultWhereGnatproveDisagrees() {
+    // Obligations and counts copied verbatim from an AdaLang Analyzer 1.8.3 JSON report, for the
+    // hand-written log of the analyzer's tests that goes against its own results
+    // (tests/gnatprove_import/made_up.log): a proof GNATprove is said not to have, a justified
+    // check, and a definite error GNATprove is said to prove.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.3", "selectedPreset": "verify", "skippedChecks": 0},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 3, "provedSafe": 1, "definiteError": 1, "unproved": 1, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/54493de18b31b463", "kind": "division-by-zero", "status": "proved-safe", \
+      "method": "abstract-interpretation", "file": "tests/gnatprove_import/sample.ads", "line": 9, "column": 63, \
+      "operation": "2", "assumptions": "", "abstractState": "right operand is strictly negative or positive", \
+      "explanation": "right operand range excludes zero", "imprecisionSource": "", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none", "gnatprove": "not-proved"},
+          {"id": "proof/v1/509a357295e4bad1", "kind": "division-by-zero", "status": "unproved", \
+      "method": "abstract-interpretation", "file": "tests/gnatprove_import/sample.ads", "line": 13, "column": 14, \
+      "operation": "Right", "assumptions": "", "abstractState": "", \
+      "explanation": "zero has not been excluded from the divisor", \
+      "imprecisionSource": "the divisor range is unknown or contains zero", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none", "gnatprove": "justified"},
+          {"id": "proof/v1/220511861509692d", "kind": "division-by-zero", "status": "definite-error", \
+      "method": "abstract-interpretation", "file": "tests/gnatprove_import/sample.adb", "line": 11, "column": 22, \
+      "operation": "Zero", "assumptions": "", "abstractState": "right operand => 0", \
+      "explanation": "right operand is zero in the incoming abstract state", "imprecisionSource": "", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "gnatprove": "proved"}
+        ],
+        "gnatproveImport": {"logs": ["tests/gnatprove_import/made_up.log"], "checks": 7, "proved": 4, \
+      "justified": 1, "notProved": 2, "provedByBoth": 1, "provedByGnatproveOnObligation": 0, \
+      "provedByGnatproveWithoutObligation": 2, "definiteErrorWhereGnatproveProved": 1, \
+      "provedSafeWhereGnatproveNotProved": 1, "obligationsWithVerdict": 5},
+        "gnatproveChecks": [
+          {"file": "sample.adb", "line": 11, "column": 20, "check": "division check", "kind": "division-by-zero", \
+      "verdict": "proved", "instances": 1, "adalang": "definite-error", "obligation": "proof/v1/220511861509692d"},
+          {"file": "other.adb", "line": 3, "column": 4, "check": "range check", "kind": "range-check", \
+      "verdict": "proved", "instances": 1, "adalang": "file without any obligation", "obligation": null}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    // The checks of the log are GNATprove's and are not findings.
+    assertThat(report.findings()).isEmpty();
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true, true);
+    assertThat(report.proofObligations().get(2).sonarMessage())
+      .startsWith("Proof obligation [division-by-zero] definite-error. Operation: Zero")
+      .contains("GNATprove: proved");
+
+    AdaLangAnalyzerGnatproveSummary summary = report.gnatproveSummary().orElseThrow();
+    assertThat(summary.definiteErrorWhereGnatproveProved()).isEqualTo(1);
+    assertThat(summary.provedSafeWhereGnatproveNotProved()).isEqualTo(1);
+    assertThat(summary.justified()).isEqualTo(1);
+  }
+
+  private static String readResource(String name) {
+    try (InputStream stream = AdaLangAnalyzerJsonReportParserTest.class.getClassLoader().getResourceAsStream(name)) {
+      if (stream == null) {
+        throw new IllegalStateException("Missing test resource: " + name);
+      }
+      return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }

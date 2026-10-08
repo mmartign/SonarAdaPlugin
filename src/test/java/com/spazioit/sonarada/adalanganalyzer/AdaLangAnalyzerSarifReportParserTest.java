@@ -89,6 +89,62 @@ class AdaLangAnalyzerSarifReportParserTest {
   }
 
   @Test
+  void readsGnatproveVerdictsAndCountsFromTheRunProperties() {
+    // Obligation summaries and counts copied verbatim from the run properties of an AdaLang
+    // Analyzer 1.8.3 --format=sarif report produced with --verify --gnatprove-log.
+    String sarif = """
+      {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [{
+          "tool": {"driver": {"name": "AdaLang Analyzer", "rules": []}},
+          "properties": {
+            "proofObligations": [
+              {"id": "proof/v1/54493de18b31b463", "kind": "division-by-zero", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "gnatprove": "proved"},
+              {"id": "proof/v1/509a357295e4bad1", "kind": "division-by-zero", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "gnatprove": "not-proved"},
+              {"id": "proof/v1/81577117d1d63a73", "kind": "integer-overflow", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/d44c2209b745df62", "kind": "integer-overflow", "status": "unproved", \
+      "reasonCode": "unsupported-call", "blockingExpression": "Data (Data'First)", "inlinePath": "", \
+      "gnatprove": "proved"},
+              {"id": "proof/v1/f7135e0426de4ca1", "kind": "termination", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "gnatprove": "proved"}
+            ],
+            "gnatproveImport": {"logs": ["tests/gnatprove_import/gnatprove.log"], "checks": 14, "proved": 11, \
+      "justified": 0, "notProved": 3, "provedByBoth": 9, "provedByGnatproveOnObligation": 1, \
+      "provedByGnatproveWithoutObligation": 1, "definiteErrorWhereGnatproveProved": 0, \
+      "provedSafeWhereGnatproveNotProved": 0, "obligationsWithVerdict": 13},
+            "analysisConfiguration": {"toolVersion": "1.8.3", "selectedPreset": "verify", "skippedChecks": 0}
+          },
+          "results": []
+        }]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(sarif)));
+
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::gnatprove)
+      .containsExactly("proved", "not-proved", "", "proved", "proved");
+    // The unproved ones stay actionable whatever GNATprove said of their check.
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true, false, true, false);
+    assertThat(report.proofObligations().get(1).sonarMessage())
+      .isEqualTo("Proof obligation [division-by-zero] unproved. GNATprove: not-proved");
+    assertThat(report.gnatproveSummary()).contains(
+      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 9, 1, 1, 0, 0, 13));
+  }
+
+  @Test
+  void reportsNoGnatproveSummaryForARunWithoutALog() {
+    Map<String, Object> root = AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(
+      "{\"runs\": [{\"properties\": {\"proofObligations\": []}, \"results\": []}]}"));
+
+    assertThat(parser.parse(root).gnatproveSummary()).isEmpty();
+  }
+
+  @Test
   void toleratesMissingRuns() {
     Map<String, Object> root = AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse("{\"runs\": []}"));
 

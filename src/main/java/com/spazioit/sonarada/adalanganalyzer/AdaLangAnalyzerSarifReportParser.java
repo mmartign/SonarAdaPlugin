@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Reads AdaLang Analyzer's {@code --format=sarif} report: a single {@code runs[0]} with a
@@ -20,7 +21,9 @@ import java.util.Map;
  * (id/kind/status/reasonCode/blockingExpression/inlinePath, no file/line/column) that this parser
  * turns into obligations with an empty location so they still count towards the total but cannot
  * be resolved to an input file (see {@code Adalang_Analyzer.Report.Emit_SARIF} and {@code
- * Adalang_Analyzer.Report.Emit_JSON} for the format that carries fully located obligations).
+ * Adalang_Analyzer.Report.Emit_JSON} for the format that carries fully located obligations). When
+ * the run was given a GNATprove log, each summary also has the {@code gnatprove} verdict of its
+ * check and {@code properties.gnatproveImport} has the counts.
  */
 final class AdaLangAnalyzerSarifReportParser {
 
@@ -69,18 +72,21 @@ final class AdaLangAnalyzerSarifReportParser {
         1));
     }
 
-    List<AdaLangAnalyzerProofObligation> proofObligations = proofObligations(run);
+    Map<String, Object> runProperties = AdaLangAnalyzerJson.mapOf(run.get("properties"));
+    List<AdaLangAnalyzerProofObligation> proofObligations = proofObligations(runProperties);
 
-    // SARIF reports no file/violation/skipped-check summary counts, only the proof-obligation
-    // total implied by the properties.proofObligations array.
+    // SARIF reports no file/violation/skipped-check summary counts and no proof scope, only the
+    // proof-obligation total implied by the properties.proofObligations array.
     return new AdaLangAnalyzerReport(
-      List.copyOf(findings), proofObligations, -1, -1, proofObligations.size(), -1);
+      List.copyOf(findings), proofObligations, -1, -1, proofObligations.size(), -1, "",
+      runProperties.containsKey("gnatproveImport")
+        ? Optional.of(AdaLangAnalyzerGnatproveSummary.of(AdaLangAnalyzerJson.mapOf(runProperties.get("gnatproveImport"))))
+        : Optional.empty());
   }
 
-  private static List<AdaLangAnalyzerProofObligation> proofObligations(Map<String, Object> run) {
-    Map<String, Object> properties = AdaLangAnalyzerJson.mapOf(run.get("properties"));
+  private static List<AdaLangAnalyzerProofObligation> proofObligations(Map<String, Object> runProperties) {
     List<AdaLangAnalyzerProofObligation> proofObligations = new ArrayList<>();
-    for (Object item : AdaLangAnalyzerJson.listOf(properties.get("proofObligations"))) {
+    for (Object item : AdaLangAnalyzerJson.listOf(runProperties.get("proofObligations"))) {
       Map<String, Object> obligation = AdaLangAnalyzerJson.mapOf(item);
       proofObligations.add(new AdaLangAnalyzerProofObligation(
         "",
@@ -94,7 +100,8 @@ final class AdaLangAnalyzerSarifReportParser {
         "",
         AdaLangAnalyzerJson.stringOf(obligation, "reasonCode"),
         AdaLangAnalyzerJson.stringOf(obligation, "blockingExpression"),
-        AdaLangAnalyzerJson.stringOf(obligation, "inlinePath")));
+        AdaLangAnalyzerJson.stringOf(obligation, "inlinePath"))
+        .withGnatprove(AdaLangAnalyzerJson.stringOf(obligation, "gnatprove")));
     }
     return proofObligations;
   }

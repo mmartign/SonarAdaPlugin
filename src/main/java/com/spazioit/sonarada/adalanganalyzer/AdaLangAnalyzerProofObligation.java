@@ -6,6 +6,13 @@ package com.spazioit.sonarada.adalanganalyzer;
 
 import java.util.Locale;
 
+/**
+ * One proof obligation of an AdaLang Analyzer report. {@code gnatprove} is what GNATprove said of
+ * the same check ({@code proved}, {@code justified}, or {@code not-proved}) when the analyzer was
+ * given a GNATprove log, and empty otherwise. The subject is the declaration of the object the
+ * obligation is about, which only JSON reports carry and only for initialization checks; its
+ * file is empty when there is none.
+ */
 record AdaLangAnalyzerProofObligation(
   String file,
   int line,
@@ -21,12 +28,16 @@ record AdaLangAnalyzerProofObligation(
   String inlinePath,
   String operation,
   String assumptions,
-  String configurationId
+  String configurationId,
+  String gnatprove,
+  String subjectFile,
+  int subjectLine,
+  int subjectColumn
 ) {
   AdaLangAnalyzerProofObligation(
     String file, int line, int column, String kind, String outcome, String method, String why, String imprecision
   ) {
-    this(file, line, column, kind, outcome, method, why, imprecision, "", "", "", "", "", "", "");
+    this(file, line, column, kind, outcome, method, why, imprecision, "", "", "", "");
   }
 
   AdaLangAnalyzerProofObligation(
@@ -34,7 +45,13 @@ record AdaLangAnalyzerProofObligation(
     String evidence, String reasonCode, String blockingExpression, String inlinePath
   ) {
     this(file, line, column, kind, outcome, method, why, imprecision, evidence, reasonCode, blockingExpression,
-      inlinePath, "", "", "");
+      inlinePath, "", "", "", "", "", 0, 0);
+  }
+
+  AdaLangAnalyzerProofObligation withGnatprove(String verdict) {
+    return new AdaLangAnalyzerProofObligation(
+      file, line, column, kind, outcome, method, why, imprecision, evidence, reasonCode, blockingExpression,
+      inlinePath, operation, assumptions, configurationId, verdict, subjectFile, subjectLine, subjectColumn);
   }
 
   String ruleId() {
@@ -49,6 +66,7 @@ record AdaLangAnalyzerProofObligation(
       .append(outcome);
     appendDetail(result, "Operation", operation);
     appendDetail(result, "Method", method);
+    appendDetail(result, "GNATprove", gnatprove);
     appendDetail(result, "Why", why);
     appendDetail(result, "Evidence", evidence);
     appendDetail(result, "Imprecision", imprecision);
@@ -66,7 +84,22 @@ record AdaLangAnalyzerProofObligation(
    * mean the check does not apply or could not run, so neither is a finding.
    */
   boolean isActionable() {
-    return "unproved".equalsIgnoreCase(outcome) || "definite-error".equalsIgnoreCase(outcome);
+    return isUnproved() || isDefiniteError();
+  }
+
+  boolean isUnproved() {
+    return "unproved".equalsIgnoreCase(outcome);
+  }
+
+  boolean isDefiniteError() {
+    return "definite-error".equalsIgnoreCase(outcome);
+  }
+
+  /** True when the declaration of the object is known and is not where the obligation itself is. */
+  boolean hasSeparateSubject() {
+    return !subjectFile.isBlank()
+      && subjectLine > 0
+      && !(subjectFile.equals(file) && subjectLine == line && subjectColumn == column);
   }
 
   private static void appendDetail(StringBuilder result, String label, String value) {

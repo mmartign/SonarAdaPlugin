@@ -267,6 +267,23 @@ The analyzer is run from the Sonar project's base directory, so an `adalang_anal
 
 The analyzer's own warnings about a run, such as no check being enabled or no `gnatls` being found on `PATH` (which degrades the checks that need the Ada runtime packages), are repeated as warnings in the scanner log.
 
+Where the project is also proved with GNATprove, `sonar.ada.adalang.gnatproveLogPaths` gives the analyzer the log of that run, and what GNATprove said of each check is set beside the analyzer's own proof obligation for it. The property takes one or more comma-separated paths, resolved from the project base directory and each passed with `--gnatprove-log=`; it needs the `verify` preset and AdaLang Analyzer 1.8.3 or later. Produce the log with `--report=all --output=oneline`:
+
+```sh
+gnatprove -P my_project.gpr --mode=all --report=all --output=oneline > build/gnatprove.log
+```
+
+```properties
+sonar.ada.adalang.enabled=true
+sonar.ada.adalang.preset=verify
+sonar.ada.adalang.projectFile=my_project.gpr
+sonar.ada.adalang.gnatproveLogPaths=build/gnatprove.log
+```
+
+GNATprove is a separate tool of AdaCore. Neither this plugin nor AdaLang Analyzer contains it or runs it: the analyzer reads the text GNATprove wrote. A verdict read from the log is GNATprove's and changes nothing the analyzer reports of its own: an obligation the analyzer left `unproved` stays `unproved`. The same holds in Sonar. The log neither adds nor removes an issue: an `unproved` obligation is raised whether GNATprove proved its check or not, and so is a `definite-error` one. What the log adds is the verdict itself, in the message of each proof-obligation issue a check of the log is paired with: `GNATprove: proved`, `GNATprove: justified` (accepted by a reviewer, not discharged by a prover), or `GNATprove: not-proved`.
+
+The scanner log repeats the analyzer's counts of GNATprove's verdicts, kept apart from its own results, and warns when a check GNATprove proved is a definite error for the analyzer: one of the two tools is wrong, or the log is not that of the sources analyzed. Giving the log of the sources analyzed is up to you. A log names a file without its directory and says nothing of the state of the sources it was written for, so a log of an earlier state can pair a verdict with the wrong obligation. Given a log without `--verify`, or a log it cannot read, the analyzer stops with an error, which fails the scan unless `sonar.ada.adalang.failOnError=false`.
+
 Import one or more pre-generated reports without running the analyzer. The
 analyzer's complete console-text output, `--format=json`, and `--format=sarif`
 are all supported, plus the legacy semicolon-separated CSV/CSVX format shared
@@ -295,9 +312,16 @@ Structured proof obligations are imported from console-text and JSON reports
 (SARIF has no slot for them). Both `definite-error` (a proven failure) and
 `unproved` (an undetermined risk) obligations become reliability issues
 containing their obligation kind, analysis method, reason, and imprecision
-detail; JSON reports additionally carry the checked operation and any
+detail, and GNATprove's verdict on the same check when the analyzer was given a
+GNATprove log; JSON reports additionally carry the checked operation and any
 assumptions the proof relied on. `proved-safe`, `unreachable`, and
 `unsupported` obligations are not findings and are not imported.
+
+An initialization check is located where the object is read. JSON reports also
+give the declaration of that object (`subject`), which becomes a secondary
+location of the issue when it is elsewhere, in the same file or in another one
+Sonar indexes. Console-text output, which is what the plugin reads when it runs
+the analyzer itself, does not carry it.
 
 `unproved` obligations are imported only from a `--verify` run. Without
 `--verify` the analyzer attempts no proof and reports every obligation that is
@@ -311,14 +335,32 @@ JSON's `newViolations`) and proof-obligation `Total` summaries against the
 parsed details, when the format reports them. It logs the reported file,
 violation, proof-obligation, and skipped-check coverage totals so incomplete
 semantic analysis remains visible in scanner logs, followed by the number of
-proof obligations with each outcome.
+proof obligations with each outcome and, for a report of a run that was given a
+GNATprove log, the counts of GNATprove's verdicts. All three formats carry
+those verdicts and counts; the JSON report's list of every check of the log
+(`gnatproveChecks`) is not imported.
 
-Reports of AdaLang Analyzer 1.6.2 are supported in all three formats. Its
-`--verify` results differ from those of 1.6.0 and earlier, which could report
-an obligation as proved safe that a legal execution violates (see the
-analyzer's changelog for 1.6.1). Regenerate imported `--verify` reports with
-1.6.1 or later: obligations that were wrongly proved safe then appear as
-unproved or definite-error issues.
+Reports of AdaLang Analyzer 1.8.3 are supported in all three formats, and
+reports of earlier versions are still imported. Its `--verify` results differ
+from those of 1.8.0 and earlier in two ways:
+
+- It raises obligations where earlier versions raised none: that a function
+  returns (`termination`), that a subprogram respects its `Global` and
+  `Depends` aspects (`data-dependencies`, `flow-dependencies`), and the checks
+  in expression functions, inside preconditions and postconditions, on actual
+  parameters, on the bounds of a slice, and on `out` parameters at exit. Expect
+  more proof-obligation issues after upgrading, some of them under three new
+  rules, `proof-obligation:termination`, `proof-obligation:data-dependencies`,
+  and `proof-obligation:flow-dependencies`; the totals are not comparable with
+  those of 1.8.0. Up to 1.8.3 no route proves a `Depends` aspect, so every
+  `flow-dependencies` obligation is `unproved`, with the method `none`, and
+  each `Depends` aspect has one such issue; a wrong aspect is reported by the
+  `Depends_Contract_Mismatch` check as before.
+- Earlier versions could report an obligation as proved safe that a legal
+  execution violates, and a definite error where there is none (see the
+  analyzer's changelog for 1.6.1 and for 1.8.1 to 1.8.3). Regenerate imported
+  `--verify` reports with 1.8.3: obligations that were wrongly proved safe then
+  appear as unproved or definite-error issues.
 CSV and CSVX reports use these fields:
 
 ```text

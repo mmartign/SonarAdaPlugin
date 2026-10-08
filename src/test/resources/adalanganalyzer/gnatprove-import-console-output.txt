@@ -1,0 +1,186 @@
+adalang-analyzer [INFO]: Unit lookup covers 2 sources, 2 of them analyzed
+adalang-analyzer [INFO]: Built 2 subprogram summaries
+adalang-analyzer [INFO]: Parsing: tests/gnatprove_import/sample.ads
+adalang-analyzer [INFO]: Parsing: tests/gnatprove_import/sample.adb
+/checkout/tests/gnatprove_import/sample.adb:3:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Copy (Source : Vector; Target : out Vector) is
+                 ^^^^
+/checkout/tests/gnatprove_import/sample.adb:8:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Divide_By_Zero (Result : out Integer) is
+                 ^^^^^^^^^^^^^^
+/checkout/tests/gnatprove_import/sample.adb:11:22: warning: right operand is zero here based on an earlier assignment [Division_By_Zero]
+  rule: Find division, mod, and rem operations whose right operand is statically zero.
+  advice: Guard the operation, change the divisor, or make the exceptional case explicit before evaluating the operation.
+  why: Flow analysis propagated the assigned value to this operation without an intervening write.
+  evidence: right operand => 0
+  quality: Reliability (Blocker)
+  source:
+          Result := 10 / Zero;
+                         ^^^^
+
+Files scanned : 2
+Violations    : 3
+
+Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+  Total : 26
+  proved-safe : 19
+  definite-error : 1
+  unproved : 6
+  Details:
+    /checkout/tests/gnatprove_import/sample.ads:9:63 [division-by-zero] proved-safe
+      method: abstract-interpretation
+      GNATprove: proved
+      why: right operand range excludes zero
+      evidence: right operand is strictly negative or positive
+    /checkout/tests/gnatprove_import/sample.ads:13:14 [division-by-zero] unproved
+      method: abstract-interpretation
+      GNATprove: not-proved
+      why: zero has not been excluded from the divisor
+      imprecision: the divisor range is unknown or contains zero
+    /checkout/tests/gnatprove_import/sample.ads:9:55 [integer-overflow] proved-safe
+      method: abstract-interpretation
+      why: arithmetic result range is inside its base type
+      evidence: result bounds are within base-type bounds
+    /checkout/tests/gnatprove_import/sample.ads:9:55 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.ads:13:7 [integer-overflow] unproved
+      method: abstract-interpretation
+      GNATprove: not-proved
+      why: overflow is not established, but absence is not proved
+      imprecision: Ada division semantics require a provably nonzero divisor
+      reason: unsafe-divisor-semantics
+      blocked at: Left / Right
+    /checkout/tests/gnatprove_import/sample.ads:13:7 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.ads:13:14 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.ads:21:36 [index-check] proved-safe
+      method: static-evaluation
+      GNATprove: proved
+      why: index is the parameter of a loop over this array's own range
+      evidence: loop parameter ranges over the indexed object's bounds
+    /checkout/tests/gnatprove_import/sample.ads:21:30 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.ads:18:7 [integer-overflow] unproved
+      method: abstract-interpretation
+      GNATprove: proved
+      why: overflow is not established, but absence is not proved
+      imprecision: this call form cannot be inlined safely
+      reason: unsupported-call
+      blocked at: Data (Data'First)
+    /checkout/tests/gnatprove_import/sample.ads:18:13 [index-check] proved-safe
+      method: external-prover
+      GNATprove: proved
+      why: scalar verification condition proves the index is within the object's own bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/gnatprove_import/sample.ads:18:7 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.ads:18:33 [index-check] proved-safe
+      method: external-prover
+      GNATprove: proved
+      why: scalar verification condition proves the index is within the object's own bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/gnatprove_import/sample.ads:18:27 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.ads:9:13 [termination] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: the subprogram returns: its loops are bounded, it is not recursive and what it calls returns
+      evidence: no unbounded loop, no recursion, every callee terminates
+    /checkout/tests/gnatprove_import/sample.ads:12:13 [termination] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: the subprogram returns: its loops are bounded, it is not recursive and what it calls returns
+      evidence: no unbounded loop, no recursion, every callee terminates
+    /checkout/tests/gnatprove_import/sample.ads:17:13 [termination] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: the subprogram returns: its loops are bounded, it is not recursive and what it calls returns
+      evidence: no unbounded loop, no recursion, every callee terminates
+    /checkout/tests/gnatprove_import/sample.adb:11:22 [division-by-zero] definite-error
+      method: abstract-interpretation
+      GNATprove: not-proved
+      why: right operand is zero in the incoming abstract state
+      evidence: right operand => 0
+    /checkout/tests/gnatprove_import/sample.adb:5:17 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.adb:5:17 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the expression conflicts with its symbolic scalar sort
+      reason: sort-mismatch
+      blocked at: Source
+    /checkout/tests/gnatprove_import/sample.ads:24:37 [initialization-check] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.adb:9:25 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/gnatprove_import/sample.adb:11:17 [integer-overflow] unproved
+      method: abstract-interpretation
+      why: overflow is not established, but absence is not proved
+      imprecision: Ada division semantics require a provably nonzero divisor
+      reason: unsafe-divisor-semantics
+      blocked at: 10 / Zero
+    /checkout/tests/gnatprove_import/sample.adb:11:22 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.adb:11:17 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: Ada division semantics require a provably nonzero divisor
+      reason: unsafe-divisor-semantics
+      blocked at: 10 / Zero
+    /checkout/tests/gnatprove_import/sample.ads:28:30 [initialization-check] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+
+GNATprove verdicts (read from 1 log; not AdaLang's own results):
+  Checks in the log : 14 (11 proved, 0 justified, 3 not proved)
+  Of the checks GNATprove proved:
+    proved by AdaLang too : 9
+    GNATprove's verdict alone, on an AdaLang obligation : 1
+    GNATprove's verdict alone, no AdaLang obligation : 1
+    a definite error for AdaLang : 0
+  Proved by AdaLang where GNATprove did not prove : 0
+  Obligations with a GNATprove verdict : 13 of 26
+
+Violations by check:
+  Division_By_Zero : 1  [Reliability/Blocker]
+  Missing_Depends_Contract : 2  [Maintainability/Medium]
+
+Violations by software quality:
+  Reliability : 1
+  Maintainability : 2
+
+Violations by severity:
+  Blocker : 1
+  Medium : 2

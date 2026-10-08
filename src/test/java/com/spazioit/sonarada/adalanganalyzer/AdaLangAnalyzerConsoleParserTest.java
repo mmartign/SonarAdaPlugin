@@ -212,6 +212,167 @@ class AdaLangAnalyzerConsoleParserTest {
     assertThat(parser.reportedViolationCount(report)).isEqualTo(-1);
   }
 
+  @Test
+  void parsesGnatproveVerdictsAndTheirSummaryFromRealAnalyzerOutput() {
+    // The complete output of AdaLang Analyzer 1.8.3 run with --verify -v --gnatprove-log on the
+    // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
+    String report = readResource("adalanganalyzer/gnatprove-import-console-output.txt");
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(parser.parse(report)).hasSize(3).hasSize(parser.reportedViolationCount(report));
+    assertThat(obligations).hasSize(26).hasSize(parser.reportedProofObligationCount(report));
+    assertThat(parser.reportedProofScope(report))
+      .isEqualTo("bounded scalar verification; unsupported boundaries are explicit");
+
+    // The verdict follows the method of each obligation a check of the log is paired with.
+    assertThat(obligations).filteredOn(obligation -> !obligation.gnatprove().isBlank()).hasSize(13);
+    assertThat(obligations)
+      .extracting(AdaLangAnalyzerProofObligation::outcome, AdaLangAnalyzerProofObligation::gnatprove)
+      .contains(
+        org.assertj.core.groups.Tuple.tuple("proved-safe", "proved"),
+        org.assertj.core.groups.Tuple.tuple("unproved", "proved"),
+        org.assertj.core.groups.Tuple.tuple("unproved", "not-proved"),
+        org.assertj.core.groups.Tuple.tuple("definite-error", "not-proved"));
+
+    // The addition only GNATprove proves: the analyzer's own outcome and details are as they
+    // are without the log.
+    assertThat(obligations.get(9)).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/gnatprove_import/sample.ads", 18, 7, "integer-overflow", "unproved",
+        "abstract-interpretation", "overflow is not established, but absence is not proved",
+        "this call form cannot be inlined safely", "", "unsupported-call", "Data (Data'First)", "")
+        .withGnatprove("proved"));
+    assertThat(obligations.get(9).sonarMessage()).isEqualTo(
+      "Proof obligation [integer-overflow] unproved. Method: abstract-interpretation. GNATprove: proved"
+        + ". Why: overflow is not established, but absence is not proved"
+        + ". Imprecision: this call form cannot be inlined safely"
+        + ". Reason: unsupported-call"
+        + ". Blocked at: Data (Data'First)");
+
+    assertThat(parser.reportedGnatproveSummary(report)).contains(
+      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 9, 1, 1, 0, 0, 13));
+  }
+
+  @Test
+  void readsTheGnatproveCountsThatAreToBeLookedAtFirst() {
+    // Summary copied verbatim from AdaLang Analyzer 1.8.3 output, for the hand-written log of
+    // the analyzer's tests that goes against its own results (tests/gnatprove_import/made_up.log).
+    String report = """
+      Files scanned : 2
+      Violations    : 3
+
+      GNATprove verdicts (read from 1 log; not AdaLang's own results):
+        Checks in the log : 7 (4 proved, 1 justified, 2 not proved)
+        Of the checks GNATprove proved:
+          proved by AdaLang too : 1
+          GNATprove's verdict alone, on an AdaLang obligation : 0
+          GNATprove's verdict alone, no AdaLang obligation : 2
+          a definite error for AdaLang : 1
+        Proved by AdaLang where GNATprove did not prove : 1
+        Obligations with a GNATprove verdict : 5 of 26
+
+      Violations by check:
+        Division_By_Zero : 1  [Reliability/Blocker]
+      """;
+
+    AdaLangAnalyzerGnatproveSummary summary = parser.reportedGnatproveSummary(report).orElseThrow();
+
+    assertThat(summary).isEqualTo(new AdaLangAnalyzerGnatproveSummary(1, 7, 4, 1, 2, 1, 0, 2, 1, 1, 5));
+    assertThat(summary.definiteErrorWhereGnatproveProved()).isEqualTo(1);
+    assertThat(summary.provedSafeWhereGnatproveNotProved()).isEqualTo(1);
+    // The four ways a check GNATprove proved is accounted for add up to the checks it proved.
+    assertThat(summary.provedByBoth() + summary.provedByGnatproveOnObligation()
+      + summary.provedByGnatproveWithoutObligation() + summary.definiteErrorWhereGnatproveProved())
+      .isEqualTo(summary.proved());
+  }
+
+  @Test
+  void readsTheGnatproveSummaryOfSeveralLogs() {
+    // Copied verbatim from AdaLang Analyzer 1.8.3 output of a run given two logs and no -v.
+    String report = """
+      Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+        Total : 26
+        proved-safe : 19
+        definite-error : 1
+        unproved : 6
+        (details suppressed; rerun with -v to list each proof obligation)
+
+      GNATprove verdicts (read from 2 logs; not AdaLang's own results):
+        Checks in the log : 18 (13 proved, 0 justified, 5 not proved)
+        Of the checks GNATprove proved:
+          proved by AdaLang too : 9
+          GNATprove's verdict alone, on an AdaLang obligation : 0
+          GNATprove's verdict alone, no AdaLang obligation : 4
+          a definite error for AdaLang : 0
+        Proved by AdaLang where GNATprove did not prove : 0
+        Obligations with a GNATprove verdict : 13 of 26
+      """;
+
+    assertThat(parser.reportedGnatproveSummary(report)).contains(
+      new AdaLangAnalyzerGnatproveSummary(2, 18, 13, 0, 5, 9, 0, 4, 0, 0, 13));
+    assertThat(parser.reportedProofObligationCount(report)).isEqualTo(26);
+  }
+
+  @Test
+  void reportsNoGnatproveSummaryForARunWithoutALog() {
+    assertThat(parser.reportedGnatproveSummary("Files scanned : 3\nViolations    : 0\n")).isEmpty();
+  }
+
+  @Test
+  void parsesTheObligationsAboutASubprogramAsAWhole() {
+    // Obligations copied verbatim from AdaLang Analyzer 1.8.3 --verify -v output, with the
+    // checkout directory shortened: the termination, data-dependencies, and flow-dependencies
+    // kinds 1.8.1 added. No route proves a Depends aspect yet, which the method none says.
+    // All three unproved ones are worth an issue.
+    String report = """
+      Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+        Total : 5
+        proved-safe : 2
+        unproved : 3
+        Details:
+          /checkout/tests/verification_global_aspect_reference_clean.adb:5:11 [data-dependencies] unproved
+            method: flow-analysis
+            why: the Global aspect is not shown to cover what the subprogram reads and writes
+            imprecision: Arg is used and is not listed
+          /checkout/tests/verification_mutation_call_effects.adb:65:13 [termination] unproved
+            method: flow-analysis
+            why: the subprogram is not shown to return
+            imprecision: a loop that is not a for loop is not shown to end
+          /checkout/tests/verification_flow_contracts.adb:39:11 [data-dependencies] proved-safe
+            method: flow-analysis
+            why: the subprogram reads and writes no outside object its Global aspect does not allow
+            evidence: every object the body may read or write is allowed by the aspect
+          /checkout/tests/verification_flow_contracts.adb:40:11 [flow-dependencies] unproved
+            method: none
+            why: the Depends aspect is not shown to be the dependencies of the subprogram
+            imprecision: information flow is not yet analyzed to the point of proof
+          /checkout/tests/verification_termination.adb:7:13 [termination] proved-safe
+            method: flow-analysis
+            why: the subprogram returns: its loops are bounded, it is not recursive and what it calls returns
+            evidence: no unbounded loop, no recursion, every callee terminates
+      """;
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(obligations).hasSize(parser.reportedProofObligationCount(report));
+    assertThat(obligations)
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly(
+        "proof-obligation:data-dependencies", "proof-obligation:termination", "proof-obligation:data-dependencies",
+        "proof-obligation:flow-dependencies", "proof-obligation:termination");
+    assertThat(obligations)
+      .extracting(AdaLangAnalyzerProofObligation::method)
+      .containsExactly("flow-analysis", "flow-analysis", "flow-analysis", "none", "flow-analysis");
+    assertThat(obligations)
+      .extracting(AdaLangAnalyzerProofObligation::isActionable)
+      .containsExactly(true, true, false, true, false);
+    assertThat(obligations.get(1).sonarMessage()).isEqualTo(
+      "Proof obligation [termination] unproved. Method: flow-analysis"
+        + ". Why: the subprogram is not shown to return"
+        + ". Imprecision: a loop that is not a for loop is not shown to end");
+  }
+
   private static String readResource(String name) {
     try (InputStream stream = AdaLangAnalyzerConsoleParserTest.class.getClassLoader().getResourceAsStream(name)) {
       if (stream == null) {

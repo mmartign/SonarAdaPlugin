@@ -41,6 +41,7 @@ public final class AdaProperties {
   public static final String ADALANG_ANALYZER_PRESET_KEY = "sonar.ada.adalang.preset";
   public static final String ADALANG_ANALYZER_CHECKS_KEY = "sonar.ada.adalang.checks";
   public static final String ADALANG_ANALYZER_PROJECT_FILE_KEY = "sonar.ada.adalang.projectFile";
+  public static final String ADALANG_ANALYZER_GNATPROVE_LOG_PATHS_KEY = "sonar.ada.adalang.gnatproveLogPaths";
   public static final String ADALANG_ANALYZER_EXTRA_ARGS_KEY = "sonar.ada.adalang.extraArgs";
   public static final String ADALANG_ANALYZER_REPORT_PATHS_KEY = "sonar.ada.adalang.reportPaths";
   public static final String ADALANG_ANALYZER_TIMEOUT_SECONDS_KEY = "sonar.ada.adalang.timeoutSeconds";
@@ -159,6 +160,16 @@ public final class AdaProperties {
         .name("AdaLang Analyzer project file")
         .description("Optional GNAT .gpr project file passed with -P. Its sources are analyzed together with the "
           + "Ada files indexed by Sonar, and its configuration pragmas (such as SPARK_Mode) are taken into account.")
+        .category(CATEGORY)
+        .subCategory("AdaLang Analyzer")
+        .type(PropertyType.STRING)
+        .build(),
+      PropertyDefinition.builder(ADALANG_ANALYZER_GNATPROVE_LOG_PATHS_KEY)
+        .name("AdaLang Analyzer GNATprove log paths")
+        .description("Optional comma-separated paths to logs of a 'gnatprove --report=all --output=oneline' run on the "
+          + "same sources, each passed with --gnatprove-log=. Requires the verify preset. The analyzer sets GNATprove's "
+          + "verdict beside each of its own proof obligations without changing them, and the verdict is shown in the "
+          + "message of the issue. GNATprove is a separate tool of AdaCore that is neither bundled nor run.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)

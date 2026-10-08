@@ -19,6 +19,8 @@ sonar.sourceEncoding=UTF-8
 # sonar.ada.adalang.preset=verify
 # sonar.ada.adalang.checks=-Missing_Depends_Contract
 # sonar.ada.adalang.projectFile=my_project.gpr
+# Log of 'gnatprove --report=all --output=oneline' on the same sources (verify preset only).
+# sonar.ada.adalang.gnatproveLogPaths=build/gnatprove.log
 # sonar.ada.adalang.extraArgs=-XBUILD_MODE=release
 # sonar.ada.adalang.reportPaths=build/adalang_report.json
 

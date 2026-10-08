@@ -70,7 +70,10 @@ diagnostic output. Exit code `1` is accepted when findings were produced.
 Replace the `checks` line with `sonar.ada.adalang.preset=verify` to run the
 analyzer's bounded verification instead, and add
 `sonar.ada.adalang.projectFile=example.gpr` to analyze the sources of the GNAT
-project.
+project. With the `verify` preset,
+`sonar.ada.adalang.gnatproveLogPaths=build/gnatprove.log` sets beside each proof
+obligation what GNATprove said of the same check, read from the log of a
+`gnatprove --report=all --output=oneline` run you made on the same sources.
 Report import and direct execution can be enabled together, although the same
 finding may then be published twice.
 

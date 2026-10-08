@@ -169,7 +169,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
             }
             java.util.Optional<InputFile> inputFile = fileIndex.find(proofObligation.file());
             if (inputFile.isPresent()) {
-              saveExternalIssue(context, inputFile.get(), proofObligation);
+              saveExternalIssue(context, inputFile.get(), proofObligation, fileIndex);
               imported++;
             } else {
               unresolved++;
@@ -204,7 +204,8 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       parser.reportedViolationCount(output),
       parser.reportedProofObligationCount(output),
       parser.reportedSkippedCheckCount(output),
-      parser.reportedProofScope(output));
+      parser.reportedProofScope(output),
+      parser.reportedGnatproveSummary(output));
   }
 
   private static void publishFindings(
@@ -231,7 +232,7 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       }
       java.util.Optional<InputFile> inputFile = fileIndex.find(proofObligation.file());
       if (inputFile.isPresent()) {
-        saveExternalIssue(context, inputFile.get(), proofObligation);
+        saveExternalIssue(context, inputFile.get(), proofObligation, fileIndex);
         imported++;
       } else {
         unresolved++;
@@ -304,6 +305,34 @@ public final class AdaLangAnalyzerSensor implements Sensor {
           source, unattempted, AdaProperties.ADALANG_ANALYZER_PRESET_KEY);
       }
     }
+    report.gnatproveSummary().ifPresent(summary -> logGnatproveSummary(source, summary));
+  }
+
+  private static void logGnatproveSummary(String source, AdaLangAnalyzerGnatproveSummary summary) {
+    LOG.info(
+      "AdaLang Analyzer {} GNATprove verdicts (read from {} GNATprove log(s); not AdaLang Analyzer's own results): "
+        + "{} check(s), {} proved, {} justified, {} not proved. Of the checks GNATprove proved: {} proved by "
+        + "AdaLang Analyzer too, {} on an obligation it did not decide, {} without an obligation of its own",
+      source,
+      displayCount(summary.logs()),
+      displayCount(summary.checks()),
+      displayCount(summary.proved()),
+      displayCount(summary.justified()),
+      displayCount(summary.notProved()),
+      displayCount(summary.provedByBoth()),
+      displayCount(summary.provedByGnatproveOnObligation()),
+      displayCount(summary.provedByGnatproveWithoutObligation())
+    );
+    if (summary.definiteErrorWhereGnatproveProved() > 0) {
+      LOG.warn("AdaLang Analyzer {}: {} check(s) GNATprove proved are a definite error for AdaLang Analyzer; "
+        + "one of the two tools is wrong, or the GNATprove log is not that of the sources analyzed",
+        source, summary.definiteErrorWhereGnatproveProved());
+    }
+    if (summary.provedSafeWhereGnatproveNotProved() > 0) {
+      LOG.info("AdaLang Analyzer {}: {} obligation(s) AdaLang Analyzer proved safe have a check GNATprove did "
+        + "not prove; GNATprove gives up where its provers run out of time, so this need not be a fault of either",
+        source, summary.provedSafeWhereGnatproveNotProved());
+    }
   }
 
   private static String displayCount(int count) {
@@ -344,9 +373,10 @@ public final class AdaLangAnalyzerSensor implements Sensor {
   private static void saveExternalIssue(
     SensorContext context,
     InputFile inputFile,
-    AdaLangAnalyzerProofObligation proofObligation
+    AdaLangAnalyzerProofObligation proofObligation,
+    AdaLangAnalyzerFileIndex fileIndex
   ) {
-    org.sonar.api.issue.impact.Severity impactSeverity = "definite-error".equalsIgnoreCase(proofObligation.outcome())
+    org.sonar.api.issue.impact.Severity impactSeverity = proofObligation.isDefiniteError()
       ? org.sonar.api.issue.impact.Severity.HIGH
       : org.sonar.api.issue.impact.Severity.MEDIUM;
     NewExternalIssue issue = context.newExternalIssue()
@@ -359,14 +389,30 @@ public final class AdaLangAnalyzerSensor implements Sensor {
       .remediationEffortMinutes(10L);
 
     NewIssueLocation location = issue.newLocation().on(inputFile).message(proofObligation.sonarMessage());
-    int line = Math.max(1, Math.min(inputFile.lines(), proofObligation.line()));
-    try {
-      int start = Math.max(0, proofObligation.column() - 1);
-      location.at(inputFile.newRange(line, start, line, start + 1));
-    } catch (RuntimeException invalidRange) {
-      location.at(inputFile.selectLine(line));
+    issue.at(atPosition(location, inputFile, proofObligation.line(), proofObligation.column()));
+    if (proofObligation.hasSeparateSubject()) {
+      // The object an initialization check is about is declared elsewhere, possibly in another file.
+      fileIndex.find(proofObligation.subjectFile()).ifPresent(subjectFile -> issue.addLocation(atPosition(
+        issue.newLocation().on(subjectFile).message(subjectMessage(proofObligation)),
+        subjectFile, proofObligation.subjectLine(), proofObligation.subjectColumn())));
     }
-    issue.at(location).save();
+    issue.save();
+  }
+
+  private static String subjectMessage(AdaLangAnalyzerProofObligation proofObligation) {
+    return proofObligation.operation().isBlank()
+      ? "Declaration of the object"
+      : "Declaration of " + proofObligation.operation();
+  }
+
+  private static NewIssueLocation atPosition(NewIssueLocation location, InputFile inputFile, int line, int column) {
+    int clampedLine = Math.max(1, Math.min(inputFile.lines(), line));
+    try {
+      int start = Math.max(0, column - 1);
+      return location.at(inputFile.newRange(clampedLine, start, clampedLine, start + 1));
+    } catch (RuntimeException invalidRange) {
+      return location.at(inputFile.selectLine(clampedLine));
+    }
   }
 
   private static void saveExternalIssue(SensorContext context, InputFile inputFile, AdaLangAnalyzerIssue importedIssue) {

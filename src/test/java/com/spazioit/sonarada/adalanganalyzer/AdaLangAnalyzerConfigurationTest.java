@@ -39,6 +39,13 @@ class AdaLangAnalyzerConfigurationTest {
       .contains(AdaProperties.ADALANG_ANALYZER_REPORT_PATHS_KEY);
   }
 
+  @Test
+  void registersGnatproveLogPathsAsAnAdaSetting() {
+    assertThat(AdaProperties.definitions())
+      .extracting(definition -> definition.key())
+      .contains(AdaProperties.ADALANG_ANALYZER_GNATPROVE_LOG_PATHS_KEY);
+  }
+
   private static Configuration configuration(String reportPaths) {
     return (Configuration) Proxy.newProxyInstance(
       Configuration.class.getClassLoader(),

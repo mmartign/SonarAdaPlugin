@@ -77,6 +77,7 @@ final class AdaLangAnalyzerRunner {
     // After the preset, so that the list refines it instead of being reset by it.
     checks.ifPresent(value -> command.add("-checks=" + value));
     configuration.projectFile().ifPresent(projectFile -> command.add("-P" + projectFile));
+    configuration.gnatproveLogPaths().forEach(log -> command.add("--gnatprove-log=" + log));
     command.addAll(configuration.extraArguments());
     inputFiles.stream()
       .map(IndexedFile.class::cast)

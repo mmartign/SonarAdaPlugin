@@ -62,6 +62,14 @@ final class AdaLangAnalyzerConfiguration {
       .map(this::resolvePath);
   }
 
+  /**
+   * Logs of GNATprove runs on the same sources, whose verdicts the analyzer sets beside its own
+   * obligations. The analyzer rejects them without {@code --verify} and when one cannot be read.
+   */
+  List<Path> gnatproveLogPaths() {
+    return resolvePaths(AdaProperties.ADALANG_ANALYZER_GNATPROVE_LOG_PATHS_KEY);
+  }
+
   List<String> extraArguments() {
     return argumentParser.parse(configuration.get(AdaProperties.ADALANG_ANALYZER_EXTRA_ARGS_KEY).orElse(""));
   }
@@ -81,15 +89,7 @@ final class AdaLangAnalyzerConfiguration {
   }
 
   List<Path> reportPaths() {
-    String configuredPaths = configuration.get(AdaProperties.ADALANG_ANALYZER_REPORT_PATHS_KEY).orElse("");
-    if (configuredPaths.isBlank()) {
-      return List.of();
-    }
-    return Arrays.stream(configuredPaths.split(","))
-      .map(String::trim)
-      .filter(path -> !path.isEmpty())
-      .map(this::resolvePath)
-      .toList();
+    return resolvePaths(AdaProperties.ADALANG_ANALYZER_REPORT_PATHS_KEY);
   }
 
   int timeoutSeconds() {
@@ -98,6 +98,18 @@ final class AdaLangAnalyzerConfiguration {
 
   boolean failOnError() {
     return configuration.getBoolean(AdaProperties.ADALANG_ANALYZER_FAIL_ON_ERROR_KEY).orElse(true);
+  }
+
+  private List<Path> resolvePaths(String key) {
+    String configuredPaths = configuration.get(key).orElse("");
+    if (configuredPaths.isBlank()) {
+      return List.of();
+    }
+    return Arrays.stream(configuredPaths.split(","))
+      .map(String::trim)
+      .filter(path -> !path.isEmpty())
+      .map(this::resolvePath)
+      .toList();
   }
 
   private Path resolvePath(String path) {
