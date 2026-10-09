@@ -1,6 +1,7 @@
 # SonarQube Ada Plugin
 
 [![CI](https://github.com/mmartign/SonarAdaPlugin/actions/workflows/ci.yml/badge.svg)](https://github.com/mmartign/SonarAdaPlugin/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmmartign%2FSonarAdaPlugin%2Fmain%2Fpom.xml&query=%2F%2A%5Blocal-name%28%29%3D%27project%27%5D%2F%2A%5Blocal-name%28%29%3D%27version%27%5D&label=version&color=blue)](pom.xml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
