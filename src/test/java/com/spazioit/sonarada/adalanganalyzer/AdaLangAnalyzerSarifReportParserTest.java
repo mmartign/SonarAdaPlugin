@@ -91,7 +91,7 @@ class AdaLangAnalyzerSarifReportParserTest {
   @Test
   void readsGnatproveVerdictsAndCountsFromTheRunProperties() {
     // Obligation summaries and counts copied verbatim from the run properties of an AdaLang
-    // Analyzer 1.8.3 --format=sarif report produced with --verify --gnatprove-log.
+    // Analyzer 1.8.4 --format=sarif report produced with --verify --gnatprove-log.
     String sarif = """
       {
         "version": "2.1.0",
@@ -110,13 +110,15 @@ class AdaLangAnalyzerSarifReportParserTest {
       "reasonCode": "unsupported-call", "blockingExpression": "Data (Data'First)", "inlinePath": "", \
       "gnatprove": "proved"},
               {"id": "proof/v1/f7135e0426de4ca1", "kind": "termination", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "gnatprove": "proved"},
+              {"id": "proof/v1/1a1cde184e601e05", "kind": "length-check", "status": "proved-safe", \
       "reasonCode": "", "blockingExpression": "", "inlinePath": "", "gnatprove": "proved"}
             ],
             "gnatproveImport": {"logs": ["tests/gnatprove_import/gnatprove.log"], "checks": 14, "proved": 11, \
-      "justified": 0, "notProved": 3, "provedByBoth": 9, "provedByGnatproveOnObligation": 1, \
-      "provedByGnatproveWithoutObligation": 1, "definiteErrorWhereGnatproveProved": 0, \
-      "provedSafeWhereGnatproveNotProved": 0, "obligationsWithVerdict": 13},
-            "analysisConfiguration": {"toolVersion": "1.8.3", "selectedPreset": "verify", "skippedChecks": 0}
+      "justified": 0, "notProved": 3, "provedByBoth": 10, "provedByGnatproveOnObligation": 1, \
+      "provedByGnatproveWithoutObligation": 0, "definiteErrorWhereGnatproveProved": 0, \
+      "provedSafeWhereGnatproveNotProved": 0, "obligationsWithVerdict": 14},
+            "analysisConfiguration": {"toolVersion": "1.8.4", "selectedPreset": "verify", "skippedChecks": 0}
           },
           "results": []
         }]
@@ -127,13 +129,50 @@ class AdaLangAnalyzerSarifReportParserTest {
 
     assertThat(report.proofObligations())
       .extracting(AdaLangAnalyzerProofObligation::gnatprove)
-      .containsExactly("proved", "not-proved", "", "proved", "proved");
+      .containsExactly("proved", "not-proved", "", "proved", "proved", "proved");
     // The unproved ones stay actionable whatever GNATprove said of their check.
-    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true, false, true, false);
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true, false, true, false, false);
     assertThat(report.proofObligations().get(1).sonarMessage())
       .isEqualTo("Proof obligation [division-by-zero] unproved. GNATprove: not-proved");
     assertThat(report.gnatproveSummary()).contains(
-      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 9, 1, 1, 0, 0, 13));
+      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 10, 1, 0, 0, 0, 14));
+  }
+
+  @Test
+  void readsTheLengthChecksOfTheRunProperties() {
+    // Obligation summaries copied verbatim from the run properties of an AdaLang Analyzer 1.8.4
+    // --format=sarif report produced with --verify: the length-check kind 1.8.4 added.
+    String sarif = """
+      {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [{
+          "tool": {"driver": {"name": "AdaLang Analyzer", "rules": []}},
+          "properties": {
+            "proofObligations": [
+              {"id": "proof/v1/1507a9292cfdc9a3", "kind": "length-check", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/43fc862f68af09f1", "kind": "length-check", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/460c11b760569cb6", "kind": "length-check", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""}
+            ],
+            "analysisConfiguration": {"toolVersion": "1.8.4", "selectedPreset": "verify", "skippedChecks": 0}
+          },
+          "results": []
+        }]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(sarif)));
+
+    assertThat(report.proofObligationCount()).isEqualTo(3);
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsOnly("proof-obligation:length-check");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true, true);
+    assertThat(report.proofObligations().get(1).sonarMessage()).isEqualTo("Proof obligation [length-check] unproved");
+    assertThat(report.gnatproveSummary()).isEmpty();
   }
 
   @Test

@@ -1,0 +1,252 @@
+adalang-analyzer [INFO]: Unit lookup covers 1 sources, 1 of them analyzed
+adalang-analyzer [INFO]: Built 4 subprogram summaries
+adalang-analyzer [INFO]: Parsing: tests/verification_length_check_state.adb
+/checkout/tests/verification_length_check_state.adb:11:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Declared_Before (Goal : in out Bytes; Count : Index)
+                 ^^^^^^^^^^^^^^^
+/checkout/tests/verification_length_check_state.adb:22:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Changed_Since (Into : in out Bytes; From : Bytes; Count : Index)
+                 ^^^^^^^^^^^^^
+/checkout/tests/verification_length_check_state.adb:33:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Subtype_Before (Sink : in out Bytes; Count : Index)
+                 ^^^^^^^^^^^^^^
+
+Files scanned : 1
+Violations    : 3
+
+Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+  Total : 47
+  proved-safe : 26
+  unproved : 21
+  Details:
+    /checkout/tests/verification_length_check_state.adb:12:42 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:14:24 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:14:24 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_length_check_state.adb:15:45 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: this expression form is outside the scalar VC subset
+      reason: unsupported-expression-kind
+      blocked at: (others => 0)
+    /checkout/tests/verification_length_check_state.adb:17:15 [integer-overflow] unproved
+      method: abstract-interpretation
+      why: overflow is not established, but absence is not proved
+      imprecision: the required bounds are not statically known
+      reason: missing-static-bounds
+      blocked at: Size + 1
+    /checkout/tests/verification_length_check_state.adb:17:15 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:17:15 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/verification_length_check_state.adb:18:27 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:18:27 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the expression conflicts with its symbolic scalar sort
+      reason: sort-mismatch
+      blocked at: Local
+    /checkout/tests/verification_length_check_state.adb:15:45 [length-check] proved-safe
+      method: abstract-interpretation
+      why: an aggregate with an others choice has the bounds of what it is given to
+      evidence: the value takes the bounds of its target
+    /checkout/tests/verification_length_check_state.adb:15:36 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:18:27 [length-check] unproved
+      method: abstract-interpretation
+      why: length-check failure is not established, but absence is not proved
+      imprecision: the two lengths are not known to be equal
+    /checkout/tests/verification_length_check_state.adb:18:24 [length-check] unproved
+      method: abstract-interpretation
+      why: length-check failure is not established, but absence is not proved
+      imprecision: the two lengths are not known to be equal
+    /checkout/tests/verification_length_check_state.adb:18:7 [range-check] unproved
+      method: abstract-interpretation
+      why: slice bounds are not established as within the array bounds
+      imprecision: slice bound and array bound ranges remain inconclusive
+    /checkout/tests/verification_length_check_state.adb:18:18 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:24:27 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:24:54 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:26:24 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:26:24 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_length_check_state.adb:28:16 [integer-overflow] unproved
+      method: abstract-interpretation
+      why: overflow is not established, but absence is not proved
+      imprecision: the required bounds are not statically known
+      reason: missing-static-bounds
+      blocked at: Limit + 1
+    /checkout/tests/verification_length_check_state.adb:28:16 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:28:16 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/verification_length_check_state.adb:29:28 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:29:39 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:29:28 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: this call form cannot be inlined safely
+      reason: unsupported-call
+      blocked at: From (1 .. Limit)
+    /checkout/tests/verification_length_check_state.adb:29:28 [length-check] unproved
+      method: abstract-interpretation
+      why: length-check failure is not established, but absence is not proved
+      imprecision: the two lengths are not known to be equal
+    /checkout/tests/verification_length_check_state.adb:29:25 [length-check] unproved
+      method: abstract-interpretation
+      why: length-check failure is not established, but absence is not proved
+      imprecision: the two lengths are not known to be equal
+    /checkout/tests/verification_length_check_state.adb:29:7 [range-check] unproved
+      method: abstract-interpretation
+      why: slice bounds are not established as within the array bounds
+      imprecision: slice bound and array bound ranges remain inconclusive
+    /checkout/tests/verification_length_check_state.adb:29:18 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:29:28 [range-check] proved-safe
+      method: external-prover
+      why: both slice bounds are within the array index bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/verification_length_check_state.adb:34:42 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:36:23 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:36:23 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_length_check_state.adb:38:32 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: this expression form is outside the scalar VC subset
+      reason: unsupported-expression-kind
+      blocked at: (others => 0)
+    /checkout/tests/verification_length_check_state.adb:40:15 [integer-overflow] unproved
+      method: abstract-interpretation
+      why: overflow is not established, but absence is not proved
+      imprecision: the required bounds are not statically known
+      reason: missing-static-bounds
+      blocked at: Size + 1
+    /checkout/tests/verification_length_check_state.adb:40:15 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:40:15 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/verification_length_check_state.adb:42:48 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:42:48 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the expression conflicts with its symbolic scalar sort
+      reason: sort-mismatch
+      blocked at: Kept
+    /checkout/tests/verification_length_check_state.adb:44:29 [index-check] unproved
+      method: abstract-interpretation
+      why: index-check failure is not established, but absence is not proved
+      imprecision: the required bounds are not statically known
+      reason: missing-static-bounds
+      blocked at: 1
+    /checkout/tests/verification_length_check_state.adb:44:22 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:44:22 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: this call form cannot be inlined safely
+      reason: unsupported-call
+      blocked at: Wider (1)
+    /checkout/tests/verification_length_check_state.adb:44:16 [index-check] unproved
+      method: abstract-interpretation
+      why: index-check failure is not established, but absence is not proved
+      imprecision: the required bounds are not statically known
+      reason: missing-static-bounds
+      blocked at: 1
+    /checkout/tests/verification_length_check_state.adb:37:36 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_length_check_state.adb:38:32 [length-check] proved-safe
+      method: abstract-interpretation
+      why: an aggregate with an others choice has the bounds of what it is given to
+      evidence: the value takes the bounds of its target
+    /checkout/tests/verification_length_check_state.adb:42:48 [length-check] unproved
+      method: abstract-interpretation
+      why: length-check failure is not established, but absence is not proved
+      imprecision: the two lengths are not known to be equal
+    /checkout/tests/verification_length_check_state.adb:42:39 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+
+Violations by check:
+  Missing_Depends_Contract : 3  [Maintainability/Medium]
+
+Violations by software quality:
+  Maintainability : 3
+
+Violations by severity:
+  Medium : 3

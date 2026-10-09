@@ -35,7 +35,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsARealConsoleReportWithGnatproveVerdicts(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.8.3 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/gnatprove-import-console-output.txt"));
 
@@ -69,6 +69,35 @@ class AdaLangAnalyzerSensorTest {
         && message.contains("GNATprove: proved"))
       .anyMatch(message -> message.startsWith("Proof obligation [division-by-zero] definite-error")
         && message.contains("GNATprove: not-proved"));
+  }
+
+  @Test
+  void importsTheLengthChecksOfARealConsoleReport(@TempDir Path projectDirectory) throws IOException {
+    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v on the analyzer's own
+    // tests/verification_length_check_state.adb, with the checkout directory shortened.
+    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/length-check-console-output.txt"));
+
+    List<SavedIssue> issues = importReport(projectDirectory, "adalang.txt", "tests/verification_length_check_state.adb");
+
+    // Three findings and the twenty-one unproved obligations.
+    assertThat(issues).hasSize(24);
+    // The five length checks that are not proved. An assignment to a slice has one at its value
+    // and one at its ":=", three columns before.
+    assertThat(issues)
+      .filteredOn(issue -> issue.ruleId().equals("proof-obligation:length-check"))
+      .extracting(issue -> issue.primary().range(), SavedIssue::severity)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("18:26", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("18:23", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("29:27", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("29:24", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("42:47", Severity.MAJOR));
+    assertThat(issues)
+      .filteredOn(issue -> issue.ruleId().equals("proof-obligation:length-check"))
+      .extracting(issue -> issue.primary().message())
+      .containsOnly("Proof obligation [length-check] unproved. Method: abstract-interpretation"
+        + ". Why: length-check failure is not established, but absence is not proved"
+        + ". Imprecision: the two lengths are not known to be equal");
   }
 
   @Test

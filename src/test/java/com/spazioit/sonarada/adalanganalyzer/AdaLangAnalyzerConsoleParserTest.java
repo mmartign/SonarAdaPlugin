@@ -214,19 +214,19 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesGnatproveVerdictsAndTheirSummaryFromRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.8.3 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     String report = readResource("adalanganalyzer/gnatprove-import-console-output.txt");
 
     List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
 
     assertThat(parser.parse(report)).hasSize(3).hasSize(parser.reportedViolationCount(report));
-    assertThat(obligations).hasSize(26).hasSize(parser.reportedProofObligationCount(report));
+    assertThat(obligations).hasSize(27).hasSize(parser.reportedProofObligationCount(report));
     assertThat(parser.reportedProofScope(report))
       .isEqualTo("bounded scalar verification; unsupported boundaries are explicit");
 
     // The verdict follows the method of each obligation a check of the log is paired with.
-    assertThat(obligations).filteredOn(obligation -> !obligation.gnatprove().isBlank()).hasSize(13);
+    assertThat(obligations).filteredOn(obligation -> !obligation.gnatprove().isBlank()).hasSize(14);
     assertThat(obligations)
       .extracting(AdaLangAnalyzerProofObligation::outcome, AdaLangAnalyzerProofObligation::gnatprove)
       .contains(
@@ -251,12 +251,12 @@ class AdaLangAnalyzerConsoleParserTest {
         + ". Blocked at: Data (Data'First)");
 
     assertThat(parser.reportedGnatproveSummary(report)).contains(
-      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 9, 1, 1, 0, 0, 13));
+      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 10, 1, 0, 0, 0, 14));
   }
 
   @Test
   void readsTheGnatproveCountsThatAreToBeLookedAtFirst() {
-    // Summary copied verbatim from AdaLang Analyzer 1.8.3 output, for the hand-written log of
+    // Summary copied verbatim from AdaLang Analyzer 1.8.4 output, for the hand-written log of
     // the analyzer's tests that goes against its own results (tests/gnatprove_import/made_up.log).
     String report = """
       Files scanned : 2
@@ -270,7 +270,7 @@ class AdaLangAnalyzerConsoleParserTest {
           GNATprove's verdict alone, no AdaLang obligation : 2
           a definite error for AdaLang : 1
         Proved by AdaLang where GNATprove did not prove : 1
-        Obligations with a GNATprove verdict : 5 of 26
+        Obligations with a GNATprove verdict : 5 of 27
 
       Violations by check:
         Division_By_Zero : 1  [Reliability/Blocker]
@@ -289,11 +289,11 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void readsTheGnatproveSummaryOfSeveralLogs() {
-    // Copied verbatim from AdaLang Analyzer 1.8.3 output of a run given two logs and no -v.
+    // Copied verbatim from AdaLang Analyzer 1.8.4 output of a run given two logs and no -v.
     String report = """
       Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
-        Total : 26
-        proved-safe : 19
+        Total : 27
+        proved-safe : 20
         definite-error : 1
         unproved : 6
         (details suppressed; rerun with -v to list each proof obligation)
@@ -301,17 +301,17 @@ class AdaLangAnalyzerConsoleParserTest {
       GNATprove verdicts (read from 2 logs; not AdaLang's own results):
         Checks in the log : 18 (13 proved, 0 justified, 5 not proved)
         Of the checks GNATprove proved:
-          proved by AdaLang too : 9
+          proved by AdaLang too : 10
           GNATprove's verdict alone, on an AdaLang obligation : 0
-          GNATprove's verdict alone, no AdaLang obligation : 4
+          GNATprove's verdict alone, no AdaLang obligation : 3
           a definite error for AdaLang : 0
         Proved by AdaLang where GNATprove did not prove : 0
-        Obligations with a GNATprove verdict : 13 of 26
+        Obligations with a GNATprove verdict : 14 of 27
       """;
 
     assertThat(parser.reportedGnatproveSummary(report)).contains(
-      new AdaLangAnalyzerGnatproveSummary(2, 18, 13, 0, 5, 9, 0, 4, 0, 0, 13));
-    assertThat(parser.reportedProofObligationCount(report)).isEqualTo(26);
+      new AdaLangAnalyzerGnatproveSummary(2, 18, 13, 0, 5, 10, 0, 3, 0, 0, 14));
+    assertThat(parser.reportedProofObligationCount(report)).isEqualTo(27);
   }
 
   @Test
@@ -371,6 +371,132 @@ class AdaLangAnalyzerConsoleParserTest {
       "Proof obligation [termination] unproved. Method: flow-analysis"
         + ". Why: the subprogram is not shown to return"
         + ". Imprecision: a loop that is not a for loop is not shown to end");
+  }
+
+  @Test
+  void parsesTheLengthChecksOfRealAnalyzerOutput() {
+    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v on the analyzer's own
+    // tests/verification_length_check_state.adb, with the checkout directory shortened: the
+    // length-check kind 1.8.4 added.
+    String report = readResource("adalanganalyzer/length-check-console-output.txt");
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(parser.parse(report)).hasSize(3).hasSize(parser.reportedViolationCount(report));
+    assertThat(obligations).hasSize(47).hasSize(parser.reportedProofObligationCount(report));
+
+    List<AdaLangAnalyzerProofObligation> lengthChecks = obligations.stream()
+      .filter(obligation -> obligation.kind().equals("length-check"))
+      .toList();
+    // An assignment to a slice has two: one at the value, one of its own at the ":=".
+    assertThat(lengthChecks)
+      .extracting(
+        AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::column,
+        AdaLangAnalyzerProofObligation::outcome)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(15, 45, "proved-safe"),
+        org.assertj.core.groups.Tuple.tuple(18, 27, "unproved"),
+        org.assertj.core.groups.Tuple.tuple(18, 24, "unproved"),
+        org.assertj.core.groups.Tuple.tuple(29, 28, "unproved"),
+        org.assertj.core.groups.Tuple.tuple(29, 25, "unproved"),
+        org.assertj.core.groups.Tuple.tuple(38, 32, "proved-safe"),
+        org.assertj.core.groups.Tuple.tuple(42, 48, "unproved"));
+    assertThat(lengthChecks)
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsOnly("proof-obligation:length-check");
+    assertThat(lengthChecks)
+      .extracting(AdaLangAnalyzerProofObligation::isActionable)
+      .containsExactly(false, true, true, true, true, false, true);
+    assertThat(lengthChecks.get(2)).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/verification_length_check_state.adb", 18, 24, "length-check", "unproved",
+        "abstract-interpretation", "length-check failure is not established, but absence is not proved",
+        "the two lengths are not known to be equal"));
+    assertThat(lengthChecks.get(2).sonarMessage()).isEqualTo(
+      "Proof obligation [length-check] unproved. Method: abstract-interpretation"
+        + ". Why: length-check failure is not established, but absence is not proved"
+        + ". Imprecision: the two lengths are not known to be equal");
+    assertThat(lengthChecks.getFirst().sonarMessage()).isEqualTo(
+      "Proof obligation [length-check] proved-safe. Method: abstract-interpretation"
+        + ". Why: an aggregate with an others choice has the bounds of what it is given to"
+        + ". Evidence: the value takes the bounds of its target");
+  }
+
+  @Test
+  void keepsEveryLineOfAnExpressionWrittenOnSeveral() {
+    // Obligations copied verbatim from AdaLang Analyzer 1.8.4 --verify -v output, with the
+    // checkout directory shortened: the expression that blocked the proof is a case expression
+    // written on two lines of the source, and is printed as it is written.
+    String report = """
+      Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+        Total : 2
+        proved-safe : 1
+        unproved : 1
+        Details:
+          /checkout/tests/verification_guarded_operand.adb:64:17 [integer-overflow] unproved
+            method: abstract-interpretation
+            why: overflow is not established, but absence is not proved
+            imprecision: this expression form is outside the scalar VC subset
+            reason: unsupported-expression-kind
+            blocked at: case Count is when 1 .. 4 => Table (Count),
+                                              when others => 0
+          /checkout/tests/verification_guarded_operand.adb:64:17 [initialization-check] proved-safe
+            method: flow-analysis
+            why: object is initialized on every incoming path
+            evidence: initialization => true
+
+      Violations by check:
+        Missing_Depends_Contract : 1  [Maintainability/Medium]
+      """;
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(obligations).hasSize(2).hasSize(parser.reportedProofObligationCount(report));
+    // As the blockingExpression of the JSON report has it.
+    assertThat(obligations.getFirst().blockingExpression()).isEqualTo(
+      "case Count is when 1 .. 4 => Table (Count),\n" + " ".repeat(40) + "when others => 0");
+    assertThat(obligations.getFirst().reasonCode()).isEqualTo("unsupported-expression-kind");
+    // What follows the details is no part of the last of them.
+    assertThat(obligations.getLast()).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/verification_guarded_operand.adb", 64, 17, "initialization-check", "proved-safe",
+        "flow-analysis", "object is initialized on every incoming path", "", "initialization => true", "", "", ""));
+  }
+
+  @Test
+  void readsFromTheTextOutputWhatTheJsonReportHas() {
+    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.8.4.
+    // Only the JSON report has the operation, the assumptions and the subject of an obligation;
+    // only the text output has the rule, the advice and the source line of a finding.
+    for (String run : List.of("gnatprove-import", "length-check")) {
+      String text = readResource("adalanganalyzer/" + run + "-console-output.txt");
+      AdaLangAnalyzerReport json = new AdaLangAnalyzerJsonReportParser().parse(AdaLangAnalyzerJson.mapOf(
+        AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/" + run + "-report.json"))));
+
+      assertThat(parser.parseProofObligations(text))
+        .extracting(AdaLangAnalyzerConsoleParserTest::inBothFormats)
+        .containsExactlyElementsOf(
+          json.proofObligations().stream().map(AdaLangAnalyzerConsoleParserTest::inBothFormats).toList());
+      assertThat(parser.parse(text))
+        .extracting(AdaLangAnalyzerConsoleParserTest::inBothFormats)
+        .containsExactlyElementsOf(
+          json.findings().stream().map(AdaLangAnalyzerConsoleParserTest::inBothFormats).toList());
+      assertThat(parser.reportedGnatproveSummary(text)).isEqualTo(json.gnatproveSummary());
+    }
+  }
+
+  private static List<Object> inBothFormats(AdaLangAnalyzerProofObligation obligation) {
+    return List.of(
+      obligation.file().replace("/checkout/", ""), obligation.line(), obligation.column(), obligation.kind(),
+      obligation.outcome(), obligation.method(), obligation.gnatprove(), obligation.why(), obligation.evidence(),
+      obligation.imprecision(), obligation.reasonCode(), obligation.blockingExpression(), obligation.inlinePath());
+  }
+
+  private static List<Object> inBothFormats(AdaLangAnalyzerFinding finding) {
+    return List.of(
+      finding.file().replace("/checkout/", ""), finding.line(), finding.column(), finding.ruleId(),
+      finding.message(), finding.explanation(), finding.evidence(), finding.softwareQuality(),
+      finding.qualitySeverity());
   }
 
   private static String readResource(String name) {

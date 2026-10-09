@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -354,15 +355,15 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsGnatproveVerdictsAndSubjectsFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.8.3 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.8.4 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
 
     assertThat(report.findings()).hasSize(3).hasSize(report.violationCount());
-    assertThat(report.proofObligations()).hasSize(26).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations()).hasSize(27).hasSize(report.proofObligationCount());
     assertThat(report.gnatproveSummary()).contains(
-      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 9, 1, 1, 0, 0, 13));
+      new AdaLangAnalyzerGnatproveSummary(1, 14, 11, 0, 3, 10, 1, 0, 0, 0, 14));
     assertThat(report.proofObligations())
       .filteredOn(obligation -> !obligation.gnatprove().isBlank())
       .hasSize(report.gnatproveSummary().orElseThrow().obligationsWithVerdict());
@@ -410,7 +411,7 @@ class AdaLangAnalyzerJsonReportParserTest {
     assertThat(read.hasSeparateSubject()).isTrue();
 
     // An out parameter checked at its subprogram's exit is located at its own declaration.
-    AdaLangAnalyzerProofObligation outParameter = report.proofObligations().get(20);
+    AdaLangAnalyzerProofObligation outParameter = report.proofObligations().get(21);
     assertThat(outParameter.operation()).isEqualTo("Target");
     assertThat(outParameter.subjectLine()).isEqualTo(outParameter.line());
     assertThat(outParameter.hasSeparateSubject()).isFalse();
@@ -478,6 +479,56 @@ class AdaLangAnalyzerJsonReportParserTest {
     assertThat(summary.definiteErrorWhereGnatproveProved()).isEqualTo(1);
     assertThat(summary.provedSafeWhereGnatproveNotProved()).isEqualTo(1);
     assertThat(summary.justified()).isEqualTo(1);
+  }
+
+  @Test
+  void importsTheLengthChecksOfARealReport() {
+    // The complete --format=json report of AdaLang Analyzer 1.8.4 run with --verify on the
+    // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
+    // added.
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
+      AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/length-check-report.json"))));
+
+    assertThat(report.findings()).hasSize(3).hasSize(report.violationCount());
+    assertThat(report.proofObligations()).hasSize(47).hasSize(report.proofObligationCount());
+    assertThat(report.gnatproveSummary()).isEmpty();
+
+    List<AdaLangAnalyzerProofObligation> lengthChecks = report.proofObligations().stream()
+      .filter(obligation -> obligation.kind().equals("length-check"))
+      .toList();
+    // The unproved ones are issues, under a rule of their own.
+    assertThat(lengthChecks)
+      .extracting(AdaLangAnalyzerProofObligation::outcome)
+      .containsExactly(
+        "proved-safe", "unproved", "unproved", "unproved", "unproved", "proved-safe", "unproved");
+    assertThat(lengthChecks).filteredOn(report::isIssue).hasSize(5);
+    assertThat(lengthChecks)
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsOnly("proof-obligation:length-check");
+
+    // An assignment to a slice has a check at the value and one of its own, which the analyzer
+    // reports at the ":=" and whose operation is the whole statement.
+    assertThat(lengthChecks.get(1))
+      .extracting(
+        AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::column,
+        AdaLangAnalyzerProofObligation::operation)
+      .containsExactly(18, 27, "Local");
+    assertThat(lengthChecks.get(2))
+      .extracting(
+        AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::column,
+        AdaLangAnalyzerProofObligation::operation)
+      .containsExactly(18, 24, "Goal (1 .. Size) := Local;");
+    assertThat(lengthChecks.get(2).sonarMessage()).isEqualTo(
+      "Proof obligation [length-check] unproved. Operation: Goal (1 .. Size) := Local;"
+        + ". Method: abstract-interpretation"
+        + ". Why: length-check failure is not established, but absence is not proved"
+        + ". Imprecision: the two lengths are not known to be equal");
+    assertThat(lengthChecks.getFirst().sonarMessage()).isEqualTo(
+      "Proof obligation [length-check] proved-safe. Operation: (others => 0). Method: abstract-interpretation"
+        + ". Why: an aggregate with an others choice has the bounds of what it is given to"
+        + ". Evidence: the value takes the bounds of its target");
+    // A length check is about no declared object.
+    assertThat(lengthChecks).noneMatch(AdaLangAnalyzerProofObligation::hasSeparateSubject);
   }
 
   private static String readResource(String name) {

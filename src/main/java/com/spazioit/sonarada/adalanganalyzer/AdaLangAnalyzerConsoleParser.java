@@ -40,6 +40,9 @@ final class AdaLangAnalyzerConsoleParser {
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE
   );
   private static final String WARNING_PREFIX = "adalang-analyzer: warning:";
+  // What the analyzer says of the run itself, on standard error, which the plugin reads with
+  // its output.
+  private static final String DIAGNOSTIC_PREFIX = "adalang-analyzer";
   // The counts printed after the proof obligations when a GNATprove log was given
   // (Adalang_Analyzer.CLI.Put_Gnatprove_Summary).
   private static final Pattern GNATPROVE_LOGS = summaryLine(
@@ -127,6 +130,8 @@ final class AdaLangAnalyzerConsoleParser {
   List<AdaLangAnalyzerProofObligation> parseProofObligations(String output) {
     List<AdaLangAnalyzerProofObligation> obligations = new ArrayList<>();
     PendingProofObligation pending = null;
+    String detailName = null;
+    String detailValue = "";
     for (String line : output.lines().toList()) {
       Matcher obligationMatcher = PROOF_OBLIGATION.matcher(line);
       if (obligationMatcher.matches()) {
@@ -140,13 +145,24 @@ final class AdaLangAnalyzerConsoleParser {
           obligationMatcher.group(4),
           obligationMatcher.group(5)
         );
+        detailName = null;
         continue;
       }
 
       if (pending != null) {
         Matcher detailMatcher = PROOF_DETAIL.matcher(line);
         if (detailMatcher.matches()) {
-          pending.setDetail(detailMatcher.group(1), detailMatcher.group(2).trim());
+          detailName = detailMatcher.group(1);
+          detailValue = detailMatcher.group(2).trim();
+          pending.setDetail(detailName, detailValue);
+        } else if (detailName != null && !line.isBlank() && !line.startsWith(DIAGNOSTIC_PREFIX)) {
+          // An expression written on several lines of the source is printed as it is written,
+          // so the lines up to the next detail belong to the one above them. Kept as the JSON
+          // report has them.
+          detailValue = detailValue + "\n" + line.stripTrailing();
+          pending.setDetail(detailName, detailValue);
+        } else {
+          detailName = null;
         }
       }
     }

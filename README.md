@@ -340,9 +340,9 @@ GNATprove log, the counts of GNATprove's verdicts. All three formats carry
 those verdicts and counts; the JSON report's list of every check of the log
 (`gnatproveChecks`) is not imported.
 
-Reports of AdaLang Analyzer 1.8.3 are supported in all three formats, and
+Reports of AdaLang Analyzer 1.8.4 are supported in all three formats, and
 reports of earlier versions are still imported. Its `--verify` results differ
-from those of 1.8.0 and earlier in two ways:
+from those of 1.8.0 and earlier in three ways:
 
 - It raises obligations where earlier versions raised none: that a function
   returns (`termination`), that a subprogram respects its `Global` and
@@ -352,14 +352,25 @@ from those of 1.8.0 and earlier in two ways:
   more proof-obligation issues after upgrading, some of them under three new
   rules, `proof-obligation:termination`, `proof-obligation:data-dependencies`,
   and `proof-obligation:flow-dependencies`; the totals are not comparable with
-  those of 1.8.0. Up to 1.8.3 no route proves a `Depends` aspect, so every
+  those of 1.8.0. Up to 1.8.4 no route proves a `Depends` aspect, so every
   `flow-dependencies` obligation is `unproved`, with the method `none`, and
   each `Depends` aspect has one such issue; a wrong aspect is reported by the
   `Depends_Contract_Mismatch` check as before.
+- 1.8.4 checks that an array given to a target has the target's length
+  (`length-check`): in an assignment, an initial value, a returned value, an
+  actual parameter, the operand of a conversion, and the operands of `and`,
+  `or` and `xor` on arrays. The ones it does not prove are issues under a new
+  rule, `proof-obligation:length-check`. An assignment has its check at the
+  value, at the `:=`, or one at each, depending on its target. 1.8.4 also
+  checks the range of the length of an array where it is converted to an
+  integer type, and the precondition of an operator that a declaration
+  defines, under the `proof-obligation:range-check` and
+  `proof-obligation:precondition` rules there already were. Expect more
+  proof-obligation issues after upgrading from 1.8.3.
 - Earlier versions could report an obligation as proved safe that a legal
   execution violates, and a definite error where there is none (see the
-  analyzer's changelog for 1.6.1 and for 1.8.1 to 1.8.3). Regenerate imported
-  `--verify` reports with 1.8.3: obligations that were wrongly proved safe then
+  analyzer's changelog for 1.6.1 and for 1.8.1 to 1.8.4). Regenerate imported
+  `--verify` reports with 1.8.4: obligations that were wrongly proved safe then
   appear as unproved or definite-error issues.
 CSV and CSVX reports use these fields:
 

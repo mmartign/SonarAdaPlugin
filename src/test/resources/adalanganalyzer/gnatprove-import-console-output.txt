@@ -30,8 +30,8 @@ Files scanned : 2
 Violations    : 3
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
-  Total : 26
-  proved-safe : 19
+  Total : 27
+  proved-safe : 20
   definite-error : 1
   unproved : 6
   Details:
@@ -132,6 +132,11 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       imprecision: the expression conflicts with its symbolic scalar sort
       reason: sort-mismatch
       blocked at: Source
+    /checkout/tests/gnatprove_import/sample.adb:5:14 [length-check] proved-safe
+      method: external-prover
+      GNATprove: proved
+      why: scalar verification condition proves the value has the length of its target
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/gnatprove_import/sample.ads:24:37 [initialization-check] proved-safe
       method: flow-analysis
       GNATprove: proved
@@ -166,12 +171,12 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
 GNATprove verdicts (read from 1 log; not AdaLang's own results):
   Checks in the log : 14 (11 proved, 0 justified, 3 not proved)
   Of the checks GNATprove proved:
-    proved by AdaLang too : 9
+    proved by AdaLang too : 10
     GNATprove's verdict alone, on an AdaLang obligation : 1
-    GNATprove's verdict alone, no AdaLang obligation : 1
+    GNATprove's verdict alone, no AdaLang obligation : 0
     a definite error for AdaLang : 0
   Proved by AdaLang where GNATprove did not prove : 0
-  Obligations with a GNATprove verdict : 13 of 26
+  Obligations with a GNATprove verdict : 14 of 27
 
 Violations by check:
   Division_By_Zero : 1  [Reliability/Blocker]
