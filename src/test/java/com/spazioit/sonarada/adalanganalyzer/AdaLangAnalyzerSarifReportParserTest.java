@@ -176,6 +176,48 @@ class AdaLangAnalyzerSarifReportParserTest {
   }
 
   @Test
+  void readsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
+    // Obligation summaries copied verbatim from the run properties of an AdaLang Analyzer 1.8.5
+    // --format=sarif report produced with --verify on the analyzer's own
+    // tests/verification_fp117_unwritten_out.adb: the read of an out actual after a call whose
+    // callee may not have written it, the read after a callee that never writes it, and the
+    // range check on the value that read gives. 1.8.4 proved the two reads safe.
+    String sarif = """
+      {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [{
+          "tool": {"driver": {"name": "AdaLang Analyzer", "rules": []}},
+          "properties": {
+            "proofObligations": [
+              {"id": "proof/v1/743348d8701fca75", "kind": "initialization-check", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/2026a19ddf3ed220", "kind": "initialization-check", "status": "definite-error", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/81d09f99b177db1b", "kind": "range-check", "status": "unproved", \
+      "reasonCode": "uninitialized-object", "blockingExpression": "Swallowed", "inlinePath": ""}
+            ],
+            "analysisConfiguration": {"toolVersion": "1.8.5", "selectedPreset": "verify", "skippedChecks": 0}
+          },
+          "results": []
+        }]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(sarif)));
+
+    assertThat(report.proofObligationCount()).isEqualTo(3);
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(true, true, true);
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::isDefiniteError)
+      .containsExactly(false, true, false);
+    assertThat(report.proofObligations().get(1).sonarMessage())
+      .isEqualTo("Proof obligation [initialization-check] definite-error");
+    assertThat(report.proofObligations().get(2).sonarMessage())
+      .isEqualTo("Proof obligation [range-check] unproved. Reason: uninitialized-object. Blocked at: Swallowed");
+  }
+
+  @Test
   void reportsNoGnatproveSummaryForARunWithoutALog() {
     Map<String, Object> root = AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(
       "{\"runs\": [{\"properties\": {\"proofObligations\": []}, \"results\": []}]}"));

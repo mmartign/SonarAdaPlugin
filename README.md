@@ -341,9 +341,9 @@ GNATprove log, the counts of GNATprove's verdicts. All three formats carry
 those verdicts and counts; the JSON report's list of every check of the log
 (`gnatproveChecks`) is not imported.
 
-Reports of AdaLang Analyzer 1.8.4 are supported in all three formats, and
+Reports of AdaLang Analyzer 1.8.5 are supported in all three formats, and
 reports of earlier versions are still imported. Its `--verify` results differ
-from those of 1.8.0 and earlier in three ways:
+from those of 1.8.0 and earlier in four ways:
 
 - It raises obligations where earlier versions raised none: that a function
   returns (`termination`), that a subprogram respects its `Global` and
@@ -353,7 +353,7 @@ from those of 1.8.0 and earlier in three ways:
   more proof-obligation issues after upgrading, some of them under three new
   rules, `proof-obligation:termination`, `proof-obligation:data-dependencies`,
   and `proof-obligation:flow-dependencies`; the totals are not comparable with
-  those of 1.8.0. Up to 1.8.4 no route proves a `Depends` aspect, so every
+  those of 1.8.0. Up to 1.8.5 no route proves a `Depends` aspect, so every
   `flow-dependencies` obligation is `unproved`, with the method `none`, and
   each `Depends` aspect has one such issue; a wrong aspect is reported by the
   `Depends_Contract_Mismatch` check as before.
@@ -368,11 +368,27 @@ from those of 1.8.0 and earlier in three ways:
   defines, under the `proof-obligation:range-check` and
   `proof-obligation:precondition` rules there already were. Expect more
   proof-obligation issues after upgrading from 1.8.3.
+- 1.8.5 raises the obligations 1.8.4 raised, under the same rules and in the
+  same report formats, and decides more of them: it knows that a constant, an
+  `in` parameter and a loop parameter hold a value wherever they are read,
+  what a call leaves of its actuals, and what the bounds of an array can be.
+  Expect fewer `unproved` proof-obligation issues after upgrading from 1.8.4.
+  An obligation that stays `unproved` can give another reason for it, and one
+  1.8.4 could not decide can now be a `definite-error`, an issue of higher
+  severity; a precondition among these is also a finding of the
+  `Known_Precondition_Failure` check.
 - Earlier versions could report an obligation as proved safe that a legal
   execution violates, and a definite error where there is none (see the
-  analyzer's changelog for 1.6.1 and for 1.8.1 to 1.8.4). Regenerate imported
-  `--verify` reports with 1.8.4: obligations that were wrongly proved safe then
-  appear as unproved or definite-error issues.
+  analyzer's changelog for 1.6.1 and for 1.8.1 to 1.8.5). 1.8.5 corrects two
+  such faults. The read of an object after it was the `out` actual of a call
+  was proved safe where the callee can return without writing the parameter;
+  it is now an `unproved` issue under `proof-obligation:initialization-check`,
+  or a `definite-error` one where the callee never writes the parameter. And
+  a precondition, postcondition, assertion or loop invariant was proved
+  through a function that is declared in one part of a package and completed
+  by an expression function in another. Regenerate imported `--verify`
+  reports with 1.8.5: obligations that were wrongly proved safe then appear
+  as unproved or definite-error issues.
 CSV and CSVX reports use these fields:
 
 ```text

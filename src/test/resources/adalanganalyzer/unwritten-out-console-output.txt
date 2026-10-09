@@ -1,0 +1,313 @@
+adalang-analyzer [INFO]: Unit lookup covers 1 sources, 1 of them analyzed
+adalang-analyzer [INFO]: Built 11 subprogram summaries
+adalang-analyzer [INFO]: Parsing: tests/verification_fp117_unwritten_out.adb
+/checkout/tests/verification_fp117_unwritten_out.adb:10:30: warning: out parameter 'X' is not initialized on every normal return path [Uninitialized_Output]
+  rule: Find out parameters whose complete initialization cannot be established on every normal return path.
+  advice: Assign the complete out parameter on every path before the subprogram returns.
+  quality: Reliability (High)
+  source:
+       procedure Return_In_Loop (X : out Integer; N : Integer) is
+                                 ^
+/checkout/tests/verification_fp117_unwritten_out.adb:10:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Return_In_Loop (X : out Integer; N : Integer) is
+                 ^^^^^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:20:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Jump_Over (X : out Integer; C : Boolean) is
+                 ^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:23:10: warning: goto statement used [No_Goto]
+  rule: Avoid goto statements because they make control flow difficult to follow and verify.
+  advice: Replace the jump with structured control flow such as a loop condition, if statement, return, or a small local subprogram.
+  quality: Maintainability (Medium)
+  source:
+             goto Done;
+             ^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:30:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Return_In_Block (X : out Integer; C : Boolean) is
+                 ^^^^^^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:40:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Handled_Before (X : out Integer) is
+                 ^^^^^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:44:10: warning: raise statement used [No_Raise]
+  rule: Avoid explicit raise statements when the code base expects errors to be handled through regular control flow.
+  advice: Return a status/result value where possible, or centralize exception raising at a documented boundary.
+  quality: Maintainability (Low)
+  source:
+             raise Program_Error;
+             ^^^^^^^^^^^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:52:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Written (X : out Integer; C : Boolean) is
+                 ^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:65:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure After_Loop (N : Integer; R : out Integer) is
+                 ^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:72:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure After_Jump (C : Boolean; R : out Integer) is
+                 ^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:79:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure After_Block (C : Boolean; R : out Integer) is
+                 ^^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:86:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure After_Handler (R : out Integer) is
+                 ^^^^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:93:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure After_Written (C : Boolean; R : out Integer) is
+                 ^^^^^^^^^^^^^
+/checkout/tests/verification_fp117_unwritten_out.adb:102:19: warning: output value assigned by call is never read later in this subprogram [Dead_Store]
+  rule: Find assignments whose stored value is never read later in the enclosing subprogram.
+  advice: Remove the assignment or restore the later use that was intended to consume the value.
+  quality: Maintainability (Medium)
+  source:
+       After_Loop (5, V);
+                      ^
+/checkout/tests/verification_fp117_unwritten_out.adb:103:22: warning: output value assigned by call is never read later in this subprogram [Dead_Store]
+  rule: Find assignments whose stored value is never read later in the enclosing subprogram.
+  advice: Remove the assignment or restore the later use that was intended to consume the value.
+  quality: Maintainability (Medium)
+  source:
+       After_Jump (True, V);
+                         ^
+/checkout/tests/verification_fp117_unwritten_out.adb:104:23: warning: output value assigned by call is never read later in this subprogram [Dead_Store]
+  rule: Find assignments whose stored value is never read later in the enclosing subprogram.
+  advice: Remove the assignment or restore the later use that was intended to consume the value.
+  quality: Maintainability (Medium)
+  source:
+       After_Block (True, V);
+                          ^
+/checkout/tests/verification_fp117_unwritten_out.adb:105:19: warning: output value assigned by call is never read later in this subprogram [Dead_Store]
+  rule: Find assignments whose stored value is never read later in the enclosing subprogram.
+  advice: Remove the assignment or restore the later use that was intended to consume the value.
+  quality: Maintainability (Medium)
+  source:
+       After_Handler (V);
+                      ^
+/checkout/tests/verification_fp117_unwritten_out.adb:106:25: warning: output value assigned by call is never read later in this subprogram [Dead_Store]
+  rule: Find assignments whose stored value is never read later in the enclosing subprogram.
+  advice: Remove the assignment or restore the later use that was intended to consume the value.
+  quality: Maintainability (Medium)
+  source:
+       After_Written (True, V);
+                            ^
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at After_Loop (5, V)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at After_Jump (True, V)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at After_Block (True, V)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at After_Handler (V)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at After_Written (True, V)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at Return_In_Loop (Looped, N)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at Jump_Over (Jumped, C)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at Return_In_Block (Blocked, C)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at Handled_Before (Swallowed)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at Written (Whole, C)
+
+Files scanned : 1
+Violations    : 18
+
+Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+  Total : 35
+  proved-safe : 22
+  definite-error : 1
+  unproved : 12
+  Details:
+    /checkout/tests/verification_fp117_unwritten_out.adb:12:21 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:17:12 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp117_unwritten_out.adb:10:30 [initialization-check] unproved
+      method: flow-analysis
+      why: out parameter is not established as initialized at the normal exit
+      imprecision: some path to the exit does not assign the whole parameter
+    /checkout/tests/verification_fp117_unwritten_out.adb:22:10 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:25:12 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp117_unwritten_out.adb:20:25 [initialization-check] unproved
+      method: flow-analysis
+      why: out parameter is not established as initialized at the normal exit
+      imprecision: some path to the exit does not assign the whole parameter
+    /checkout/tests/verification_fp117_unwritten_out.adb:33:13 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:37:12 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp117_unwritten_out.adb:30:31 [initialization-check] unproved
+      method: flow-analysis
+      why: out parameter is not established as initialized at the normal exit
+      imprecision: some path to the exit does not assign the whole parameter
+    /checkout/tests/verification_fp117_unwritten_out.adb:40:30 [initialization-check] unproved
+      method: flow-analysis
+      why: out parameter is not established as initialized at the normal exit
+      imprecision: some path to the exit does not assign the whole parameter
+    /checkout/tests/verification_fp117_unwritten_out.adb:54:10 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:55:15 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp117_unwritten_out.adb:58:41 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp117_unwritten_out.adb:60:18 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:60:18 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp117_unwritten_out.adb:52:23 [initialization-check] proved-safe
+      method: flow-analysis
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:68:31 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:69:12 [initialization-check] unproved
+      method: flow-analysis
+      why: object initialization is not established
+      imprecision: incoming paths disagree or object is external
+    /checkout/tests/verification_fp117_unwritten_out.adb:69:12 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the blocking object is not known to be initialized
+      reason: uninitialized-object
+      blocked at: Looped
+    /checkout/tests/verification_fp117_unwritten_out.adb:65:39 [initialization-check] proved-safe
+      method: flow-analysis
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:75:26 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:76:12 [initialization-check] unproved
+      method: flow-analysis
+      why: object initialization is not established
+      imprecision: incoming paths disagree or object is external
+    /checkout/tests/verification_fp117_unwritten_out.adb:76:12 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the blocking object is not known to be initialized
+      reason: uninitialized-object
+      blocked at: Jumped
+    /checkout/tests/verification_fp117_unwritten_out.adb:72:39 [initialization-check] proved-safe
+      method: flow-analysis
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:82:33 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:83:12 [initialization-check] unproved
+      method: flow-analysis
+      why: object initialization is not established
+      imprecision: incoming paths disagree or object is external
+    /checkout/tests/verification_fp117_unwritten_out.adb:83:12 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the blocking object is not known to be initialized
+      reason: uninitialized-object
+      blocked at: Blocked
+    /checkout/tests/verification_fp117_unwritten_out.adb:79:40 [initialization-check] proved-safe
+      method: flow-analysis
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:90:12 [initialization-check] definite-error
+      method: flow-analysis
+      why: object is uninitialized on every incoming path
+      evidence: initialization => false
+    /checkout/tests/verification_fp117_unwritten_out.adb:90:12 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the blocking object is not known to be initialized
+      reason: uninitialized-object
+      blocked at: Swallowed
+    /checkout/tests/verification_fp117_unwritten_out.adb:86:29 [initialization-check] proved-safe
+      method: flow-analysis
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:96:23 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:97:12 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp117_unwritten_out.adb:97:12 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/verification_fp117_unwritten_out.adb:93:42 [initialization-check] proved-safe
+      method: flow-analysis
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+
+Violations by check:
+  No_Goto : 1  [Maintainability/Medium]
+  No_Raise : 1  [Maintainability/Low]
+  Dead_Store : 5  [Maintainability/Medium]
+  Missing_Depends_Contract : 10  [Maintainability/Medium]
+  Uninitialized_Output : 1  [Reliability/High]
+
+Violations by software quality:
+  Reliability : 1
+  Maintainability : 17
+
+Violations by severity:
+  High : 1
+  Medium : 16
+  Low : 1

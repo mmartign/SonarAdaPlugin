@@ -35,7 +35,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsARealConsoleReportWithGnatproveVerdicts(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/gnatprove-import-console-output.txt"));
 
@@ -73,14 +73,14 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheLengthChecksOfARealConsoleReport(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/length-check-console-output.txt"));
 
     List<SavedIssue> issues = importReport(projectDirectory, "adalang.txt", "tests/verification_length_check_state.adb");
 
-    // Three findings and the twenty-one unproved obligations.
-    assertThat(issues).hasSize(24);
+    // Three findings and the nineteen unproved obligations: 1.8.5 proves two that 1.8.4 did not.
+    assertThat(issues).hasSize(22);
     // The five length checks that are not proved. An assignment to a slice has one at its value
     // and one at its ":=", three columns before.
     assertThat(issues)
@@ -98,6 +98,63 @@ class AdaLangAnalyzerSensorTest {
       .containsOnly("Proof obligation [length-check] unproved. Method: abstract-interpretation"
         + ". Why: length-check failure is not established, but absence is not proved"
         + ". Imprecision: the two lengths are not known to be equal");
+  }
+
+  @Test
+  void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten(@TempDir Path projectDirectory) throws IOException {
+    // The complete text output and --format=json report of AdaLang Analyzer 1.8.5 run with
+    // --verify on the analyzer's own tests/verification_fp117_unwritten_out.adb, the text with
+    // the checkout directory shortened. Up to 1.8.4 the four reads were proved safe, and so
+    // were no issue: an out actual was taken to be initialized after a call whose callee has a
+    // path that returns without writing the parameter.
+    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/unwritten-out-console-output.txt"));
+    Files.write(projectDirectory.resolve("adalang.json"), readResource("adalanganalyzer/unwritten-out-report.json"));
+
+    List<SavedIssue> fromText = importReport(projectDirectory, "adalang.txt", "tests/verification_fp117_unwritten_out.adb");
+    List<SavedIssue> fromJson = importReport(projectDirectory, "adalang.json", "tests/verification_fp117_unwritten_out.adb");
+
+    // Eighteen findings, the definite error and the twelve unproved obligations.
+    assertThat(fromText).hasSize(31);
+    assertThat(fromJson).hasSize(31);
+
+    // The out parameter each of four callees does not write on every path, then the read of
+    // the actual after the call of each: an error after the callee that never writes it.
+    List<SavedIssue> initializations = fromJson.stream()
+      .filter(issue -> issue.ruleId().equals("proof-obligation:initialization-check"))
+      .toList();
+    assertThat(initializations)
+      .extracting(issue -> issue.primary().range(), SavedIssue::severity)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("10:29", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("20:24", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("30:30", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("40:29", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("69:11", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("76:11", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("83:11", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("90:11", Severity.CRITICAL));
+    assertThat(initializations.getLast().primary().message()).isEqualTo(
+      "Proof obligation [initialization-check] definite-error. Operation: Swallowed. Method: flow-analysis"
+        + ". Why: object is uninitialized on every incoming path"
+        + ". Evidence: initialization => false");
+
+    // The JSON report says where the object read is declared; a parameter is its own declaration.
+    assertThat(initializations)
+      .extracting(SavedIssue::secondary)
+      .containsExactly(
+        List.of(), List.of(), List.of(), List.of(),
+        List.of(new Location("tests/verification_fp117_unwritten_out.adb", "66:6", "Declaration of Looped")),
+        List.of(new Location("tests/verification_fp117_unwritten_out.adb", "73:6", "Declaration of Jumped")),
+        List.of(new Location("tests/verification_fp117_unwritten_out.adb", "80:6", "Declaration of Blocked")),
+        List.of(new Location("tests/verification_fp117_unwritten_out.adb", "87:6", "Declaration of Swallowed")));
+
+    // The text output gives the same issues at the same places, without the declarations.
+    assertThat(fromText)
+      .extracting(SavedIssue::ruleId, SavedIssue::severity, issue -> issue.primary().range())
+      .containsExactlyElementsOf(fromJson.stream()
+        .map(issue -> org.assertj.core.groups.Tuple.tuple(issue.ruleId(), issue.severity(), issue.primary().range()))
+        .toList());
+    assertThat(fromText).allMatch(issue -> issue.secondary().isEmpty());
   }
 
   @Test

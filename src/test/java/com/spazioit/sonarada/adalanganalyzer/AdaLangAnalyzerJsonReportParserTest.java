@@ -355,7 +355,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsGnatproveVerdictsAndSubjectsFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.8.4 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.8.5 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
@@ -483,7 +483,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.8.4 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.8.5 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
@@ -529,6 +529,104 @@ class AdaLangAnalyzerJsonReportParserTest {
         + ". Evidence: the value takes the bounds of its target");
     // A length check is about no declared object.
     assertThat(lengthChecks).noneMatch(AdaLangAnalyzerProofObligation::hasSeparateSubject);
+  }
+
+  @Test
+  void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
+    // The complete --format=json report of AdaLang Analyzer 1.8.5 run with --verify on the
+    // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
+    // reads was proved safe: an out actual was taken to be initialized after a call whose callee
+    // has a path that returns without writing the parameter.
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
+      AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/unwritten-out-report.json"))));
+
+    assertThat(report.findings()).hasSize(18).hasSize(report.violationCount());
+    assertThat(report.proofObligations()).hasSize(35).hasSize(report.proofObligationCount());
+
+    // The read of the actual, in the statement after each of the five calls, with the
+    // declaration of the object read: not proved where a path of the callee passes the write,
+    // an error where the callee never writes the parameter, and proved where every path of the
+    // callee writes it.
+    List<AdaLangAnalyzerProofObligation> reads = report.proofObligations().stream()
+      .filter(obligation -> obligation.kind().equals("initialization-check"))
+      .filter(obligation -> List.of(69, 76, 83, 90, 97).contains(obligation.line()))
+      .toList();
+    assertThat(reads)
+      .extracting(
+        AdaLangAnalyzerProofObligation::operation, AdaLangAnalyzerProofObligation::outcome,
+        AdaLangAnalyzerProofObligation::subjectLine)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("Looped", "unproved", 66),
+        org.assertj.core.groups.Tuple.tuple("Jumped", "unproved", 73),
+        org.assertj.core.groups.Tuple.tuple("Blocked", "unproved", 80),
+        org.assertj.core.groups.Tuple.tuple("Swallowed", "definite-error", 87),
+        org.assertj.core.groups.Tuple.tuple("Whole", "proved-safe", 94));
+    assertThat(reads).extracting(report::isIssue).containsExactly(true, true, true, true, false);
+    assertThat(reads).allMatch(AdaLangAnalyzerProofObligation::hasSeparateSubject);
+    assertThat(reads.get(3).isDefiniteError()).isTrue();
+    assertThat(reads.get(3).sonarMessage()).isEqualTo(
+      "Proof obligation [initialization-check] definite-error. Operation: Swallowed. Method: flow-analysis"
+        + ". Why: object is uninitialized on every incoming path"
+        + ". Evidence: initialization => false");
+
+    // What each of the four callees owes is at its own parameter, and was unproved before too.
+    assertThat(report.proofObligations())
+      .filteredOn(obligation -> obligation.operation().equals("X") && report.isIssue(obligation))
+      .extracting(AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::hasSeparateSubject)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(10, false),
+        org.assertj.core.groups.Tuple.tuple(20, false),
+        org.assertj.core.groups.Tuple.tuple(30, false),
+        org.assertj.core.groups.Tuple.tuple(40, false));
+    // The definite error, and the twelve obligations that are not proved.
+    assertThat(report.proofObligations()).filteredOn(report::isIssue).hasSize(13);
+  }
+
+  @Test
+  void importsAReadOfAnObjectThatAlwaysHoldsAValue() {
+    // Obligations copied verbatim from an AdaLang Analyzer 1.8.5 --verify JSON report: the
+    // division by a constant of a package. 1.8.4 left both unproved, not knowing the constant to
+    // be initialized. The read is now proved by what the object is, with a method no
+    // initialization check had before, and the division with it.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.5", "selectedPreset": "verify", "skippedChecks": 0},
+        "filesScanned": 2,
+        "newViolations": 0,
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 2, "provedSafe": 2, "definiteError": 0, "unproved": 0, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/876046df75ffa68f", "kind": "division-by-zero", "status": "proved-safe", \
+      "method": "abstract-interpretation", "file": "tests/verification_standing_values.adb", "line": 14, \
+      "column": 25, "operation": "Bits", "assumptions": "", \
+      "abstractState": "right operand is strictly negative or positive", \
+      "explanation": "right operand range excludes zero", "imprecisionSource": "", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/5d8087f25eb5b368", "kind": "initialization-check", "status": "proved-safe", \
+      "method": "static-evaluation", "file": "tests/verification_standing_values.adb", "line": 14, \
+      "column": 25, "operation": "Bits", "assumptions": "", \
+      "abstractState": "a constant, an in parameter or a loop parameter", \
+      "explanation": "object holds a value wherever it is read", "imprecisionSource": "", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none", \
+      "subject": {"file": "tests/verification_standing_values.ads", "line": 27, "column": 7}}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(2).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations()).noneMatch(report::isIssue);
+    AdaLangAnalyzerProofObligation read = report.proofObligations().getLast();
+    assertThat(read.method()).isEqualTo("static-evaluation");
+    assertThat(read.sonarMessage()).isEqualTo(
+      "Proof obligation [initialization-check] proved-safe. Operation: Bits. Method: static-evaluation"
+        + ". Why: object holds a value wherever it is read"
+        + ". Evidence: a constant, an in parameter or a loop parameter");
+    // The constant is declared in the specification of the package.
+    assertThat(read.subjectFile()).isEqualTo("tests/verification_standing_values.ads");
+    assertThat(read.hasSeparateSubject()).isTrue();
   }
 
   private static String readResource(String name) {

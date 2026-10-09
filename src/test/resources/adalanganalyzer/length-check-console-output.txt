@@ -28,8 +28,8 @@ Violations    : 3
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
   Total : 47
-  proved-safe : 26
-  unproved : 21
+  proved-safe : 28
+  unproved : 19
   Details:
     /checkout/tests/verification_length_check_state.adb:12:42 [initialization-check] proved-safe
       method: flow-analysis
@@ -52,9 +52,7 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
     /checkout/tests/verification_length_check_state.adb:17:15 [integer-overflow] unproved
       method: abstract-interpretation
       why: overflow is not established, but absence is not proved
-      imprecision: the required bounds are not statically known
-      reason: missing-static-bounds
-      blocked at: Size + 1
+      imprecision: the current range domain does not certify the result
     /checkout/tests/verification_length_check_state.adb:17:15 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
@@ -113,20 +111,18 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: abstract-interpretation
       why: value range is contained in the target subtype range
       evidence: value bounds are within target bounds
-    /checkout/tests/verification_length_check_state.adb:28:16 [integer-overflow] unproved
-      method: abstract-interpretation
-      why: overflow is not established, but absence is not proved
-      imprecision: the required bounds are not statically known
-      reason: missing-static-bounds
-      blocked at: Limit + 1
+    /checkout/tests/verification_length_check_state.adb:28:16 [integer-overflow] proved-safe
+      method: external-prover
+      why: scalar verification condition proves the arithmetic result fits its base type
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:28:16 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/verification_length_check_state.adb:28:16 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/verification_length_check_state.adb:28:16 [range-check] proved-safe
+      method: external-prover
+      why: scalar verification condition proves the value is inside the target subtype range
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:29:28 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
@@ -182,9 +178,7 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
     /checkout/tests/verification_length_check_state.adb:40:15 [integer-overflow] unproved
       method: abstract-interpretation
       why: overflow is not established, but absence is not proved
-      imprecision: the required bounds are not statically known
-      reason: missing-static-bounds
-      blocked at: Size + 1
+      imprecision: the current range domain does not certify the result
     /checkout/tests/verification_length_check_state.adb:40:15 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path

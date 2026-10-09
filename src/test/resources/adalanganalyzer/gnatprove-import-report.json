@@ -4,7 +4,7 @@
   "structuralCoverageObjective": "none",
   "certificationClaim": "verification support only; not a compliance determination",
   "analysisConfiguration": {
-    "toolVersion": "1.8.4",
+    "toolVersion": "1.8.5",
     "selectedPreset": "verify",
     "enabledRules": [
       "No_Goto",

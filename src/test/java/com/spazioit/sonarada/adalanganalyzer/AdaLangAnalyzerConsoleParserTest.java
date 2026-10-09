@@ -214,7 +214,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesGnatproveVerdictsAndTheirSummaryFromRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     String report = readResource("adalanganalyzer/gnatprove-import-console-output.txt");
 
@@ -375,7 +375,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheLengthChecksOfRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.8.4 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened: the
     // length-check kind 1.8.4 added.
     String report = readResource("adalanganalyzer/length-check-console-output.txt");
@@ -423,6 +423,93 @@ class AdaLangAnalyzerConsoleParserTest {
   }
 
   @Test
+  void parsesTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
+    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v on the analyzer's own
+    // tests/verification_fp117_unwritten_out.adb, with the checkout directory shortened. Up to
+    // 1.8.4 every one of these reads was proved safe: an out actual was taken to be initialized
+    // after a call whose callee has a path that returns without writing the parameter.
+    String report = readResource("adalanganalyzer/unwritten-out-console-output.txt");
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(parser.parse(report)).hasSize(18).hasSize(parser.reportedViolationCount(report));
+    assertThat(obligations).hasSize(35).hasSize(parser.reportedProofObligationCount(report));
+
+    // The read of the actual, in the statement after each of the five calls: not proved where a
+    // path of the callee passes the write, an error where the callee never writes the
+    // parameter, and proved where every path of the callee writes it.
+    List<AdaLangAnalyzerProofObligation> reads = obligations.stream()
+      .filter(obligation -> obligation.kind().equals("initialization-check"))
+      .filter(obligation -> List.of(69, 76, 83, 90, 97).contains(obligation.line()))
+      .toList();
+    assertThat(reads)
+      .extracting(AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::outcome)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(69, "unproved"),
+        org.assertj.core.groups.Tuple.tuple(76, "unproved"),
+        org.assertj.core.groups.Tuple.tuple(83, "unproved"),
+        org.assertj.core.groups.Tuple.tuple(90, "definite-error"),
+        org.assertj.core.groups.Tuple.tuple(97, "proved-safe"));
+    assertThat(reads)
+      .extracting(AdaLangAnalyzerProofObligation::isActionable)
+      .containsExactly(true, true, true, true, false);
+    assertThat(reads.get(3)).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/verification_fp117_unwritten_out.adb", 90, 12, "initialization-check", "definite-error",
+        "flow-analysis", "object is uninitialized on every incoming path", "", "initialization => false", "", "", ""));
+    assertThat(reads.get(3).sonarMessage()).isEqualTo(
+      "Proof obligation [initialization-check] definite-error. Method: flow-analysis"
+        + ". Why: object is uninitialized on every incoming path"
+        + ". Evidence: initialization => false");
+    assertThat(reads.getFirst().sonarMessage()).isEqualTo(
+      "Proof obligation [initialization-check] unproved. Method: flow-analysis"
+        + ". Why: object initialization is not established"
+        + ". Imprecision: incoming paths disagree or object is external");
+
+    // A check on the value read says which object stands in its way.
+    assertThat(obligations)
+      .filteredOn(obligation -> obligation.reasonCode().equals("uninitialized-object"))
+      .extracting(AdaLangAnalyzerProofObligation::kind, AdaLangAnalyzerProofObligation::blockingExpression)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("range-check", "Looped"),
+        org.assertj.core.groups.Tuple.tuple("range-check", "Jumped"),
+        org.assertj.core.groups.Tuple.tuple("range-check", "Blocked"),
+        org.assertj.core.groups.Tuple.tuple("range-check", "Swallowed"));
+  }
+
+  @Test
+  void parsesAReadOfAnObjectThatAlwaysHoldsAValue() {
+    // Obligations copied verbatim from AdaLang Analyzer 1.8.5 --verify -v output, with the
+    // checkout directory shortened: the division by a constant of a package. 1.8.4 left both
+    // unproved, not knowing the constant to be initialized. The read is now proved by what the
+    // object is, with a method no initialization check had before, and the division with it.
+    String report = """
+      Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+        Total : 2
+        proved-safe : 2
+        Details:
+          /checkout/tests/verification_standing_values.adb:14:25 [division-by-zero] proved-safe
+            method: abstract-interpretation
+            why: right operand range excludes zero
+            evidence: right operand is strictly negative or positive
+          /checkout/tests/verification_standing_values.adb:14:25 [initialization-check] proved-safe
+            method: static-evaluation
+            why: object holds a value wherever it is read
+            evidence: a constant, an in parameter or a loop parameter
+      """;
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(obligations).hasSize(2).hasSize(parser.reportedProofObligationCount(report));
+    assertThat(obligations.getLast()).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/verification_standing_values.adb", 14, 25, "initialization-check", "proved-safe",
+        "static-evaluation", "object holds a value wherever it is read", "",
+        "a constant, an in parameter or a loop parameter", "", "", ""));
+    assertThat(obligations).noneMatch(AdaLangAnalyzerProofObligation::isActionable);
+  }
+
+  @Test
   void keepsEveryLineOfAnExpressionWrittenOnSeveral() {
     // Obligations copied verbatim from AdaLang Analyzer 1.8.4 --verify -v output, with the
     // checkout directory shortened: the expression that blocked the proof is a case expression
@@ -465,10 +552,10 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void readsFromTheTextOutputWhatTheJsonReportHas() {
-    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.8.4.
+    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.8.5.
     // Only the JSON report has the operation, the assumptions and the subject of an obligation;
     // only the text output has the rule, the advice and the source line of a finding.
-    for (String run : List.of("gnatprove-import", "length-check")) {
+    for (String run : List.of("gnatprove-import", "length-check", "unwritten-out")) {
       String text = readResource("adalanganalyzer/" + run + "-console-output.txt");
       AdaLangAnalyzerReport json = new AdaLangAnalyzerJsonReportParser().parse(AdaLangAnalyzerJson.mapOf(
         AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/" + run + "-report.json"))));
