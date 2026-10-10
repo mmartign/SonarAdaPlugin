@@ -35,7 +35,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsARealConsoleReportWithGnatproveVerdicts(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/gnatprove-import-console-output.txt"));
 
@@ -73,7 +73,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheLengthChecksOfARealConsoleReport(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/length-check-console-output.txt"));
 
@@ -102,7 +102,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten(@TempDir Path projectDirectory) throws IOException {
-    // The complete text output and --format=json report of AdaLang Analyzer 1.8.5 run with
+    // The complete text output and --format=json report of AdaLang Analyzer 1.8.6 run with
     // --verify on the analyzer's own tests/verification_fp117_unwritten_out.adb, the text with
     // the checkout directory shortened. Up to 1.8.4 the four reads were proved safe, and so
     // were no issue: an out actual was taken to be initialized after a call whose callee has a
@@ -155,6 +155,58 @@ class AdaLangAnalyzerSensorTest {
         .map(issue -> org.assertj.core.groups.Tuple.tuple(issue.ruleId(), issue.severity(), issue.primary().range()))
         .toList());
     assertThat(fromText).allMatch(issue -> issue.secondary().isEmpty());
+  }
+
+  @Test
+  void importsAComponentReadInTwoElementsOfAnArray(@TempDir Path projectDirectory) throws IOException {
+    // The complete text output and --format=json report of AdaLang Analyzer 1.8.6 run with
+    // --verify on the analyzer's own tests/verification_fp119_element_component.ads and .adb,
+    // the text with the checkout directory shortened. Up to 1.8.5 the assertion and the division
+    // were proved safe, and so were no issue: a component was one value for every element of
+    // its array.
+    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/element-component-console-output.txt"));
+    Files.write(projectDirectory.resolve("adalang.json"), readResource("adalanganalyzer/element-component-report.json"));
+    String[] sources = {
+      "tests/verification_fp119_element_component.ads", "tests/verification_fp119_element_component.adb"};
+
+    List<SavedIssue> fromText = importReport(projectDirectory, "adalang.txt", sources);
+    List<SavedIssue> fromJson = importReport(projectDirectory, "adalang.json", sources);
+
+    // One finding and the four unproved obligations.
+    assertThat(fromJson).hasSize(5);
+    // The assertion on two elements, the division by a component of one, and the two checks on
+    // the quotient, which were issues before too. All are in the body.
+    assertThat(fromJson)
+      .filteredOn(issue -> issue.ruleId().startsWith("proof-obligation:"))
+      .extracting(issue -> issue.primary().file() + ":" + issue.primary().range(), SavedIssue::ruleId, SavedIssue::severity)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp119_element_component.adb:6:21", "proof-obligation:assertion", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp119_element_component.adb:15:25", "proof-obligation:division-by-zero", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp119_element_component.adb:15:17", "proof-obligation:integer-overflow", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp119_element_component.adb:15:17", "proof-obligation:range-check", Severity.MAJOR));
+    assertThat(fromJson)
+      .extracting(issue -> issue.primary().message())
+      .contains(
+        "Proof obligation [assertion] unproved. Operation: Row (1).Count = Row (2).Count"
+          + ". Method: abstract-interpretation"
+          + ". Why: assertion failure is not established, but the assertion is not proved"
+          + ". Imprecision: abstract interpretation and the scalar VC portfolio did not certify it",
+        "Proof obligation [division-by-zero] unproved. Operation: Mixed (2).Limit. Method: abstract-interpretation"
+          + ". Why: zero has not been excluded from the divisor"
+          + ". Imprecision: the divisor range is unknown or contains zero");
+
+    // The text output gives the same issues at the same places.
+    assertThat(fromText)
+      .extracting(
+        SavedIssue::ruleId, SavedIssue::severity, issue -> issue.primary().file(), issue -> issue.primary().range())
+      .containsExactlyElementsOf(fromJson.stream()
+        .map(issue -> org.assertj.core.groups.Tuple.tuple(
+          issue.ruleId(), issue.severity(), issue.primary().file(), issue.primary().range()))
+        .toList());
   }
 
   @Test

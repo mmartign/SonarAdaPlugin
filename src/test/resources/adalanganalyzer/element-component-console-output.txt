@@ -1,0 +1,121 @@
+adalang-analyzer [INFO]: Unit lookup covers 2 sources, 2 of them analyzed
+adalang-analyzer [INFO]: Built 3 subprogram summaries
+adalang-analyzer [INFO]: Parsing: tests/verification_fp119_element_component.ads
+adalang-analyzer [INFO]: Parsing: tests/verification_fp119_element_component.adb
+/checkout/tests/verification_fp119_element_component.adb:11:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Across_Elements (Mixed : Items; Share : Integer; Part : out Integer) is
+                 ^^^^^^^^^^^^^^^
+
+Files scanned : 2
+Violations    : 1
+
+Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+  Total : 22
+  proved-safe : 18
+  unproved : 4
+  Details:
+    /checkout/tests/verification_fp119_element_component.adb:6:22 [assertion] unproved
+      method: abstract-interpretation
+      why: assertion failure is not established, but the assertion is not proved
+      imprecision: abstract interpretation and the scalar VC portfolio did not certify it
+    /checkout/tests/verification_fp119_element_component.adb:15:26 [division-by-zero] unproved
+      method: abstract-interpretation
+      why: zero has not been excluded from the divisor
+      imprecision: the divisor range is unknown or contains zero
+    /checkout/tests/verification_fp119_element_component.adb:22:22 [assertion] proved-safe
+      method: external-prover
+      why: scalar verification condition proved by the external prover portfolio
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/verification_fp119_element_component.adb:6:27 [index-check] proved-safe
+      method: abstract-interpretation
+      why: index range is contained in the array index bounds
+      evidence: index bounds are within array bounds
+    /checkout/tests/verification_fp119_element_component.adb:6:22 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:6:43 [index-check] proved-safe
+      method: abstract-interpretation
+      why: index range is contained in the array index bounds
+      evidence: index bounds are within array bounds
+    /checkout/tests/verification_fp119_element_component.adb:6:38 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:13:15 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp119_element_component.adb:14:17 [index-check] proved-safe
+      method: abstract-interpretation
+      why: index range is contained in the array index bounds
+      evidence: index bounds are within array bounds
+    /checkout/tests/verification_fp119_element_component.adb:14:10 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:14:47 [index-check] proved-safe
+      method: abstract-interpretation
+      why: index range is contained in the array index bounds
+      evidence: index bounds are within array bounds
+    /checkout/tests/verification_fp119_element_component.adb:14:40 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:15:18 [integer-overflow] unproved
+      method: abstract-interpretation
+      why: overflow is not established, but absence is not proved
+      imprecision: Ada division semantics require a provably nonzero divisor
+      reason: unsafe-divisor-semantics
+      blocked at: Share / Mixed (2).Limit
+    /checkout/tests/verification_fp119_element_component.adb:15:18 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:15:33 [index-check] proved-safe
+      method: abstract-interpretation
+      why: index range is contained in the array index bounds
+      evidence: index bounds are within array bounds
+    /checkout/tests/verification_fp119_element_component.adb:15:26 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:15:18 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: Ada division semantics require a provably nonzero divisor
+      reason: unsafe-divisor-semantics
+      blocked at: Share / Mixed (2).Limit
+    /checkout/tests/verification_fp119_element_component.ads:18:63 [initialization-check] proved-safe
+      method: flow-analysis
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:22:28 [index-check] proved-safe
+      method: abstract-interpretation
+      why: index range is contained in the array index bounds
+      evidence: index bounds are within array bounds
+    /checkout/tests/verification_fp119_element_component.adb:22:22 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp119_element_component.adb:22:45 [index-check] proved-safe
+      method: abstract-interpretation
+      why: index range is contained in the array index bounds
+      evidence: index bounds are within array bounds
+    /checkout/tests/verification_fp119_element_component.adb:22:39 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+
+Violations by check:
+  Missing_Depends_Contract : 1  [Maintainability/Medium]
+
+Violations by software quality:
+  Maintainability : 1
+
+Violations by severity:
+  Medium : 1

@@ -210,9 +210,7 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
     /checkout/tests/verification_length_check_state.adb:44:22 [range-check] unproved
       method: abstract-interpretation
       why: range-check failure is not established, but absence is not proved
-      imprecision: this call form cannot be inlined safely
-      reason: unsupported-call
-      blocked at: Wider (1)
+      imprecision: the current non-relational range domain is inconclusive
     /checkout/tests/verification_length_check_state.adb:44:16 [index-check] unproved
       method: abstract-interpretation
       why: index-check failure is not established, but absence is not proved

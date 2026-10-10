@@ -218,6 +218,54 @@ class AdaLangAnalyzerSarifReportParserTest {
   }
 
   @Test
+  void readsAComponentReadInTwoElementsOfAnArray() {
+    // Obligation summaries copied verbatim from the run properties of an AdaLang Analyzer 1.8.6
+    // --format=sarif report produced with --verify on the analyzer's own
+    // tests/verification_fp119_element_component.ads and .adb: an assertion that two elements of
+    // an array hold the same count, a division by a component of one under a condition on two,
+    // an assertion on one element, and the overflow check on the quotient. 1.8.5 proved the
+    // first two safe.
+    String sarif = """
+      {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [{
+          "tool": {"driver": {"name": "AdaLang Analyzer", "rules": []}},
+          "properties": {
+            "proofObligations": [
+              {"id": "proof/v1/e13a45eb1272d0aa", "kind": "assertion", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/78d0a2a2af2c0d44", "kind": "division-by-zero", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/86646668761dc1f7", "kind": "assertion", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/0a57515517dbb62c", "kind": "integer-overflow", "status": "unproved", \
+      "reasonCode": "unsafe-divisor-semantics", "blockingExpression": "Share / Mixed (2).Limit", "inlinePath": ""}
+            ],
+            "analysisConfiguration": {"toolVersion": "1.8.6", "selectedPreset": "verify", "skippedChecks": 0}
+          },
+          "results": []
+        }]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(sarif)));
+
+    assertThat(report.proofObligationCount()).isEqualTo(4);
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(true, true, false, true);
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly(
+        "proof-obligation:assertion", "proof-obligation:division-by-zero", "proof-obligation:assertion",
+        "proof-obligation:integer-overflow");
+    assertThat(report.proofObligations().get(1).sonarMessage())
+      .isEqualTo("Proof obligation [division-by-zero] unproved");
+    assertThat(report.proofObligations().get(3).sonarMessage()).isEqualTo(
+      "Proof obligation [integer-overflow] unproved. Reason: unsafe-divisor-semantics"
+        + ". Blocked at: Share / Mixed (2).Limit");
+  }
+
+  @Test
   void reportsNoGnatproveSummaryForARunWithoutALog() {
     Map<String, Object> root = AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(
       "{\"runs\": [{\"properties\": {\"proofObligations\": []}, \"results\": []}]}"));

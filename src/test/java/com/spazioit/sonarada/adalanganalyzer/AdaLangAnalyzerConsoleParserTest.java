@@ -214,7 +214,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesGnatproveVerdictsAndTheirSummaryFromRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     String report = readResource("adalanganalyzer/gnatprove-import-console-output.txt");
 
@@ -375,7 +375,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheLengthChecksOfRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened: the
     // length-check kind 1.8.4 added.
     String report = readResource("adalanganalyzer/length-check-console-output.txt");
@@ -424,7 +424,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete output of AdaLang Analyzer 1.8.5 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
     // tests/verification_fp117_unwritten_out.adb, with the checkout directory shortened. Up to
     // 1.8.4 every one of these reads was proved safe: an out actual was taken to be initialized
     // after a call whose callee has a path that returns without writing the parameter.
@@ -510,6 +510,121 @@ class AdaLangAnalyzerConsoleParserTest {
   }
 
   @Test
+  void parsesAComponentReadInTwoElementsOfAnArray() {
+    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
+    // tests/verification_fp119_element_component.ads and .adb, with the checkout directory
+    // shortened. Up to 1.8.5 a component was one value for every element of its array, and the
+    // first two of these obligations were proved safe: an assertion that two elements hold the
+    // same count, and a division by a component that can be zero, under a condition on two
+    // elements that was taken for one that cannot hold.
+    String report = readResource("adalanganalyzer/element-component-console-output.txt");
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(parser.parse(report)).hasSize(1).hasSize(parser.reportedViolationCount(report));
+    assertThat(obligations).hasSize(22).hasSize(parser.reportedProofObligationCount(report));
+
+    // What is said of two elements is not proved; what is said of one element still is.
+    assertThat(obligations.subList(0, 3))
+      .extracting(
+        AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::kind,
+        AdaLangAnalyzerProofObligation::outcome, AdaLangAnalyzerProofObligation::method)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(6, "assertion", "unproved", "abstract-interpretation"),
+        org.assertj.core.groups.Tuple.tuple(15, "division-by-zero", "unproved", "abstract-interpretation"),
+        org.assertj.core.groups.Tuple.tuple(22, "assertion", "proved-safe", "external-prover"));
+    assertThat(obligations.subList(0, 3))
+      .extracting(AdaLangAnalyzerProofObligation::isActionable)
+      .containsExactly(true, true, false);
+    assertThat(obligations.getFirst().sonarMessage()).isEqualTo(
+      "Proof obligation [assertion] unproved. Method: abstract-interpretation"
+        + ". Why: assertion failure is not established, but the assertion is not proved"
+        + ". Imprecision: abstract interpretation and the scalar VC portfolio did not certify it");
+    assertThat(obligations.get(1)).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/verification_fp119_element_component.adb", 15, 26, "division-by-zero", "unproved",
+        "abstract-interpretation", "zero has not been excluded from the divisor",
+        "the divisor range is unknown or contains zero"));
+
+    // The two checks on the quotient were not proved before either, and say what stands in
+    // their way.
+    assertThat(obligations)
+      .filteredOn(obligation -> obligation.reasonCode().equals("unsafe-divisor-semantics"))
+      .extracting(AdaLangAnalyzerProofObligation::kind, AdaLangAnalyzerProofObligation::blockingExpression)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("integer-overflow", "Share / Mixed (2).Limit"),
+        org.assertj.core.groups.Tuple.tuple("range-check", "Share / Mixed (2).Limit"));
+    assertThat(obligations).filteredOn(AdaLangAnalyzerProofObligation::isActionable).hasSize(4);
+  }
+
+  @Test
+  void parsesWhatAConditionalAndACaseExpressionDecide() {
+    // A finding and obligations copied verbatim from AdaLang Analyzer 1.8.6 --verify -v output,
+    // with the checkout directory shortened: a call whose precondition is "if Up then Amount >
+    // 5", and the assertion of a function whose body is a case expression, which is false where
+    // it stands. 1.8.5 handed neither expression to the solvers and left the three unproved, the
+    // precondition with the reason unsupported-expression-kind. The precondition is now proved,
+    // and the assertion is a definite error and a finding of the Known_Assertion_Failure check.
+    String report = """
+      /checkout/tests/verification_mutation_expression_forms.adb:57:22: warning: assertion condition is false here \
+      based on earlier state [Known_Assertion_Failure]
+        rule: Find Assert, Assert_And_Cut, Check, and Loop_Invariant pragmas whose condition is statically false.
+        advice: Correct the implementation or assertion so the asserted property holds at this program point.
+        why: The incoming flow state makes the assertion condition False.
+        evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+        quality: Reliability (High)
+        source:
+                pragma Assert (Fits (Medium, Ten));
+                               ^^^^^^^^^^^^^^^^^^
+
+      Files scanned : 4
+      Violations    : 1
+
+      Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+        Total : 3
+        proved-safe : 2
+        definite-error : 1
+        Details:
+          /checkout/tests/verification_expression_forms.adb:18:7 [precondition] proved-safe
+            method: external-prover
+            why: actual arguments satisfy the precondition
+            evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+          /checkout/tests/verification_expression_forms.adb:18:7 [precondition] proved-safe
+            method: external-prover
+            why: actual arguments satisfy the precondition
+            evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+          /checkout/tests/verification_mutation_expression_forms.adb:57:22 [assertion] definite-error
+            method: external-prover
+            why: assertion condition is false based on the incoming state
+            evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+      """;
+
+    List<AdaLangAnalyzerFinding> findings = parser.parse(report);
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(obligations).hasSize(3).hasSize(parser.reportedProofObligationCount(report));
+    assertThat(obligations)
+      .extracting(AdaLangAnalyzerProofObligation::isActionable)
+      .containsExactly(false, false, true);
+    assertThat(obligations.getLast()).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/verification_mutation_expression_forms.adb", 57, 22, "assertion", "definite-error",
+        "external-prover", "assertion condition is false based on the incoming state", "",
+        "SMT-LIB scalar VC; CVC5 and Z3 agreement required", "", "", ""));
+    assertThat(obligations.getLast().isDefiniteError()).isTrue();
+
+    // The finding is where the obligation is, and has the evidence of the obligation.
+    assertThat(findings).hasSize(1).hasSize(parser.reportedViolationCount(report));
+    assertThat(findings.getFirst())
+      .extracting(
+        AdaLangAnalyzerFinding::file, AdaLangAnalyzerFinding::line, AdaLangAnalyzerFinding::column,
+        AdaLangAnalyzerFinding::ruleId, AdaLangAnalyzerFinding::evidence)
+      .containsExactly(
+        "/checkout/tests/verification_mutation_expression_forms.adb", 57, 22, "Known_Assertion_Failure",
+        "SMT-LIB scalar VC; CVC5 and Z3 agreement required");
+  }
+
+  @Test
   void keepsEveryLineOfAnExpressionWrittenOnSeveral() {
     // Obligations copied verbatim from AdaLang Analyzer 1.8.4 --verify -v output, with the
     // checkout directory shortened: the expression that blocked the proof is a case expression
@@ -552,10 +667,10 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void readsFromTheTextOutputWhatTheJsonReportHas() {
-    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.8.5.
+    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.8.6.
     // Only the JSON report has the operation, the assumptions and the subject of an obligation;
     // only the text output has the rule, the advice and the source line of a finding.
-    for (String run : List.of("gnatprove-import", "length-check", "unwritten-out")) {
+    for (String run : List.of("gnatprove-import", "length-check", "unwritten-out", "element-component")) {
       String text = readResource("adalanganalyzer/" + run + "-console-output.txt");
       AdaLangAnalyzerReport json = new AdaLangAnalyzerJsonReportParser().parse(AdaLangAnalyzerJson.mapOf(
         AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/" + run + "-report.json"))));
