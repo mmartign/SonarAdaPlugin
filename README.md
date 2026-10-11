@@ -42,6 +42,8 @@ This plugin and [AdaLang_Analyzer](https://github.com/mmartign/AdaLang_Analyzer)
 Building the plugin requires JDK 21 or newer and produces Java 21 bytecode.
 Verify that Maven uses the expected JDK with `mvn --version` before building.
 
+### Libadalang Java API
+
 Install the generated Java API from the local Libadalang and Langkit source
 trees into the project-local Maven repository:
 
@@ -73,16 +75,6 @@ scanner must start with HotSpot's `libjsig.so` signal-chaining library
 preloaded and `-XX:+UseSignalChaining` enabled. The included wrapper configures
 signal chaining and the native library paths:
 
-Some GNAT toolchains link `libadalang_jni.so` against GNU libiconv, whose
-headers redefine `iconv_open()` to `libiconv_open()`. glibc provides
-`iconv_open()` itself but not that symbol, so hosts without GNU libiconv
-installed fail to load the library. `scripts/ensure-libiconv-linux.sh` copies
-whichever `libiconv` the JNI library actually needs into the native library
-directory so this no longer depends on what a given host has installed.
-`scripts/install-local-libadalang.sh` runs it once during setup, and
-`scripts/sonar-scanner-linux.sh` runs it again before every scan so the bundle
-stays current if the native libraries are updated afterwards.
-
 ```bash
 ./scripts/sonar-scanner-linux.sh
 ```
@@ -100,6 +92,16 @@ ln -s /opt/SonarAdaPlugin/scripts/sonar-scanner-linux.sh \
 
 Do not disable `sonar.text.activate` or `sonar.scm`: signal chaining allows the
 Text/Secrets sensor and SCM publisher to run normally after Ada analysis.
+
+Some GNAT toolchains link `libadalang_jni.so` against GNU libiconv, whose
+headers redefine `iconv_open()` to `libiconv_open()`. glibc provides
+`iconv_open()` itself but not that symbol, so hosts without GNU libiconv
+installed fail to load the library. `scripts/ensure-libiconv-linux.sh` copies
+whichever `libiconv` the JNI library actually needs into the native library
+directory so this no longer depends on what a given host has installed.
+`scripts/install-local-libadalang.sh` runs it once during setup, and
+`scripts/sonar-scanner-linux.sh` runs it again before every scan so the bundle
+stays current if the native libraries are updated afterwards.
 
 ### Native libraries on macOS
 
@@ -171,9 +173,21 @@ mvn -DargLine="--enable-native-access=ALL-UNNAMED -Djava.library.path=$native_pa
 Supply the same `java.library.path` directories to the JVM that runs the
 SonarScanner in production.
 
+### Package the plugin
+
+```bash
+mvn clean package
+```
+
+The tests load the native libraries from `/opt/libadalang-jni-libs`. Where they
+are elsewhere, as in the macOS recipe above, pass their directories:
+
 ```bash
 mvn -DargLine="--enable-native-access=ALL-UNNAMED -Djava.library.path=$native_path" clean package
 ```
+
+Without the native libraries, `mvn -P skip-native-tests clean package` builds
+the plugin and runs every test except `LibadalangAnalyzerTest`.
 
 The plugin JAR is created under `target/`.
 
@@ -228,28 +242,63 @@ Rule thresholds such as line length, file length, and complexity are configured 
 
 ## Spazio IT AdaLang Analyzer
 
-AdaLang Analyzer is a Spazio IT static analyzer for Ada, similar in role to clang-analyzer, and is under active development. The plugin can run it directly and publish its findings as Sonar external issues:
+AdaLang Analyzer is a Spazio IT static analyzer for Ada, similar in role to
+clang-analyzer, and is under active development. The plugin can run it during
+the scan, import reports it wrote earlier, or both. Its findings are published
+as Sonar external issues.
+
+This version of the plugin is tested against AdaLang Analyzer 1.8.6. Reports of
+earlier versions are still imported.
+
+| Property | Default | Purpose |
+| --- | --- | --- |
+| `sonar.ada.adalang.enabled` | `false` | Run the analyzer during the scan. |
+| `sonar.ada.adalang.executable` | `adalang_analyzer` | Path to the analyzer. Use an absolute path when it is not on `PATH`. |
+| `sonar.ada.adalang.preset` | | Preset of checks, passed as `--<preset>`. |
+| `sonar.ada.adalang.checks` | | Check names, passed with `-checks=`. |
+| `sonar.ada.adalang.projectFile` | | GNAT project file, passed with `-P`. |
+| `sonar.ada.adalang.extraArgs` | | Further arguments, passed before the input files. |
+| `sonar.ada.adalang.gnatproveLogPaths` | | GNATprove logs, each passed with `--gnatprove-log=`. |
+| `sonar.ada.adalang.timeoutSeconds` | `300` | How long to wait for the analyzer. |
+| `sonar.ada.adalang.failOnError` | `true` | Fail the scan when the analyzer cannot be run or stops with an error. |
+| `sonar.ada.adalang.reportPaths` | | Reports to import. |
+
+`checks`, `gnatproveLogPaths`, and `reportPaths` take comma-separated lists.
+Relative paths of the project file, the logs, and the reports are resolved from
+the Sonar project base directory.
+
+### Run the analyzer during the scan
 
 ```properties
 sonar.ada.adalang.enabled=true
-sonar.ada.adalang.executable=/Users/mmartign/AdaLang_Analyzer/bin/adalang_analyzer
-sonar.ada.adalang.checks=*
-sonar.ada.adalang.timeoutSeconds=300
-```
-
-Use `sonar.ada.adalang.checks=*` to enable every available check, or provide a comma-separated subset such as `No_Goto,No_Raise,Division_By_Zero`. Exit code `1` is accepted when the output contains violations. A code `1` result without parseable findings, timeouts, and internal errors fail the scan by default; set `sonar.ada.adalang.failOnError=false` to log a warning instead.
-
-Select one of the analyzer's presets with `sonar.ada.adalang.preset`: `recommended`, `spark`, `verify`, `automotive`, or `do178c=<A|B|C|D>`. The value is passed as `--<preset>`. `verify` runs the analyzer's bounded scalar verification, which classifies each proof obligation as proved safe, definite error, unproved, unreachable, or unsupported; with any other preset nothing is proved, and every obligation that is not a known failure is reported as unproved. A `checks` list given together with a preset refines it, for example `-Missing_Depends_Contract` to disable one of its checks:
-
-```properties
-sonar.ada.adalang.enabled=true
+sonar.ada.adalang.executable=/path/to/adalang_analyzer
 sonar.ada.adalang.preset=verify
 sonar.ada.adalang.checks=-Missing_Depends_Contract
 sonar.ada.adalang.projectFile=my_project.gpr
 sonar.ada.adalang.extraArgs=-XBUILD_MODE=release -complexity-threshold=15
 ```
 
-AdaLang Analyzer also offers opt-in coding-standard checks: naming conventions, layout, restricted constructs, object-oriented design, representation items, and complexity limits. No preset enables them. Name the ones your coding standard requires in `sonar.ada.adalang.checks`, alone or after a preset, and give their limits and conventions with `-rule-param=<check>.<name>=<value>` in `sonar.ada.adalang.extraArgs`:
+**Checks.** `preset` selects one of the analyzer's presets: `recommended`,
+`spark`, `verify`, `automotive`, or `do178c=<A|B|C|D>`. `checks` names the
+checks to run, such as `No_Goto,No_Raise,Division_By_Zero`; given together with
+a preset it refines it, for example `-Missing_Depends_Contract` to disable one
+of its checks. When neither is set, the plugin runs the analyzer with
+`--recommended`: the analyzer enables no checks by default and would otherwise
+silently analyze nothing. Run `adalang_analyzer -list-checks` for the
+catalogue.
+
+`checks=*` enables every check of the catalogue, including the coding-standard
+checks below and pairs that contradict each other by design (for example
+`Use_If_Expression`, which suggests if expressions, and
+`Conditional_Expression`, which forbids them). Prefer a preset plus an explicit
+list.
+
+**Coding-standard checks.** The analyzer also offers opt-in checks of naming
+conventions, layout, restricted constructs, object-oriented design,
+representation items, and complexity limits. No preset enables them. Name the
+ones your coding standard requires in `checks`, alone or after a preset, and
+give their limits and conventions with `-rule-param=<check>.<name>=<value>` in
+`extraArgs`:
 
 ```properties
 sonar.ada.adalang.enabled=true
@@ -258,17 +307,73 @@ sonar.ada.adalang.checks=Identifier_Casing,Maximum_Subprogram_Lines,Forbidden_At
 sonar.ada.adalang.extraArgs=-rule-param=Identifier_Casing.type=mixed -rule-param=Maximum_Subprogram_Lines.n=200 -rule-param=Forbidden_Attribute.forbidden=Address,Unchecked_Access
 ```
 
-Their findings are imported like any other AdaLang Analyzer finding, under the check's name. With these checks in the catalogue, `sonar.ada.adalang.checks=*` enables every one of them as well, including pairs that contradict each other by design (for example `Use_If_Expression`, which suggests if expressions, and `Conditional_Expression`, which forbids them); prefer a preset plus an explicit list. Run `adalang_analyzer -list-checks` for the catalogue.
+Their findings are imported like any other finding, under the check's name.
 
-AdaLang Analyzer enables no checks by default, so when neither `preset` nor `checks` is set the plugin runs it with `--recommended` instead of silently analyzing nothing.
+**Project file.** The sources of the project given in `projectFile` are
+analyzed together with the Ada files indexed by Sonar, and `--verify` takes the
+project's configuration pragmas into account: a function in a project whose
+configuration pragmas set `SPARK_Mode` is treated as free of side effects.
 
-`sonar.ada.adalang.projectFile` passes a GNAT project file with `-P`. The project's sources are analyzed together with the Ada files indexed by Sonar, and `--verify` takes the project's configuration pragmas into account: a function in a project whose configuration pragmas set `SPARK_Mode` is treated as free of side effects. `sonar.ada.adalang.extraArgs` passes further arguments before the input files, such as `-X<name>=<value>` scenario variables, thresholds, or `--baseline=<file>`. Do not pass `--format`, `--output`, or `-q` there: the plugin reads the analyzer's verbose text output.
+**Further arguments.** `extraArgs` takes arguments such as `-X<name>=<value>`
+scenario variables, thresholds, or `--baseline=<file>`. Do not pass `--format`,
+`--output`, or `-q` there: the plugin reads the analyzer's verbose text output.
 
-The analyzer is run from the Sonar project's base directory, so an `adalang_analyzer.cfg` file placed at the project root is auto-discovered the same way it would be from a manual command-line run. When that file exists, or `extraArgs` names one with `--config=<file>`, the plugin does not add `--recommended`: the analyzer reads the file's flags before the command line, and a preset on the command line would reset the checks and the `--verify` mode the file selected. A `preset` set in Sonar still overrides the file's, and `checks` still refines it.
+**Configuration file.** The analyzer is run from the Sonar project's base
+directory, so an `adalang_analyzer.cfg` file at the project root is discovered
+as it would be in a manual run. When that file exists, or `extraArgs` names one
+with `--config=<file>`, the plugin does not add `--recommended`: the analyzer
+reads the file's flags before the command line, and a preset on the command
+line would reset the checks and the `--verify` mode the file selected. A
+`preset` set in Sonar still overrides the file's, and `checks` still refines
+it.
 
-The analyzer's own warnings about a run, such as no check being enabled or no `gnatls` being found on `PATH` (which degrades the checks that need the Ada runtime packages), are repeated as warnings in the scanner log.
+**Errors and warnings.** Exit code `1` is accepted when the output contains
+violations. A code `1` result without parseable findings, a timeout, or an
+internal error fails the scan; set `sonar.ada.adalang.failOnError=false` to log
+a warning instead. The analyzer's own warnings about a run, such as no check
+being enabled or no `gnatls` being found on `PATH` (which degrades the checks
+that need the Ada runtime packages), are repeated as warnings in the scanner
+log.
 
-Where the project is also proved with GNATprove, `sonar.ada.adalang.gnatproveLogPaths` gives the analyzer the log of that run, and what GNATprove said of each check is set beside the analyzer's own proof obligation for it. The property takes one or more comma-separated paths, resolved from the project base directory and each passed with `--gnatprove-log=`; it needs the `verify` preset and AdaLang Analyzer 1.8.3 or later. Produce the log with `--report=all --output=oneline`:
+### Proof obligations
+
+With the `verify` preset the analyzer runs its bounded scalar verification,
+which gives each proof obligation one of five outcomes:
+
+| Outcome | In Sonar |
+| --- | --- |
+| `definite-error`, a proven failure | Reliability issue of high severity |
+| `unproved`, an undetermined risk | Reliability issue of medium severity |
+| `proved-safe`, `unreachable`, `unsupported` | No issue; counted in the scanner log |
+
+The rule of an issue is made from the kind of its obligation, for example
+`proof-obligation:range-check`, `proof-obligation:initialization-check`, or
+`proof-obligation:precondition`. Its message gives the outcome, the analysis
+method, the reason, and what made the result imprecise.
+
+- **Without `--verify` nothing is proved.** The analyzer attempts no proof and
+  reports every obligation that is not a known failure as `unproved`, which
+  says nothing about the code; the report states this as the scope `enumerated
+  outcomes in current analysis scope; not exhaustive`. Those obligations are
+  not imported, only counted in the scanner log. `definite-error` obligations
+  are still imported.
+- **A `Depends` aspect is never proved.** The analyzer has no route that
+  proves one, so every `flow-dependencies` obligation is `unproved`, with the
+  method `none`, and each `Depends` aspect has one such issue. A wrong aspect
+  is reported by the `Depends_Contract_Mismatch` check.
+- **An initialization check is located where the object is read.** JSON
+  reports also give the declaration of that object, which becomes a secondary
+  location of the issue when it is elsewhere, in the same file or in another
+  one Sonar indexes. Console-text output, which is what the plugin reads when
+  it runs the analyzer itself, does not carry it.
+
+### GNATprove verdicts
+
+Where the project is also proved with GNATprove, the analyzer can be given the
+log of that run, and what GNATprove said of each check is set beside the
+analyzer's own proof obligation for it. This needs the `verify` preset and
+AdaLang Analyzer 1.8.3 or later. Produce the log with `--report=all
+--output=oneline`:
 
 ```sh
 gnatprove -P my_project.gpr --mode=all --report=all --output=oneline > build/gnatprove.log
@@ -281,131 +386,72 @@ sonar.ada.adalang.projectFile=my_project.gpr
 sonar.ada.adalang.gnatproveLogPaths=build/gnatprove.log
 ```
 
-GNATprove is a separate tool of AdaCore. Neither this plugin nor AdaLang Analyzer contains it or runs it: the analyzer reads the text GNATprove wrote. A verdict read from the log is GNATprove's and changes nothing the analyzer reports of its own: an obligation the analyzer left `unproved` stays `unproved`. The same holds in Sonar. The log neither adds nor removes an issue: an `unproved` obligation is raised whether GNATprove proved its check or not, and so is a `definite-error` one. What the log adds is the verdict itself, in the message of each proof-obligation issue a check of the log is paired with: `GNATprove: proved`, `GNATprove: justified` (accepted by a reviewer, not discharged by a prover), or `GNATprove: not-proved`.
+GNATprove is a separate tool of AdaCore. Neither this plugin nor AdaLang
+Analyzer contains it or runs it: the analyzer reads the text GNATprove wrote.
 
-The scanner log repeats the analyzer's counts of GNATprove's verdicts, kept apart from its own results, and warns when a check GNATprove proved is a definite error for the analyzer: one of the two tools is wrong, or the log is not that of the sources analyzed. Giving the log of the sources analyzed is up to you. A log names a file without its directory and says nothing of the state of the sources it was written for, so a log of an earlier state can pair a verdict with the wrong obligation. Given a log without `--verify`, or a log it cannot read, the analyzer stops with an error, which fails the scan unless `sonar.ada.adalang.failOnError=false`.
+- **The verdict is shown and decides nothing.** It is in the message of each
+  proof-obligation issue a check of the log is paired with: `GNATprove:
+  proved`, `GNATprove: justified` (accepted by a reviewer, not discharged by a
+  prover), or `GNATprove: not-proved`. The log neither adds nor removes an
+  issue: an `unproved` obligation is raised whether GNATprove proved its check
+  or not, and so is a `definite-error` one.
+- **The scanner log has the counts.** It repeats the analyzer's counts of
+  GNATprove's verdicts, kept apart from its own results, and warns when a check
+  GNATprove proved is a definite error for the analyzer: one of the two tools
+  is wrong, or the log is not that of the sources analyzed.
+- **Giving the log of the sources analyzed is up to you.** A log names a file
+  without its directory and says nothing of the state of the sources it was
+  written for, so a log of an earlier state can pair a verdict with the wrong
+  obligation.
+- **A log the analyzer rejects is an error.** Given a log without `--verify`,
+  or a log it cannot read, the analyzer stops with an error, which fails the
+  scan unless `sonar.ada.adalang.failOnError=false`.
 
-Import one or more pre-generated reports without running the analyzer. The
-analyzer's complete console-text output, `--format=json`, and `--format=sarif`
-are all supported, plus the legacy semicolon-separated CSV/CSVX format shared
-with AdaControl; the importer detects the format of each report automatically:
+### Import reports
+
+Import one or more pre-generated reports without running the analyzer:
 
 ```properties
 sonar.ada.adalang.reportPaths=build/adalang_report.json,build/adalang_report.txt
 ```
 
-Multiple report paths can be separated with commas. Relative report paths and
-relative source paths inside reports are resolved from the Sonar project base
+The importer detects the format of each report: the analyzer's complete
+console-text output, `--format=json`, `--format=sarif`, or the legacy
+semicolon-separated CSV/CSVX format shared with AdaControl. Direct execution
+and report import can be enabled together.
+
+Relative source paths inside a report are resolved from the Sonar project base
 directory. Absolute source paths from another checkout are matched by their
 project-relative suffix. SARIF locations are percent-decoded before matching.
-Direct execution and report import can be enabled together.
 
-For console and SARIF reports, the importer preserves the check identifier,
-rule and advice text (SARIF: from the run's rule catalog), software quality,
-severity, file, line, column, and (console only) the complete source caret
-span. All three structured formats also carry the analyzer's `why`/`evidence`
-explanation for a finding, when present. JSON reports additionally carry
-`explanation`/`evidence` per finding directly. Findings already matching the
-analyzer's `--baseline` are excluded from every format, the same way
-console-text output hides them.
+| What a report brings into Sonar | Console text | JSON | SARIF |
+| --- | --- | --- | --- |
+| Findings: check, message, software quality, severity, location | yes | yes | yes |
+| `why` and `evidence` of a finding | yes | yes | yes |
+| Rule and advice text of a finding | yes | no | yes |
+| Complete source span of a finding | yes | no | no |
+| Proof obligations, as issues | yes | yes | no |
+| Checked operation and assumptions of an obligation | no | yes | no |
+| Declaration of the object of an initialization check | no | yes | no |
+| GNATprove verdicts | yes | yes | counts only |
 
-Structured proof obligations are imported from console-text and JSON reports
-(SARIF has no slot for them). Both `definite-error` (a proven failure) and
-`unproved` (an undetermined risk) obligations become reliability issues
-containing their obligation kind, analysis method, reason, and imprecision
-detail, and GNATprove's verdict on the same check when the analyzer was given a
-GNATprove log; JSON reports additionally carry the checked operation and any
-assumptions the proof relied on. `proved-safe`, `unreachable`, and
-`unsupported` obligations are not findings and are not imported.
+SARIF has no slot for a located proof obligation, so its obligations are
+counted and not imported. Findings already matching the analyzer's `--baseline`
+are left out of every format, the same way console-text output hides them.
 
-An initialization check is located where the object is read. JSON reports also
-give the declaration of that object (`subject`), which becomes a secondary
-location of the issue when it is elsewhere, in the same file or in another one
-Sonar indexes. Console-text output, which is what the plugin reads when it runs
-the analyzer itself, does not carry it.
+The importer checks the `Violations` (JSON: `newViolations`) and
+proof-obligation `Total` summaries of a report against the details it parsed,
+when the format reports them. It logs the reported file, violation,
+proof-obligation, and skipped-check totals, so that incomplete semantic
+analysis remains visible in the scanner log, followed by the number of proof
+obligations with each outcome and, for a run that was given a GNATprove log,
+the counts of GNATprove's verdicts. The JSON report's list of every check of
+the log (`gnatproveChecks`) is not imported.
 
-`unproved` obligations are imported only from a `--verify` run. Without
-`--verify` the analyzer attempts no proof and reports every obligation that is
-not a known failure as `unproved`, which says nothing about the code; the
-report states this as the scope `enumerated outcomes in current analysis scope;
-not exhaustive`. Those obligations are counted in the scanner log instead, and
-`definite-error` obligations are still imported.
+A report that is missing, empty, unreadable, or inconsistent with its own
+totals is skipped with a warning. It does not fail the scan, whatever the value
+of `sonar.ada.adalang.failOnError`.
 
-The importer checks both the `Violations` (or
-JSON's `newViolations`) and proof-obligation `Total` summaries against the
-parsed details, when the format reports them. It logs the reported file,
-violation, proof-obligation, and skipped-check coverage totals so incomplete
-semantic analysis remains visible in scanner logs, followed by the number of
-proof obligations with each outcome and, for a report of a run that was given a
-GNATprove log, the counts of GNATprove's verdicts. All three formats carry
-those verdicts and counts; the JSON report's list of every check of the log
-(`gnatproveChecks`) is not imported.
-
-Reports of AdaLang Analyzer 1.8.6 are supported in all three formats, and
-reports of earlier versions are still imported. Its `--verify` results differ
-from those of 1.8.0 and earlier in five ways:
-
-- It raises obligations where earlier versions raised none: that a function
-  returns (`termination`), that a subprogram respects its `Global` and
-  `Depends` aspects (`data-dependencies`, `flow-dependencies`), and the checks
-  in expression functions, inside preconditions and postconditions, on actual
-  parameters, on the bounds of a slice, and on `out` parameters at exit. Expect
-  more proof-obligation issues after upgrading, some of them under three new
-  rules, `proof-obligation:termination`, `proof-obligation:data-dependencies`,
-  and `proof-obligation:flow-dependencies`; the totals are not comparable with
-  those of 1.8.0. Up to 1.8.6 no route proves a `Depends` aspect, so every
-  `flow-dependencies` obligation is `unproved`, with the method `none`, and
-  each `Depends` aspect has one such issue; a wrong aspect is reported by the
-  `Depends_Contract_Mismatch` check as before.
-- 1.8.4 checks that an array given to a target has the target's length
-  (`length-check`): in an assignment, an initial value, a returned value, an
-  actual parameter, the operand of a conversion, and the operands of `and`,
-  `or` and `xor` on arrays. The ones it does not prove are issues under a new
-  rule, `proof-obligation:length-check`. An assignment has its check at the
-  value, at the `:=`, or one at each, depending on its target. 1.8.4 also
-  checks the range of the length of an array where it is converted to an
-  integer type, and the precondition of an operator that a declaration
-  defines, under the `proof-obligation:range-check` and
-  `proof-obligation:precondition` rules there already were. Expect more
-  proof-obligation issues after upgrading from 1.8.3.
-- 1.8.5 raises the obligations 1.8.4 raised, under the same rules and in the
-  same report formats, and decides more of them: it knows that a constant, an
-  `in` parameter and a loop parameter hold a value wherever they are read,
-  what a call leaves of its actuals, and what the bounds of an array can be.
-  Expect fewer `unproved` proof-obligation issues after upgrading from 1.8.4.
-  An obligation that stays `unproved` can give another reason for it, and one
-  1.8.4 could not decide can now be a `definite-error`, an issue of higher
-  severity; a precondition among these is also a finding of the
-  `Known_Precondition_Failure` check.
-- 1.8.6 raises the obligations 1.8.5 raised, under the same rules and in the
-  same report formats, and decides more of them. Much of what 1.8.5 left
-  `unproved` was written with a form it did not hand to its solvers: an `if`
-  or a `case` expression, a component of a component, a discriminant, the
-  element of an array at a known index, `X'Constrained`, an access value
-  compared with `null`. 1.8.6 reads these. Expect fewer `unproved`
-  proof-obligation issues after upgrading from 1.8.5. An obligation that
-  stays `unproved` can give another reason for it, and one 1.8.5 could not
-  decide can now be a `definite-error`, an issue of higher severity; an
-  assertion among these is also a finding of the `Known_Assertion_Failure`
-  check.
-- Earlier versions could report an obligation as proved safe that a legal
-  execution violates, and a definite error where there is none (see the
-  analyzer's changelog for 1.6.1 and for 1.8.1 to 1.8.6). 1.8.5 corrected two
-  such faults. The read of an object after it was the `out` actual of a call
-  was proved safe where the callee can return without writing the parameter;
-  it is now an `unproved` issue under `proof-obligation:initialization-check`,
-  or a `definite-error` one where the callee never writes the parameter. And
-  a precondition, postcondition, assertion or loop invariant was proved
-  through a function that is declared in one part of a package and completed
-  by an expression function in another. 1.8.6 corrects a third: a component
-  read in an element of an array, `Row (I).Count`, was one value for every
-  element of the array. An assertion, precondition, postcondition, loop
-  invariant or runtime check written with such a component, or standing under
-  a condition written with one, could be proved safe where it does not hold,
-  a division by a component that can be zero among them; it is now an
-  `unproved` issue under the rule of its kind. Regenerate imported `--verify`
-  reports with 1.8.6: obligations that were wrongly proved safe then appear
-  as unproved or definite-error issues.
 CSV and CSVX reports use these fields:
 
 ```text
@@ -414,6 +460,25 @@ file,line,column,key,label,rule,message
 
 A complete sample project is available in
 [`examples/adalang-analyzer-project`](examples/adalang-analyzer-project/README.md).
+
+### Upgrading AdaLang Analyzer
+
+The plugin reports what the analyzer decides, so a new version of the analyzer
+changes the issues in Sonar with no change to the plugin:
+
+- **Issue counts are not comparable between analyzer versions.** A newer
+  version can raise obligations an earlier one did not, some of them under new
+  `proof-obligation:` rules, and decide obligations an earlier one left
+  `unproved`. One it decides can be a `definite-error`, an issue of higher
+  severity.
+- **Regenerate imported `--verify` reports with the current analyzer.** Earlier
+  versions could report an obligation as proved safe that a legal execution
+  violates, and a definite error where there is none. Obligations that were
+  wrongly proved safe then appear as unproved or definite-error issues.
+
+[`CHANGELOG.md`](CHANGELOG.md) says what each version changes in Sonar, and the
+[analyzer's changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md)
+what it changes in the analysis.
 
 ## AdaControl integration
 
@@ -445,6 +510,8 @@ file,line,column,key,label,rule,message
 AdaControl findings are imported as Sonar external issues with engine id `AdaControl`. AdaControl exit code `1` means controls were triggered and does not fail the scan. Execution errors and timeouts fail the scan by default; set `sonar.ada.adacontrol.failOnError=false` to log them as warnings instead.
 
 `sonar.ada.adacontrol.extraArgs` is appended after the input file list, which is why ASIS/compiler options can be supplied as `-- -gnat12`.
+
+Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer. This avoids any direct linking that would conflict with this plugin's GPL-3.0-or-later license.
 
 ## GNATtest integration
 
@@ -480,8 +547,6 @@ obj/gnattest/harness/test_runner > build/gnattest-junit.xml
 
 Malformed, missing, empty, or inconsistent reports fail the scan by default.
 Set `sonar.ada.gnattest.failOnError=false` to log and skip invalid reports.
-
-Because AdaControl is GPL-2.0 software, this plugin integrates with it as an external executable/report producer. This avoids any direct linking that would conflict with this plugin's GPL-3.0-or-later license.
 
 ## License
 

@@ -2,8 +2,8 @@
 
 ## Supported Versions
 
-This project is pre-1.0 and does not yet maintain parallel release branches.
-Security fixes are made against the latest release only.
+This project does not maintain parallel release branches. Security fixes are
+made against the latest release only.
 
 ## Reporting a Vulnerability
 

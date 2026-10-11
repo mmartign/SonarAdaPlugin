@@ -42,9 +42,9 @@ sonar-scanner \
 Console-text reports are the complete output produced by `adalang_analyzer` and
 include lines such as `file:line:column: warning: message [Check_Name]`, followed
 by rule, advice, and quality details. JSON reports (`--format=json`) and SARIF
-reports (`--format=sarif`) carry the same findings, plus (JSON only) proof
-obligations and self-reported summary counts. CSV/CSVX reports use this header
-and field order:
+reports (`--format=sarif`) carry the same findings; the plugin's README says
+[what each format brings into Sonar](../../README.md#import-reports). CSV/CSVX
+reports use this header and field order:
 
 ```csv
 file,line,column,key,label,rule,message
@@ -67,15 +67,22 @@ sonar.ada.adalang.checks=No_Goto,No_Raise,Division_By_Zero
 
 The executable must support the `-checks=` option and `file:line:column`
 diagnostic output. Exit code `1` is accepted when findings were produced.
-Replace the `checks` line with `sonar.ada.adalang.preset=verify` to run the
-analyzer's bounded verification instead, and add
-`sonar.ada.adalang.projectFile=example.gpr` to analyze the sources of the GNAT
-project. With the `verify` preset,
-`sonar.ada.adalang.gnatproveLogPaths=build/gnatprove.log` sets beside each proof
-obligation what GNATprove said of the same check, read from the log of a
-`gnatprove --report=all --output=oneline` run you made on the same sources.
 Report import and direct execution can be enabled together, although the same
 finding may then be published twice.
+
+To go further:
+
+- Replace the `checks` line with `sonar.ada.adalang.preset=verify` to run the
+  analyzer's bounded verification instead.
+- Add `sonar.ada.adalang.projectFile=example.gpr` to analyze the sources of the
+  GNAT project.
+- With the `verify` preset, add
+  `sonar.ada.adalang.gnatproveLogPaths=build/gnatprove.log` to see what
+  GNATprove said of each check beside the analyzer's proof obligation for it.
+
+The plugin's README describes
+[proof obligations](../../README.md#proof-obligations) and
+[GNATprove verdicts](../../README.md#gnatprove-verdicts).
 
 ## Configuration
 
@@ -84,8 +91,10 @@ The integration settings are in [`sonar-project.properties`](sonar-project.prope
 - `sonar.ada.adalang.reportPaths` selects comma-separated console-text, JSON,
   SARIF, or CSV/CSVX reports.
 - `sonar.ada.adalang.enabled=false` prevents the analyzer from also running.
-- `sonar.ada.adalang.failOnError=true` makes missing or unreadable reports fail
-  the Sonar scan.
+- `sonar.ada.adalang.failOnError=true` fails the Sonar scan when the analyzer
+  is run and cannot start, times out, or stops with an error. It does not
+  concern imported reports: a missing or unreadable report is skipped with a
+  warning.
 
 GNAT users can build the sample independently with:
 

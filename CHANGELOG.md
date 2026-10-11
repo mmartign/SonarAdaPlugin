@@ -1,0 +1,106 @@
+# Changelog
+
+What each version of the plugin changes for a SonarQube user.
+
+The version of the plugin is that of the AdaLang Analyzer it is aligned with,
+so an entry says what the reports of that analyzer change in Sonar: which
+issues appear, disappear, or move to another rule or severity. What the
+analyzer itself changed is in
+[its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
+Versions before 1.8.3 are in the git history.
+
+## 1.8.6 - 2026-10-10
+
+Aligned with AdaLang Analyzer 1.8.6. The report formats, the kinds of
+obligation, and the rules are those of 1.8.5, and the plugin reads them with
+no change.
+
+- **Fewer `unproved` issues.** 1.8.6 raises the obligations 1.8.5 raised and
+  decides more of them. Much of what 1.8.5 left `unproved` was written with a
+  form it did not hand to its solvers: an `if` or a `case` expression, a
+  component of a component, a discriminant, the element of an array at a known
+  index, `X'Constrained`, an access value compared with `null`. 1.8.6 reads
+  these.
+- **Some issues change.** An obligation that stays `unproved` can give another
+  reason for it, and one 1.8.5 could not decide can now be a `definite-error`,
+  an issue of higher severity; an assertion among these is also a finding of
+  the `Known_Assertion_Failure` check.
+- **A false-safe corrected.** A component read in an element of an array,
+  `Row (I).Count`, was one value for every element of the array. An assertion,
+  precondition, postcondition, loop invariant or runtime check written with
+  such a component, or standing under a condition written with one, could be
+  proved safe where it does not hold, a division by a component that can be
+  zero among them; it is now an `unproved` issue under the rule of its kind.
+  Regenerate imported `--verify` reports with 1.8.6.
+
+## 1.8.5 - 2026-10-09
+
+Aligned with AdaLang Analyzer 1.8.5. The report formats, the kinds of
+obligation, and the rules are those of 1.8.4, and the plugin reads them with
+no change.
+
+- **Fewer `unproved` issues.** 1.8.5 raises the obligations 1.8.4 raised and
+  decides more of them: it knows that a constant, an `in` parameter and a loop
+  parameter hold a value wherever they are read, what a call leaves of its
+  actuals, and what the bounds of an array can be.
+- **Some issues change.** An obligation that stays `unproved` can give another
+  reason for it, and one 1.8.4 could not decide can now be a `definite-error`,
+  an issue of higher severity; a precondition among these is also a finding of
+  the `Known_Precondition_Failure` check.
+- **Two false-safes corrected.** The read of an object after it was the `out`
+  actual of a call was proved safe where the callee can return without writing
+  the parameter; it is now an `unproved` issue under
+  `proof-obligation:initialization-check`, or a `definite-error` one where the
+  callee never writes the parameter. And a precondition, postcondition,
+  assertion or loop invariant was proved through a function that is declared
+  in one part of a package and completed by an expression function in another.
+  Regenerate imported `--verify` reports with 1.8.5.
+
+## 1.8.4 - 2026-10-09
+
+Aligned with AdaLang Analyzer 1.8.4. Expect more proof-obligation issues after
+upgrading from 1.8.3.
+
+- **New rule `proof-obligation:length-check`.** 1.8.4 checks that an array
+  given to a target has the target's length: in an assignment, an initial
+  value, a returned value, an actual parameter, the operand of a conversion,
+  and the operands of `and`, `or` and `xor` on arrays. The ones it does not
+  prove are issues under the new rule. An assignment has its check at the
+  value, at the `:=`, or one at each, depending on its target.
+- **More issues under two rules there already were.** 1.8.4 also checks the
+  range of the length of an array where it is converted to an integer type,
+  under `proof-obligation:range-check`, and the precondition of an operator
+  that a declaration defines, under `proof-obligation:precondition`.
+- **Fixed:** the expression that blocked a proof is kept whole in the message
+  of its issue when it is written on several lines of the source. In
+  console-text output, which is what the plugin reads when it runs the
+  analyzer itself, the lines after the first were dropped.
+
+## 1.8.3 - 2026-10-08
+
+Aligned with AdaLang Analyzer 1.8.3, from 1.8.0. Expect more proof-obligation
+issues after upgrading; the totals are not comparable with those of 1.8.0.
+
+- **Added `sonar.ada.adalang.gnatproveLogPaths`.** Given the log of a GNATprove
+  run on the same sources, the analyzer sets GNATprove's verdict beside each of
+  its own proof obligations. The verdict is in the message of the issue, and
+  the counts of the verdicts are in the scanner log. The log adds and removes
+  no issue.
+- **Added the declaration of the object of an initialization check** as a
+  secondary location of its issue, from JSON reports.
+- **Three new rules**, `proof-obligation:termination`,
+  `proof-obligation:data-dependencies`, and
+  `proof-obligation:flow-dependencies`. The analyzer raises obligations where
+  earlier versions raised none: that a function returns, that a subprogram
+  respects its `Global` and `Depends` aspects, and the checks in expression
+  functions, inside preconditions and postconditions, on actual parameters, on
+  the bounds of a slice, and on `out` parameters at exit. No route proves a
+  `Depends` aspect yet, so every `flow-dependencies` obligation is `unproved`,
+  with the method `none`, and each `Depends` aspect has one such issue; a
+  wrong aspect is reported by the `Depends_Contract_Mismatch` check as before.
+- **False-safes and false errors corrected.** Earlier versions could report an
+  obligation as proved safe that a legal execution violates, and a definite
+  error where there is none (see the analyzer's changelog for 1.6.1 and for
+  1.8.1 to 1.8.3). Regenerate imported `--verify` reports with 1.8.3:
+  obligations that were wrongly proved safe then appear as unproved or
+  definite-error issues.

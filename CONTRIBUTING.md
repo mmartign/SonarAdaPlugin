@@ -39,6 +39,8 @@ This is the same profile used by [CI](README.md#continuous-integration).
 
 - Keep changes focused; unrelated cleanup makes review harder.
 - Add or update tests for behavior you change.
+- Say what a version changes for users in [CHANGELOG.md](CHANGELOG.md). The
+  README describes how the plugin behaves now, not how it got there.
 - Make sure `mvn -P skip-native-tests test` passes locally; CI runs the same
   check on every pull request.
 - Describe the change and its motivation in the pull request description.
