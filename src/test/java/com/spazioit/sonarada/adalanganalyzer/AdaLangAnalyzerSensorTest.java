@@ -35,7 +35,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsARealConsoleReportWithGnatproveVerdicts(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/gnatprove-import-console-output.txt"));
 
@@ -73,7 +73,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheLengthChecksOfARealConsoleReport(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/length-check-console-output.txt"));
 
@@ -102,7 +102,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten(@TempDir Path projectDirectory) throws IOException {
-    // The complete text output and --format=json report of AdaLang Analyzer 1.8.6 run with
+    // The complete text output and --format=json report of AdaLang Analyzer 1.8.9 run with
     // --verify on the analyzer's own tests/verification_fp117_unwritten_out.adb, the text with
     // the checkout directory shortened. Up to 1.8.4 the four reads were proved safe, and so
     // were no issue: an out actual was taken to be initialized after a call whose callee has a
@@ -159,7 +159,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray(@TempDir Path projectDirectory) throws IOException {
-    // The complete text output and --format=json report of AdaLang Analyzer 1.8.6 run with
+    // The complete text output and --format=json report of AdaLang Analyzer 1.8.9 run with
     // --verify on the analyzer's own tests/verification_fp119_element_component.ads and .adb,
     // the text with the checkout directory shortened. Up to 1.8.5 the assertion and the division
     // were proved safe, and so were no issue: a component was one value for every element of
@@ -206,6 +206,94 @@ class AdaLangAnalyzerSensorTest {
       .containsExactlyElementsOf(fromJson.stream()
         .map(issue -> org.assertj.core.groups.Tuple.tuple(
           issue.ruleId(), issue.severity(), issue.primary().file(), issue.primary().range()))
+        .toList());
+  }
+
+  @Test
+  void importsTheReadsOfAnAliasedParameterChangedWithoutItsName(@TempDir Path projectDirectory) throws IOException {
+    // The complete text output and --format=json report of AdaLang Analyzer 1.8.9 run with
+    // --verify on the analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb, the
+    // text with the checkout directory shortened. Up to 1.8.8 the four obligations were proved
+    // safe, and so were no issue: an aliased parameter was taken to change only by its own name.
+    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/aliased-parameter-console-output.txt"));
+    Files.write(projectDirectory.resolve("adalang.json"), readResource("adalanganalyzer/aliased-parameter-report.json"));
+    String[] sources = {
+      "tests/verification_fp121_aliased_parameter.ads", "tests/verification_fp121_aliased_parameter.adb"};
+
+    List<SavedIssue> fromText = importReport(projectDirectory, "adalang.txt", sources);
+    List<SavedIssue> fromJson = importReport(projectDirectory, "adalang.json", sources);
+
+    // Seven findings and the four unproved obligations.
+    assertThat(fromJson).hasSize(11);
+    // The assertion on what each aliased parameter holds, and the range check of each read of one.
+    assertThat(fromJson)
+      .filteredOn(issue -> issue.ruleId().startsWith("proof-obligation:"))
+      .extracting(issue -> issue.primary().file() + ":" + issue.primary().range(), SavedIssue::ruleId, SavedIssue::severity)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp121_aliased_parameter.adb:13:21", "proof-obligation:assertion", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp121_aliased_parameter.adb:21:21", "proof-obligation:assertion", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp121_aliased_parameter.adb:12:14", "proof-obligation:range-check", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple(
+          "tests/verification_fp121_aliased_parameter.adb:20:14", "proof-obligation:range-check", Severity.MAJOR));
+    assertThat(fromJson)
+      .extracting(issue -> issue.primary().message())
+      .contains(
+        "Proof obligation [assertion] unproved. Operation: Seen = 1. Method: abstract-interpretation"
+          + ". Why: assertion failure is not established, but the assertion is not proved"
+          + ". Imprecision: abstract interpretation and the scalar VC portfolio did not certify it",
+        "Proof obligation [assertion] unproved. Operation: Read = 1. Method: abstract-interpretation"
+          + ". Why: assertion failure is not established, but the assertion is not proved"
+          + ". Imprecision: abstract interpretation and the scalar VC portfolio did not certify it");
+
+    // The text output gives the same issues at the same places.
+    assertThat(fromText)
+      .extracting(
+        SavedIssue::ruleId, SavedIssue::severity, issue -> issue.primary().file(), issue -> issue.primary().range())
+      .containsExactlyElementsOf(fromJson.stream()
+        .map(issue -> org.assertj.core.groups.Tuple.tuple(
+          issue.ruleId(), issue.severity(), issue.primary().file(), issue.primary().range()))
+        .toList());
+  }
+
+  @Test
+  void importsTheItemOfAReadAttributeAsWritten(@TempDir Path projectDirectory) throws IOException {
+    // The complete text output and --format=json report of AdaLang Analyzer 1.8.9 run with
+    // --verify on the analyzer's own tests/verification_fp122_read_item.adb, the text with the
+    // checkout directory shortened: a procedure that gives its out parameter Item to
+    // Character'Read and its out parameter Twice, never assigned, to Character'Write. Up to 1.8.8
+    // the read of Item at 11:26 was a definite-error issue, and 1.8.6 and 1.8.8 also had an
+    // Uninitialized_Output issue on Item: 'Read writes its second argument.
+    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/read-item-console-output.txt"));
+    Files.write(projectDirectory.resolve("adalang.json"), readResource("adalanganalyzer/read-item-report.json"));
+
+    List<SavedIssue> fromText = importReport(projectDirectory, "adalang.txt", "tests/verification_fp122_read_item.adb");
+    List<SavedIssue> fromJson = importReport(projectDirectory, "adalang.json", "tests/verification_fp122_read_item.adb");
+
+    // Two findings, the definite error and the two unproved obligations. Nothing is on the line of
+    // 'Read, and Uninitialized_Output is only on Twice. What 'Write reads is an error, and the
+    // exit of each out parameter is not proved.
+    assertThat(fromJson)
+      .extracting(issue -> issue.primary().range(), SavedIssue::ruleId, SavedIssue::severity)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("9:3", "Uninitialized_Output", Severity.CRITICAL),
+        org.assertj.core.groups.Tuple.tuple("6:10", "Missing_Depends_Contract", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("12:26", "proof-obligation:initialization-check", Severity.CRITICAL),
+        org.assertj.core.groups.Tuple.tuple("8:3", "proof-obligation:initialization-check", Severity.MAJOR),
+        org.assertj.core.groups.Tuple.tuple("9:3", "proof-obligation:initialization-check", Severity.MAJOR));
+    assertThat(fromJson)
+      .filteredOn(issue -> issue.ruleId().equals("proof-obligation:initialization-check")
+        && issue.severity() == Severity.CRITICAL)
+      .extracting(SavedIssue::secondary)
+      .containsExactly(List.of(new Location("tests/verification_fp122_read_item.adb", "9:3", "Declaration of Twice")));
+
+    // The text output gives the same issues at the same places, without the declarations.
+    assertThat(fromText)
+      .extracting(SavedIssue::ruleId, SavedIssue::severity, issue -> issue.primary().range())
+      .containsExactlyElementsOf(fromJson.stream()
+        .map(issue -> org.assertj.core.groups.Tuple.tuple(issue.ruleId(), issue.severity(), issue.primary().range()))
         .toList());
   }
 

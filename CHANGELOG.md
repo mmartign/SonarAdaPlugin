@@ -9,6 +9,39 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.8.9 - 2026-10-16
+
+Aligned with AdaLang Analyzer 1.8.9, from 1.8.6: version 1.8.8 of the plugin
+changed only its version number. The report formats, the kinds of obligation,
+the methods, the reason codes, and the rules are those of 1.8.6, and the
+plugin reads them with no change. Expect more proof-obligation issues in code
+that uses access types, and fewer in SPARK code that passes records.
+
+- **More issues in code that uses access types.** A subprogram that
+  dereferences an access value, allocates, or declares an access type or has
+  an anonymous one was outside what 1.8.8 verifies, and every obligation in it
+  was `unsupported`, which is no issue. 1.8.9 decides them: those it does not
+  prove are `unproved` issues under the rule of their kind.
+- **Fewer `unproved` issues in SPARK code.** 1.8.7 proves more preconditions
+  of calls given a record or a part of one, and more checks on a record whose
+  subtype has a predicate. What it proves from a predicate holds where the
+  predicate holds: `--verify` does not check a predicate where an object is
+  assigned or passed, as GNATprove does, so code given `SPARK_Mode` that does
+  not keep its predicates has to discount these.
+- **Two false-safes corrected.** A check written with a record object `X` of
+  a type that has a component `X`, given to a function, could be proved safe
+  where it fails (1.8.2 to 1.8.7). So could a read of an explicitly aliased
+  parameter after a write through an access value, or after a call that may
+  write the object given for it (1.6.0 to 1.8.8). They are now `unproved`
+  issues. Regenerate imported `--verify` reports with 1.8.9.
+- **Two false errors corrected.** The second argument of `T'Read (Stream,
+  Item)` was taken for a read, not a write: an `out` parameter or a local not
+  yet assigned given to it was a `definite-error` issue under
+  `proof-obligation:initialization-check`, and, with `--recommended` or
+  `--spark`, a finding of the `Uninitialized_Output` check. Neither is
+  reported now. The `initialization-check` at the exit of such an `out`
+  parameter is still `unproved`.
+
 ## 1.8.6 - 2026-10-10
 
 Aligned with AdaLang Analyzer 1.8.6. The report formats, the kinds of

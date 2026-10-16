@@ -266,6 +266,52 @@ class AdaLangAnalyzerSarifReportParserTest {
   }
 
   @Test
+  void readsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
+    // Obligation summaries copied verbatim from the run properties of an AdaLang Analyzer 1.8.9
+    // --format=sarif report produced with --verify on the analyzer's own
+    // tests/verification_fp121_aliased_parameter.ads and .adb: the assertions on what two aliased
+    // parameters hold after a write through an access value and after a call, the assertion on a
+    // parameter that is not aliased, and the range check of the read of the first aliased
+    // parameter. 1.8.8 proved all four safe.
+    String sarif = """
+      {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [{
+          "tool": {"driver": {"name": "AdaLang Analyzer", "rules": []}},
+          "properties": {
+            "proofObligations": [
+              {"id": "proof/v1/9331e86888a89e30", "kind": "assertion", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/c427bbc92e003d2f", "kind": "assertion", "status": "unproved", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/a0615090bd42da73", "kind": "assertion", "status": "proved-safe", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": ""},
+              {"id": "proof/v1/0570bbf4ad0c4c75", "kind": "range-check", "status": "unproved", \
+      "reasonCode": "unsupported-expression-kind", "blockingExpression": "V", "inlinePath": ""}
+            ],
+            "analysisConfiguration": {"toolVersion": "1.8.9", "selectedPreset": "verify", "skippedChecks": 0}
+          },
+          "results": []
+        }]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(sarif)));
+
+    assertThat(report.proofObligationCount()).isEqualTo(4);
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(true, true, false, true);
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly(
+        "proof-obligation:assertion", "proof-obligation:assertion", "proof-obligation:assertion",
+        "proof-obligation:range-check");
+    assertThat(report.proofObligations().getFirst().sonarMessage()).isEqualTo("Proof obligation [assertion] unproved");
+    assertThat(report.proofObligations().getLast().sonarMessage()).isEqualTo(
+      "Proof obligation [range-check] unproved. Reason: unsupported-expression-kind. Blocked at: V");
+  }
+
+  @Test
   void reportsNoGnatproveSummaryForARunWithoutALog() {
     Map<String, Object> root = AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(
       "{\"runs\": [{\"properties\": {\"proofObligations\": []}, \"results\": []}]}"));

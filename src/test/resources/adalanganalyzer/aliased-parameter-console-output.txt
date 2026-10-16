@@ -1,0 +1,152 @@
+adalang-analyzer [INFO]: Unit lookup covers 2 sources, 2 of them analyzed
+adalang-analyzer [INFO]: Built 4 subprogram summaries
+adalang-analyzer [INFO]: Parsing: tests/verification_fp121_aliased_parameter.ads
+adalang-analyzer [INFO]: Parsing: tests/verification_fp121_aliased_parameter.adb
+/checkout/tests/verification_fp121_aliased_parameter.adb:3:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Set_Shared is
+                 ^^^^^^^^^^
+/checkout/tests/verification_fp121_aliased_parameter.adb:8:14: warning: subprogram accesses global state but has no Global contract [Missing_Global_Contract]
+  rule: Find subprograms that access global state without an explicit Global contract, the SPARK aspect for documenting global effects; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Global aspect that classifies every global object as Input, Output, In_Out, or Proof_In.
+  quality: Maintainability (Medium)
+  source:
+       procedure Through_Pointer (V : aliased in out Integer) is
+                 ^^^^^^^^^^^^^^^
+/checkout/tests/verification_fp121_aliased_parameter.adb:8:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Through_Pointer (V : aliased in out Integer) is
+                 ^^^^^^^^^^^^^^^
+/checkout/tests/verification_fp121_aliased_parameter.adb:16:14: warning: subprogram accesses global state but has no Global contract [Missing_Global_Contract]
+  rule: Find subprograms that access global state without an explicit Global contract, the SPARK aspect for documenting global effects; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Global aspect that classifies every global object as Input, Output, In_Out, or Proof_In.
+  quality: Maintainability (Medium)
+  source:
+       procedure Through_Call (V : aliased in out Integer) is
+                 ^^^^^^^^^^^^
+/checkout/tests/verification_fp121_aliased_parameter.adb:16:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Through_Call (V : aliased in out Integer) is
+                 ^^^^^^^^^^^^
+/checkout/tests/verification_fp121_aliased_parameter.adb:24:14: warning: subprogram accesses global state but has no Global contract [Missing_Global_Contract]
+  rule: Find subprograms that access global state without an explicit Global contract, the SPARK aspect for documenting global effects; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Global aspect that classifies every global object as Input, Output, In_Out, or Proof_In.
+  quality: Maintainability (Medium)
+  source:
+       procedure By_Copy (V : in out Integer) is
+                 ^^^^^^^
+/checkout/tests/verification_fp121_aliased_parameter.adb:24:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure By_Copy (V : in out Integer) is
+                 ^^^^^^^
+
+Files scanned : 2
+Violations    : 7
+
+Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+  Total : 19
+  proved-safe : 15
+  unproved : 4
+  Details:
+    /checkout/tests/verification_fp121_aliased_parameter.adb:13:22 [assertion] unproved
+      method: abstract-interpretation
+      why: assertion failure is not established, but the assertion is not proved
+      imprecision: abstract interpretation and the scalar VC portfolio did not certify it
+    /checkout/tests/verification_fp121_aliased_parameter.adb:21:22 [assertion] unproved
+      method: abstract-interpretation
+      why: assertion failure is not established, but the assertion is not proved
+      imprecision: abstract interpretation and the scalar VC portfolio did not certify it
+    /checkout/tests/verification_fp121_aliased_parameter.adb:29:22 [assertion] proved-safe
+      method: abstract-interpretation
+      why: assertion condition is true in the incoming state
+      evidence: assertion condition => true
+    /checkout/tests/verification_fp121_aliased_parameter.adb:5:19 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp121_aliased_parameter.ads:18:71 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.adb:11:16 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp121_aliased_parameter.adb:12:15 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.adb:12:15 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: this expression form is outside the scalar VC subset
+      reason: unsupported-expression-kind
+      blocked at: V
+    /checkout/tests/verification_fp121_aliased_parameter.adb:13:22 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.ads:19:68 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.adb:20:15 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.adb:20:15 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: this expression form is outside the scalar VC subset
+      reason: unsupported-expression-kind
+      blocked at: V
+    /checkout/tests/verification_fp121_aliased_parameter.adb:21:22 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.ads:23:55 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.adb:27:16 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp121_aliased_parameter.adb:28:15 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.adb:28:15 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/verification_fp121_aliased_parameter.adb:29:22 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp121_aliased_parameter.ads:16:30 [data-dependencies] proved-safe
+      method: flow-analysis
+      why: the subprogram reads and writes no outside object its Global aspect does not allow
+      evidence: every object the body may read or write is allowed by the aspect
+
+Violations by check:
+  Missing_Global_Contract : 3  [Maintainability/Medium]
+  Missing_Depends_Contract : 4  [Maintainability/Medium]
+
+Violations by software quality:
+  Maintainability : 7
+
+Violations by severity:
+  Medium : 7

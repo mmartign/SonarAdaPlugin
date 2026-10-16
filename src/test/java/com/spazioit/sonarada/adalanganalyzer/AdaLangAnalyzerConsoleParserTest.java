@@ -214,7 +214,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesGnatproveVerdictsAndTheirSummaryFromRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v --gnatprove-log on the
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v --gnatprove-log on the
     // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
     String report = readResource("adalanganalyzer/gnatprove-import-console-output.txt");
 
@@ -375,7 +375,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheLengthChecksOfRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened: the
     // length-check kind 1.8.4 added.
     String report = readResource("adalanganalyzer/length-check-console-output.txt");
@@ -424,7 +424,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v on the analyzer's own
     // tests/verification_fp117_unwritten_out.adb, with the checkout directory shortened. Up to
     // 1.8.4 every one of these reads was proved safe: an out actual was taken to be initialized
     // after a call whose callee has a path that returns without writing the parameter.
@@ -511,7 +511,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesAComponentReadInTwoElementsOfAnArray() {
-    // The complete output of AdaLang Analyzer 1.8.6 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v on the analyzer's own
     // tests/verification_fp119_element_component.ads and .adb, with the checkout directory
     // shortened. Up to 1.8.5 a component was one value for every element of its array, and the
     // first two of these obligations were proved safe: an assertion that two elements hold the
@@ -666,11 +666,88 @@ class AdaLangAnalyzerConsoleParserTest {
   }
 
   @Test
+  void parsesTheReadsOfAnAliasedParameterChangedWithoutItsName() {
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v on the analyzer's own
+    // tests/verification_fp121_aliased_parameter.ads and .adb, with the checkout directory
+    // shortened. Up to 1.8.8 an aliased parameter was taken to change only by its own name: read
+    // after a write through an access value, or after a call that writes the object given for
+    // it, it was taken to hold the value it had on entry, and these four obligations were proved
+    // safe. A parameter that is not aliased is a copy, and the assertion on it is proved.
+    String report = readResource("adalanganalyzer/aliased-parameter-console-output.txt");
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(parser.parse(report)).hasSize(7).hasSize(parser.reportedViolationCount(report));
+    assertThat(obligations).hasSize(19).hasSize(parser.reportedProofObligationCount(report));
+
+    assertThat(obligations.subList(0, 3))
+      .extracting(
+        AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::kind,
+        AdaLangAnalyzerProofObligation::outcome)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(13, "assertion", "unproved"),
+        org.assertj.core.groups.Tuple.tuple(21, "assertion", "unproved"),
+        org.assertj.core.groups.Tuple.tuple(29, "assertion", "proved-safe"));
+    assertThat(obligations.getFirst()).isEqualTo(
+      new AdaLangAnalyzerProofObligation(
+        "/checkout/tests/verification_fp121_aliased_parameter.adb", 13, 22, "assertion", "unproved",
+        "abstract-interpretation", "assertion failure is not established, but the assertion is not proved",
+        "abstract interpretation and the scalar VC portfolio did not certify it"));
+
+    // The value read is not handed to the solvers, and its range check says so.
+    assertThat(obligations)
+      .filteredOn(AdaLangAnalyzerProofObligation::isActionable)
+      .extracting(
+        AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::kind,
+        AdaLangAnalyzerProofObligation::reasonCode, AdaLangAnalyzerProofObligation::blockingExpression)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(13, "assertion", "", ""),
+        org.assertj.core.groups.Tuple.tuple(21, "assertion", "", ""),
+        org.assertj.core.groups.Tuple.tuple(12, "range-check", "unsupported-expression-kind", "V"),
+        org.assertj.core.groups.Tuple.tuple(20, "range-check", "unsupported-expression-kind", "V"));
+  }
+
+  @Test
+  void parsesTheItemOfAReadAttributeAsWritten() {
+    // The complete output of AdaLang Analyzer 1.8.9 run with --verify -v on the analyzer's own
+    // tests/verification_fp122_read_item.adb, with the checkout directory shortened: a procedure
+    // that gives its out parameter Item to Character'Read and its out parameter Twice, never
+    // assigned, to Character'Write. Up to 1.8.8 the second argument of 'Read was taken for a
+    // read, and the read of Item at 11:26 was a definite initialization error; 1.8.6 and 1.8.8
+    // also had a finding of the Uninitialized_Output check on Item. Both are gone.
+    String report = readResource("adalanganalyzer/read-item-console-output.txt");
+
+    List<AdaLangAnalyzerFinding> findings = parser.parse(report);
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(findings).hasSize(2).hasSize(parser.reportedViolationCount(report));
+    assertThat(findings)
+      .extracting(AdaLangAnalyzerFinding::ruleId, AdaLangAnalyzerFinding::line, AdaLangAnalyzerFinding::message)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple(
+          "Uninitialized_Output", 9, "out parameter 'Twice' is not initialized on every normal return path"),
+        org.assertj.core.groups.Tuple.tuple(
+          "Missing_Depends_Contract", 6, "subprogram has outputs but no Depends contract"));
+    assertThat(obligations).hasSize(5).hasSize(parser.reportedProofObligationCount(report));
+
+    // What 'Write reads is still an error, and the read on the line of 'Read is of Strm.
+    assertThat(obligations)
+      .filteredOn(AdaLangAnalyzerProofObligation::isDefiniteError)
+      .extracting(AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::column)
+      .containsExactly(org.assertj.core.groups.Tuple.tuple(12, 27));
+    assertThat(obligations)
+      .filteredOn(obligation -> obligation.line() == 11)
+      .extracting(AdaLangAnalyzerProofObligation::column, AdaLangAnalyzerProofObligation::outcome)
+      .containsExactly(org.assertj.core.groups.Tuple.tuple(20, "proved-safe"));
+  }
+
+  @Test
   void readsFromTheTextOutputWhatTheJsonReportHas() {
-    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.8.6.
+    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.8.9.
     // Only the JSON report has the operation, the assumptions and the subject of an obligation;
     // only the text output has the rule, the advice and the source line of a finding.
-    for (String run : List.of("gnatprove-import", "length-check", "unwritten-out", "element-component")) {
+    for (String run : List.of(
+      "gnatprove-import", "length-check", "unwritten-out", "element-component", "aliased-parameter", "read-item")) {
       String text = readResource("adalanganalyzer/" + run + "-console-output.txt");
       AdaLangAnalyzerReport json = new AdaLangAnalyzerJsonReportParser().parse(AdaLangAnalyzerJson.mapOf(
         AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/" + run + "-report.json"))));

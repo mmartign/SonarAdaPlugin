@@ -355,7 +355,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsGnatproveVerdictsAndSubjectsFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.8.6 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.8.9 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
@@ -483,7 +483,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.8.6 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.8.9 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
@@ -533,7 +533,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.8.6 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.8.9 run with --verify on the
     // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
     // reads was proved safe: an out actual was taken to be initialized after a call whose callee
     // has a path that returns without writing the parameter.
@@ -631,7 +631,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray() {
-    // The complete --format=json report of AdaLang Analyzer 1.8.6 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.8.9 run with --verify on the
     // analyzer's own tests/verification_fp119_element_component.ads and .adb. Up to 1.8.5 a
     // component was one value for every element of its array, and the first two of these
     // obligations were proved safe: an assertion that two elements hold the same count, and a
@@ -741,6 +741,234 @@ class AdaLangAnalyzerJsonReportParserTest {
         AdaLangAnalyzerFinding::ruleId, AdaLangAnalyzerFinding::evidence)
       .containsExactly(
         assertion.file(), assertion.line(), assertion.column(), "Known_Assertion_Failure", assertion.evidence());
+  }
+
+  @Test
+  void importsWhatARecordGivenToACalleeDecides() {
+    // An obligation copied verbatim from AdaLang Analyzer 1.8.6 and 1.8.8 --verify JSON reports
+    // run on the analyzer's own tests/verification_record_actuals.ads and .adb: the precondition
+    // of "Wants (Outer.Left)", a component of a record given for a record parameter. 1.8.6 did not
+    // take the component the precondition reads for the component of Outer.Left, and left it
+    // unproved. 1.8.7 proves it, and it is no longer an issue.
+    String json186 = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.6", "selectedPreset": "verify", "skippedChecks": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/cbcc7255199e7295", "kind": "precondition", "status": "unproved", \
+      "method": "contract-transfer", "file": "tests/verification_record_actuals.adb", "line": 16, "column": 7, \
+      "operation": "Wants (Outer.Left)", "assumptions": "", "abstractState": "", \
+      "explanation": "precondition failure is not established, but absence is not proved", \
+      "imprecisionSource": "current contract transfer does not certify safety", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+    String json188 = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.8", "selectedPreset": "verify", "skippedChecks": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/cbcc7255199e7295", "kind": "precondition", "status": "proved-safe", \
+      "method": "external-prover", "file": "tests/verification_record_actuals.adb", "line": 16, "column": 7, \
+      "operation": "Wants (Outer.Left)", "assumptions": "", \
+      "abstractState": "SMT-LIB scalar VC; CVC5 and Z3 agreement required", \
+      "explanation": "actual arguments satisfy the precondition", "imprecisionSource": "", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report186 = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json186)));
+    AdaLangAnalyzerReport report188 = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json188)));
+
+    assertThat(report186.proofObligations()).hasSize(1).allMatch(report186::isIssue);
+    assertThat(report186.proofObligations().getFirst().sonarMessage()).isEqualTo(
+      "Proof obligation [precondition] unproved. Operation: Wants (Outer.Left). Method: contract-transfer"
+        + ". Why: precondition failure is not established, but absence is not proved"
+        + ". Imprecision: current contract transfer does not certify safety");
+    assertThat(report188.proofObligations()).hasSize(1).noneMatch(report188::isIssue);
+  }
+
+  @Test
+  void importsAFunctionOfARecordThatHasTheNameOfItsComponent() {
+    // An obligation copied verbatim from an AdaLang Analyzer 1.8.8 --verify JSON report run on the
+    // analyzer's own tests/verification_fp120_shared_name.ads and .adb: an assertion on a function
+    // of two records X, one of them of a type with a component X. 1.8.2 to 1.8.7 took the value of
+    // that record and of its component X for one symbol, so two records that agree in X gave the
+    // function one result, and proved the assertion safe where it fails.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.8", "selectedPreset": "verify", "skippedChecks": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/7b6df6a613b9fb92", "kind": "assertion", "status": "unproved", \
+      "method": "abstract-interpretation", "file": "tests/verification_fp120_shared_name.adb", "line": 17, \
+      "column": 28, "operation": "Get_Y (X) = Get_Y (Inner_Object.X)", "assumptions": "", "abstractState": "", \
+      "explanation": "assertion failure is not established, but the assertion is not proved", \
+      "imprecisionSource": "abstract interpretation and the scalar VC portfolio did not certify it", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(1).allMatch(report::isIssue);
+    assertThat(report.proofObligations().getFirst().ruleId()).isEqualTo("proof-obligation:assertion");
+    assertThat(report.proofObligations().getFirst().sonarMessage()).isEqualTo(
+      "Proof obligation [assertion] unproved. Operation: Get_Y (X) = Get_Y (Inner_Object.X)"
+        + ". Method: abstract-interpretation"
+        + ". Why: assertion failure is not established, but the assertion is not proved"
+        + ". Imprecision: abstract interpretation and the scalar VC portfolio did not certify it");
+  }
+
+  @Test
+  void importsTheObligationsOfASubprogramThatUsesAccessTypes() {
+    // Obligations copied verbatim from AdaLang Analyzer 1.8.8 and 1.8.9 --verify JSON reports run
+    // on the analyzer's own tests/verification_access_values.ads and .adb: in a subprogram that
+    // writes through an access value it is given, the read of a local and the assertion on the
+    // local. A dereference put the subprogram outside the verified subset of 1.8.8, which left
+    // every obligation in it unsupported, and so no issue. 1.8.9 takes it in: it proves the
+    // assertion, which nothing written through the access value can reach, and not the range
+    // check of the value read through it, which is now an issue.
+    String json188 = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.8", "selectedPreset": "verify", "skippedChecks": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/fbf29172f48f669d", "kind": "assertion", "status": "unsupported", "method": "none", \
+      "file": "tests/verification_access_values.adb", "line": 92, "column": 22, "operation": "Mine = 1", \
+      "assumptions": "", "abstractState": "", "explanation": "assertion has not been established", \
+      "imprecisionSource": "outside bounded verification subset", "reasonCode": "", "blockingExpression": "", \
+      "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/257d97b4984db474", "kind": "range-check", "status": "unsupported", "method": "none", \
+      "file": "tests/verification_access_values.adb", "line": 90, "column": 14, "operation": "Q.all", \
+      "assumptions": "", "abstractState": "", "explanation": "assigned value is outside the target subtype range", \
+      "imprecisionSource": "outside bounded verification subset", "reasonCode": "", "blockingExpression": "", \
+      "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+    String json189 = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.8.9", "selectedPreset": "verify", "skippedChecks": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/fbf29172f48f669d", "kind": "assertion", "status": "proved-safe", \
+      "method": "abstract-interpretation", "file": "tests/verification_access_values.adb", "line": 92, \
+      "column": 22, "operation": "Mine = 1", "assumptions": "", "abstractState": "assertion condition => true", \
+      "explanation": "assertion condition is true in the incoming state", "imprecisionSource": "", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/257d97b4984db474", "kind": "range-check", "status": "unproved", \
+      "method": "abstract-interpretation", "file": "tests/verification_access_values.adb", "line": 90, \
+      "column": 14, "operation": "Q.all", "assumptions": "", "abstractState": "", \
+      "explanation": "range-check failure is not established, but absence is not proved", \
+      "imprecisionSource": "this expression form is outside the scalar VC subset", \
+      "reasonCode": "unsupported-expression-kind", "blockingExpression": "Q.all", "inlinePath": "", \
+      "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report188 = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json188)));
+    AdaLangAnalyzerReport report189 = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json189)));
+
+    assertThat(report188.proofObligations()).hasSize(2).noneMatch(report188::isIssue);
+    assertThat(report189.proofObligations()).extracting(report189::isIssue).containsExactly(false, true);
+    assertThat(report189.proofObligations().getLast().sonarMessage()).isEqualTo(
+      "Proof obligation [range-check] unproved. Operation: Q.all. Method: abstract-interpretation"
+        + ". Why: range-check failure is not established, but absence is not proved"
+        + ". Imprecision: this expression form is outside the scalar VC subset"
+        + ". Reason: unsupported-expression-kind. Blocked at: Q.all");
+  }
+
+  @Test
+  void importsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
+    // The complete --format=json report of AdaLang Analyzer 1.8.9 run with --verify on the
+    // analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb. Up to 1.8.8 an
+    // aliased parameter was taken to change only by its own name: read after a write through an
+    // access value, or after a call that writes the object given for it, it was taken to hold
+    // the value it had on entry, and these four obligations were proved safe. A parameter that
+    // is not aliased is a copy, which nothing else changes, and the assertion on it is proved.
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
+      AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/aliased-parameter-report.json"))));
+
+    assertThat(report.fileCount()).isEqualTo(2);
+    assertThat(report.findings()).hasSize(7).hasSize(report.violationCount());
+    assertThat(report.proofObligations()).hasSize(19).hasSize(report.proofObligationCount());
+
+    assertThat(report.proofObligations().subList(0, 3))
+      .extracting(
+        AdaLangAnalyzerProofObligation::kind, AdaLangAnalyzerProofObligation::operation,
+        AdaLangAnalyzerProofObligation::outcome)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("assertion", "Seen = 1", "unproved"),
+        org.assertj.core.groups.Tuple.tuple("assertion", "Read = 1", "unproved"),
+        org.assertj.core.groups.Tuple.tuple("assertion", "Kept = 1", "proved-safe"));
+
+    // The assertions on the two aliased parameters, and the range check of each read of one.
+    assertThat(report.proofObligations())
+      .filteredOn(report::isIssue)
+      .extracting(
+        AdaLangAnalyzerProofObligation::ruleId, AdaLangAnalyzerProofObligation::line,
+        AdaLangAnalyzerProofObligation::column)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("proof-obligation:assertion", 13, 22),
+        org.assertj.core.groups.Tuple.tuple("proof-obligation:assertion", 21, 22),
+        org.assertj.core.groups.Tuple.tuple("proof-obligation:range-check", 12, 15),
+        org.assertj.core.groups.Tuple.tuple("proof-obligation:range-check", 20, 15));
+    assertThat(report.proofObligations())
+      .filteredOn(obligation -> obligation.kind().equals("range-check") && report.isIssue(obligation))
+      .extracting(AdaLangAnalyzerProofObligation::sonarMessage)
+      .containsOnly(
+        "Proof obligation [range-check] unproved. Operation: V. Method: abstract-interpretation"
+          + ". Why: range-check failure is not established, but absence is not proved"
+          + ". Imprecision: this expression form is outside the scalar VC subset"
+          + ". Reason: unsupported-expression-kind. Blocked at: V");
+  }
+
+  @Test
+  void importsTheItemOfAReadAttributeAsWritten() {
+    // The complete --format=json report of AdaLang Analyzer 1.8.9 run with --verify on the
+    // analyzer's own tests/verification_fp122_read_item.adb, a procedure that gives its out
+    // parameter Item to Character'Read and its out parameter Twice, never assigned, to
+    // Character'Write. 'Read writes its second argument. Up to 1.8.8 that argument was taken for a
+    // read, and the read of Item at 11:26 was a definite initialization error; 1.8.6 and 1.8.8
+    // also had a finding of the Uninitialized_Output check on Item. Both are gone. What 'Write
+    // reads is still a definite error.
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
+      AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/read-item-report.json"))));
+
+    assertThat(report.findings()).hasSize(2).hasSize(report.violationCount());
+    assertThat(report.findings())
+      .extracting(AdaLangAnalyzerFinding::ruleId, AdaLangAnalyzerFinding::line)
+      .containsExactly(
+        org.assertj.core.groups.Tuple.tuple("Uninitialized_Output", 9),
+        org.assertj.core.groups.Tuple.tuple("Missing_Depends_Contract", 6));
+    assertThat(report.proofObligations()).hasSize(5).hasSize(report.proofObligationCount());
+
+    // Nothing is said of the line of 'Read but that Strm is initialized.
+    assertThat(report.proofObligations())
+      .filteredOn(obligation -> obligation.line() == 11)
+      .extracting(AdaLangAnalyzerProofObligation::operation, AdaLangAnalyzerProofObligation::outcome)
+      .containsExactly(org.assertj.core.groups.Tuple.tuple("Strm", "proved-safe"));
+    AdaLangAnalyzerProofObligation twice = report.proofObligations().stream()
+      .filter(AdaLangAnalyzerProofObligation::isDefiniteError)
+      .findFirst()
+      .orElseThrow();
+    assertThat(twice)
+      .extracting(
+        AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::column,
+        AdaLangAnalyzerProofObligation::operation, AdaLangAnalyzerProofObligation::subjectLine)
+      .containsExactly(12, 27, "Twice", 9);
+    assertThat(report.proofObligations()).filteredOn(AdaLangAnalyzerProofObligation::isDefiniteError).hasSize(1);
+
+    // Each out parameter still has an unproved check at the exit of the procedure.
+    assertThat(report.proofObligations())
+      .filteredOn(AdaLangAnalyzerProofObligation::isUnproved)
+      .extracting(AdaLangAnalyzerProofObligation::line, AdaLangAnalyzerProofObligation::operation)
+      .containsExactly(org.assertj.core.groups.Tuple.tuple(8, "Item"), org.assertj.core.groups.Tuple.tuple(9, "Twice"));
   }
 
   private static String readResource(String name) {

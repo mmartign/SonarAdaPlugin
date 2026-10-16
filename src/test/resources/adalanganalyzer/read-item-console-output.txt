@@ -1,0 +1,62 @@
+adalang-analyzer [INFO]: Unit lookup covers 1 sources, 1 of them analyzed
+adalang-analyzer [INFO]: Built 1 subprogram summaries
+adalang-analyzer [INFO]: Parsing: tests/verification_fp122_read_item.adb
+/checkout/tests/verification_fp122_read_item.adb:9:4: warning: out parameter 'Twice' is not initialized on every normal return path [Uninitialized_Output]
+  rule: Find out parameters whose complete initialization cannot be established on every normal return path.
+  advice: Assign the complete out parameter on every path before the subprogram returns.
+  quality: Reliability (High)
+  source:
+       Twice : out Character) is
+       ^^^^^
+/checkout/tests/verification_fp122_read_item.adb:6:11: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+    procedure Verification_FP122_Read_Item
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at Character'Read (Strm, Item)
+adalang-analyzer [INFO]: not applying unsupported call postcondition transfer at Character'Write (Strm, Twice)
+adalang-analyzer [INFO]: actual parameters not paired with formals: this name doesn't reference a call expression
+
+Files scanned : 1
+Violations    : 2
+
+Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
+  Total : 5
+  proved-safe : 2
+  definite-error : 1
+  unproved : 2
+  Details:
+    /checkout/tests/verification_fp122_read_item.adb:11:20 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp122_read_item.adb:12:21 [initialization-check] proved-safe
+      method: flow-analysis
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/verification_fp122_read_item.adb:12:27 [initialization-check] definite-error
+      method: flow-analysis
+      why: object is uninitialized on every incoming path
+      evidence: initialization => false
+    /checkout/tests/verification_fp122_read_item.adb:8:4 [initialization-check] unproved
+      method: flow-analysis
+      why: out parameter is not established as initialized at the normal exit
+      imprecision: some path to the exit does not assign the whole parameter
+    /checkout/tests/verification_fp122_read_item.adb:9:4 [initialization-check] unproved
+      method: flow-analysis
+      why: out parameter is not established as initialized at the normal exit
+      imprecision: some path to the exit does not assign the whole parameter
+
+Violations by check:
+  Missing_Depends_Contract : 1  [Maintainability/Medium]
+  Uninitialized_Output : 1  [Reliability/High]
+
+Violations by software quality:
+  Reliability : 1
+  Maintainability : 1
+
+Violations by severity:
+  High : 1
+  Medium : 1

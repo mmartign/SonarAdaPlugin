@@ -247,7 +247,7 @@ clang-analyzer, and is under active development. The plugin can run it during
 the scan, import reports it wrote earlier, or both. Its findings are published
 as Sonar external issues.
 
-This version of the plugin is tested against AdaLang Analyzer 1.8.6. Reports of
+This version of the plugin is tested against AdaLang Analyzer 1.8.9. Reports of
 earlier versions are still imported.
 
 | Property | Default | Purpose |
@@ -469,8 +469,9 @@ changes the issues in Sonar with no change to the plugin:
 - **Issue counts are not comparable between analyzer versions.** A newer
   version can raise obligations an earlier one did not, some of them under new
   `proof-obligation:` rules, and decide obligations an earlier one left
-  `unproved`. One it decides can be a `definite-error`, an issue of higher
-  severity.
+  `unproved` or `unsupported`. One it decides can be a `definite-error`, an
+  issue of higher severity, and one that was `unsupported`, which is no issue,
+  can be `unproved`, which is one.
 - **Regenerate imported `--verify` reports with the current analyzer.** Earlier
   versions could report an obligation as proved safe that a legal execution
   violates, and a definite error where there is none. Obligations that were
