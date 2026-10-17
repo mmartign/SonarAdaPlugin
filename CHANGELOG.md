@@ -9,6 +9,34 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.8.10 - 2026-10-17
+
+Aligned with AdaLang Analyzer 1.8.10. The report formats, the kinds of
+obligation, the methods, the reason codes, and the rules are those of 1.8.9,
+and the plugin reads them with no change. Expect more proof-obligation issues
+in code that instantiates a generic subprogram, uses a quantified expression
+as a value, iterates over a container, or declares a package in a subprogram.
+
+- **More issues in code that 1.8.9 did not verify.** A subprogram that
+  declares an instance of a generic subprogram, or uses a quantified
+  expression as a value (the condition of an `if`, the right side of an
+  assignment, an initial value), was outside what 1.8.9 verifies, and every
+  obligation in it was `unsupported`, which is no issue. 1.8.10 decides them:
+  those it does not prove are `unproved` issues under the rule of their kind,
+  and one it shows to fail is a `definite-error` issue; an assertion among
+  these is also a finding of the `Known_Assertion_Failure` check. A call to an
+  instance is taken as a call whose effects are not known.
+- **Two false-safes corrected.** A check after an iteration that is not over
+  a discrete range or an array (`for E of Container`, `for C in Iterator`, in
+  a loop or in a quantified expression) could be proved safe where the
+  iterator's operations, or the `First`, `Next`, `Has_Element` or `Element`
+  of an `Iterable` type, change state. So could a check in a subprogram that
+  declares a package whose elaboration changes state: an initial value that
+  calls a function with side effects, a package body with statements, an
+  instance of a generic package. Both concern every release with `--verify`
+  up to 1.8.9. They are now `unproved` issues. Regenerate imported `--verify`
+  reports with 1.8.10.
+
 ## 1.8.9 - 2026-10-16
 
 Aligned with AdaLang Analyzer 1.8.9, from 1.8.6: version 1.8.8 of the plugin
