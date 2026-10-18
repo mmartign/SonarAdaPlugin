@@ -9,6 +9,30 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.8.11 - 2026-10-18
+
+Aligned with AdaLang Analyzer 1.8.11. The report formats, the kinds of
+obligation, the methods, the reason codes, and the rules are those of 1.8.10,
+and the plugin reads them with no change. Expect fewer proof-obligation issues
+in code that works on the components of a record, most of all in SPARK code.
+
+- **Fewer `unproved` issues.** 1.8.11 raises the obligations 1.8.10 raised and
+  decides more of them. What 1.8.10 knew of a record object was lost where a
+  component of it was written (`Ctx.P.Next := 1`), where a procedure was
+  called, and past a condition it could not translate; 1.8.11 keeps what it
+  knows of the other components. In SPARK code that takes no access value or
+  address and declares no task or protected object, a procedure call loses
+  only the parts of the objects it is given. A function called without
+  arguments (`pragma Assert (Inv)`) is a call to its body; it was read as an
+  object never initialized.
+- **Some issues change.** An obligation that stays `unproved` can give another
+  reason for it, and one 1.8.10 could not decide can now be a
+  `definite-error`, an issue of higher severity; an assertion or a
+  precondition among these is also a finding of the `Known_Assertion_Failure`
+  or `Known_Precondition_Failure` check.
+- **No false-safe corrected.** Nothing 1.8.10 proved safe is an issue in
+  1.8.11, so imported `--verify` reports of 1.8.10 need not be regenerated.
+
 ## 1.8.10 - 2026-10-17
 
 Aligned with AdaLang Analyzer 1.8.10. The report formats, the kinds of
