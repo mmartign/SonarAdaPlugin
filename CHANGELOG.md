@@ -9,6 +9,30 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.9.0 - 2026-10-19
+
+Aligned with AdaLang Analyzer 1.9.0. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line are
+those of 1.8.11, and the plugin reads them with no change. Expect fewer
+proof-obligation issues in SPARK code that calls subprograms whose effects the
+analyzer does not know, such as RecordFlux-generated code; outside SPARK code
+every obligation keeps the verdict it had.
+
+- **Fewer `unproved` issues.** 1.9.0 raises the obligations 1.8.11 raised and
+  decides more of them. In SPARK code that takes no access value or address
+  and declares no task or protected object, a call whose effects are not known
+  keeps what is known of the caller's own objects and parameters; it lost all
+  of it. A subprogram or a generic instance that the caller declares is no
+  longer taken as code such a call could run. Expression functions are read
+  eight calls deep instead of four, and where two paths meet, a fact that holds
+  on both is kept even when they give an object different values.
+- **Some issues change.** An obligation that stays `unproved` can give another
+  reason for it, or none, and a longer inline path in its message.
+- **No new finding and no false-safe corrected.** No obligation is a new
+  `definite-error`, the checks report the findings of 1.8.11, and nothing
+  1.8.11 proved safe is an issue in 1.9.0, so imported `--verify` reports of
+  1.8.11 need not be regenerated.
+
 ## 1.8.11 - 2026-10-18
 
 Aligned with AdaLang Analyzer 1.8.11. The report formats, the kinds of
