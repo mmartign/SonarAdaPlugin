@@ -287,9 +287,9 @@ class AdaLangAnalyzerJsonReportParserTest {
   @Test
   void importsTheObligationsAboutASubprogramAsAWhole() {
     // Obligations copied verbatim from an AdaLang Analyzer 1.8.3 --verify JSON report: the
-    // termination, data-dependencies, and flow-dependencies kinds 1.8.1 added. A
-    // flow-dependencies obligation is always unproved, with the method none: no route proves a
-    // Depends aspect yet. It is an issue like the other unproved ones.
+    // termination, data-dependencies, and flow-dependencies kinds 1.8.1 added. Up to 1.9.0 a
+    // flow-dependencies obligation was always unproved, with the method none: no route proved a
+    // Depends aspect. It is an issue like the other unproved ones.
     String json = """
       {
         "analysisConfiguration": {"toolVersion": "1.8.3", "selectedPreset": "verify", "skippedChecks": 0},
@@ -354,8 +354,53 @@ class AdaLangAnalyzerJsonReportParserTest {
   }
 
   @Test
+  void importsTheDependsAspectsThatAreProved() {
+    // Obligations copied verbatim from an AdaLang Analyzer 1.9.1 --verify JSON report, the first
+    // release that proves a Depends aspect: the dependencies are worked out from the body, with
+    // the method flow-analysis. One that holds is proved safe and raises no issue; one that does
+    // not stays unproved, and its imprecision names the flow the aspect leaves out.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.9.1", "selectedPreset": "verify", "skippedChecks": 0},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 2, "provedSafe": 1, "definiteError": 0, "unproved": 1, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/dda1f8dd910d3305", "kind": "flow-dependencies", "status": "proved-safe", \
+      "method": "flow-analysis", "file": "tests/verification_flow_contracts.adb", "line": 40, "column": 11, \
+      "operation": "Depends of Scaled", "assumptions": "", \
+      "abstractState": "each output may depend on what the aspect lists for it, and on nothing else", \
+      "explanation": "the Depends aspect is the dependencies of the subprogram", "imprecisionSource": "", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
+          {"id": "proof/v1/23a875db972739d7", "kind": "flow-dependencies", "status": "unproved", \
+      "method": "flow-analysis", "file": "tests/verification_mutation_flow_contracts.adb", "line": 67, \
+      "column": 11, "operation": "Depends of Scaled", "assumptions": "", "abstractState": "", \
+      "explanation": "the Depends aspect is not shown to be the dependencies of the subprogram", \
+      "imprecisionSource": "Value may depend on Factor, which the aspect does not list for it", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly("proof-obligation:flow-dependencies", "proof-obligation:flow-dependencies");
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::method)
+      .containsExactly("flow-analysis", "flow-analysis");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true);
+    assertThat(report.proofObligations().get(1).sonarMessage()).isEqualTo(
+      "Proof obligation [flow-dependencies] unproved. Operation: Depends of Scaled. Method: flow-analysis"
+        + ". Why: the Depends aspect is not shown to be the dependencies of the subprogram"
+        + ". Imprecision: Value may depend on Factor, which the aspect does not list for it");
+  }
+
+  @Test
   void importsGnatproveVerdictsAndSubjectsFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.0 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
@@ -483,7 +528,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
@@ -533,7 +578,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
     // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
     // reads was proved safe: an out actual was taken to be initialized after a call whose callee
     // has a path that returns without writing the parameter.
@@ -631,7 +676,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
     // analyzer's own tests/verification_fp119_element_component.ads and .adb. Up to 1.8.5 a
     // component was one value for every element of its array, and the first two of these
     // obligations were proved safe: an assertion that two elements hold the same count, and a
@@ -885,7 +930,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
     // analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb. Up to 1.8.8 an
     // aliased parameter was taken to change only by its own name: read after a write through an
     // access value, or after a call that writes the object given for it, it was taken to hold
@@ -930,7 +975,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheItemOfAReadAttributeAsWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
     // analyzer's own tests/verification_fp122_read_item.adb, a procedure that gives its out
     // parameter Item to Character'Read and its out parameter Twice, never assigned, to
     // Character'Write. 'Read writes its second argument. Up to 1.8.8 that argument was taken for a

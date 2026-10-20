@@ -59,8 +59,8 @@ class AdaLangAnalyzerReportTest {
 
   @Test
   void raisesAnUnprovedObligationOfAVerificationRunThatNoAnalysisWasAppliedTo() {
-    // flow-dependencies in AdaLang Analyzer 1.8.1 to 1.9.0: no route proves a Depends aspect
-    // yet, so it is always unproved, with the method none. It is an issue like any other.
+    // flow-dependencies in AdaLang Analyzer 1.8.1 to 1.9.0: no route proved a Depends aspect,
+    // so it was always unproved, with the method none. It is an issue like any other.
     AdaLangAnalyzerProofObligation depends = new AdaLangAnalyzerProofObligation(
       "src/demo.adb", 40, 11, "flow-dependencies", "unproved", "none",
       "the Depends aspect is not shown to be the dependencies of the subprogram",

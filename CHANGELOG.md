@@ -9,6 +9,41 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.9.1 - 2026-10-20
+
+Aligned with AdaLang Analyzer 1.9.1. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line are
+those of 1.9.0, and the plugin reads them with no change. Expect fewer issues
+on SPARK `Depends` aspects: fewer `flow-dependencies` proof-obligation issues,
+and fewer `Depends_Contract_Mismatch` findings; outside SPARK contracts every
+obligation keeps the verdict it had.
+
+- **Fewer `unproved` issues.** 1.9.1 proves a `Depends` aspect. What each
+  output may depend on is worked out from the body, and a `flow-dependencies`
+  obligation whose aspect lists exactly that is proved safe, with the method
+  `flow-analysis`. Up to 1.9.0 it was `unproved` wherever it was raised, with
+  the method `none`, so every `Depends` aspect was an issue. More `Global`
+  aspects are proved too: those of callers of an instance of
+  `Unchecked_Conversion` or `Unchecked_Deallocation`, of a generic formal
+  subprogram, or of an instance of a generic subprogram, and those of
+  subprograms that read a deferred constant.
+- **Some issues change.** A `flow-dependencies` obligation that stays
+  `unproved` gives the method `flow-analysis` instead of `none`, and its
+  message names the output and the input the aspect gets wrong ("Value may
+  depend on Factor, which the aspect does not list for it").
+- **`Depends_Contract_Mismatch` findings change.** The check now takes its flow
+  findings from the same analysis. It reports none on a `Depends` aspect that
+  holds: 1.9.0 misread expanded names, state abstractions, out parameters of an
+  indefinite type, and functions that read a global. A wrong flow is reported
+  once, no longer a second time as "listed after null", and wrong flows that
+  1.9.0 missed are found. Where the dependencies cannot be worked out (across
+  an exception handler, a dispatching call, or tasking) it reports no flow
+  finding, and the obligation stays `unproved`.
+- **No false-safe corrected.** No obligation is a new `definite-error`, and
+  nothing 1.9.0 proved safe is an issue in 1.9.1. Imported `--verify` reports
+  of 1.9.0 stay right on what they prove; regenerate them to drop the false
+  `Depends_Contract_Mismatch` findings.
+
 ## 1.9.0 - 2026-10-19
 
 Aligned with AdaLang Analyzer 1.9.0. The report formats, the kinds of
