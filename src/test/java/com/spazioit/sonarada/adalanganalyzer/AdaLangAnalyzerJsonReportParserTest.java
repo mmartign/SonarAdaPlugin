@@ -399,8 +399,54 @@ class AdaLangAnalyzerJsonReportParserTest {
   }
 
   @Test
+  void importsPredicateChecks() {
+    // Obligations copied verbatim from an AdaLang Analyzer 1.10.0 --verify JSON report of the
+    // analyzer's own tests/verification_predicate_checks, the release that adds the
+    // predicate-check kind: a value given to an object whose subtype has a predicate keeps it.
+    // One that holds is proved safe and raises no issue; one that does not stays unproved.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.10.0", "selectedPreset": "verify", "skippedChecks": 0},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 2, "provedSafe": 1, "definiteError": 0, "unproved": 1, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/9ee76453c6619786", "kind": "predicate-check", "status": "proved-safe", \
+      "method": "external-prover", "file": "tests/verification_predicate_checks.adb", "line": 5, \
+      "column": 12, "operation": "N * 8", "assumptions": "", \
+      "abstractState": "SMT-LIB scalar VC; CVC5 and Z3 agreement required", \
+      "explanation": "scalar verification condition proves the predicate of the subtype", \
+      "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", \
+      "configurationId": "none"},
+          {"id": "proof/v1/202afb51c51d8b71", "kind": "predicate-check", "status": "unproved", \
+      "method": "abstract-interpretation", "file": "tests/verification_predicate_checks.adb", "line": 10, \
+      "column": 12, "operation": "N * 8 + 1", "assumptions": "", "abstractState": "", \
+      "explanation": "predicate-check failure is not established, but absence is not proved", \
+      "imprecisionSource": "the scalar VC portfolio did not certify the predicate", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly("proof-obligation:predicate-check", "proof-obligation:predicate-check");
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::method)
+      .containsExactly("external-prover", "abstract-interpretation");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true);
+    assertThat(report.proofObligations().get(1).sonarMessage()).isEqualTo(
+      "Proof obligation [predicate-check] unproved. Operation: N * 8 + 1. Method: abstract-interpretation"
+        + ". Why: predicate-check failure is not established, but absence is not proved"
+        + ". Imprecision: the scalar VC portfolio did not certify the predicate");
+  }
+
+  @Test
   void importsGnatproveVerdictsAndSubjectsFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.10.0 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
@@ -528,7 +574,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.10.0 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
@@ -578,7 +624,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.10.0 run with --verify on the
     // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
     // reads was proved safe: an out actual was taken to be initialized after a call whose callee
     // has a path that returns without writing the parameter.
@@ -676,7 +722,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.10.0 run with --verify on the
     // analyzer's own tests/verification_fp119_element_component.ads and .adb. Up to 1.8.5 a
     // component was one value for every element of its array, and the first two of these
     // obligations were proved safe: an assertion that two elements hold the same count, and a
@@ -930,7 +976,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.10.0 run with --verify on the
     // analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb. Up to 1.8.8 an
     // aliased parameter was taken to change only by its own name: read after a write through an
     // access value, or after a call that writes the object given for it, it was taken to hold
@@ -975,7 +1021,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheItemOfAReadAttributeAsWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.9.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.10.0 run with --verify on the
     // analyzer's own tests/verification_fp122_read_item.adb, a procedure that gives its out
     // parameter Item to Character'Read and its out parameter Twice, never assigned, to
     // Character'Write. 'Read writes its second argument. Up to 1.8.8 that argument was taken for a

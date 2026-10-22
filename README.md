@@ -247,7 +247,7 @@ clang-analyzer, and is under active development. The plugin can run it during
 the scan, import reports it wrote earlier, or both. Its findings are published
 as Sonar external issues.
 
-This version of the plugin is tested against AdaLang Analyzer 1.9.1. Reports of
+This version of the plugin is tested against AdaLang Analyzer 1.10.0. Reports of
 earlier versions are still imported.
 
 | Property | Default | Purpose |

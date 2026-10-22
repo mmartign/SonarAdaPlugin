@@ -9,6 +9,38 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.10.0 - 2026-10-22
+
+Aligned with AdaLang Analyzer 1.10.0. The report formats, the methods, the
+reason codes, the rules, and the command line are those of 1.9.1, and the
+plugin reads them with no change. There is one new kind of obligation,
+`predicate-check`, which the plugin imports like any other. Expect new issues
+where SPARK code gives a value to an object whose subtype has a predicate, and
+fewer issues on postconditions that use `'Old`.
+
+- **New `predicate-check` issues.** In SPARK code `--verify` checks that a
+  value given to an object whose subtype has a predicate, or to a part of one,
+  keeps the predicate: at an assignment, at a call, at a declaration, at a
+  `return`, at a conversion. The check is an obligation of the new kind
+  `predicate-check` (rule `proof-obligation:predicate-check`); one that is
+  proved raises no issue, and one that is not is an `unproved` issue whose
+  message says what was not certified. None is raised where the value already
+  has the predicates of its own subtype.
+- **Fewer `unproved` issues.** 1.10.0 translates `X'Old`, in the
+  postcondition of a subprogram and in that of a callee it calls, and proves
+  postconditions, preconditions, and assertions that depend on it. It also
+  keeps more of what is known across a call: constants, the other components
+  of a record when one component is passed, and facts about functions of SPARK
+  generic units.
+- **A few new `definite-error` issues.** A postcondition that the
+  postcondition of a callee makes false on every path, which 1.9.1 left
+  `unproved`, can now be a `definite-error`.
+- **No false-safe corrected.** Nothing 1.9.1 proved safe is an issue in
+  1.10.0. Over the analyzer's 202 `tests/verification_*` bodies, run with
+  their specs, the JSON reports give 7,499 obligations instead of 7,478 (21
+  predicate checks, 9 of them proved) and the same 888 findings; the issues on
+  obligations are 1,926 instead of 1,933.
+
 ## 1.9.1 - 2026-10-20
 
 Aligned with AdaLang Analyzer 1.9.1. The report formats, the kinds of
