@@ -28,8 +28,8 @@ Violations    : 3
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
   Total : 47
-  proved-safe : 28
-  unproved : 19
+  proved-safe : 34
+  unproved : 13
   Details:
     /checkout/tests/verification_length_check_state.adb:12:42 [initialization-check] proved-safe
       method: flow-analysis
@@ -49,18 +49,18 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       imprecision: this expression form is outside the scalar VC subset
       reason: unsupported-expression-kind
       blocked at: (others => 0)
-    /checkout/tests/verification_length_check_state.adb:17:15 [integer-overflow] unproved
-      method: abstract-interpretation
-      why: overflow is not established, but absence is not proved
-      imprecision: the current range domain does not certify the result
+    /checkout/tests/verification_length_check_state.adb:17:15 [integer-overflow] proved-safe
+      method: external-prover
+      why: scalar verification condition proves the arithmetic result fits its base type
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:17:15 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/verification_length_check_state.adb:17:15 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/verification_length_check_state.adb:17:15 [range-check] proved-safe
+      method: external-prover
+      why: scalar verification condition proves the value is inside the target subtype range
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:18:27 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
@@ -87,10 +87,10 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: abstract-interpretation
       why: length-check failure is not established, but absence is not proved
       imprecision: the two lengths are not known to be equal
-    /checkout/tests/verification_length_check_state.adb:18:7 [range-check] unproved
-      method: abstract-interpretation
-      why: slice bounds are not established as within the array bounds
-      imprecision: slice bound and array bound ranges remain inconclusive
+    /checkout/tests/verification_length_check_state.adb:18:7 [range-check] proved-safe
+      method: external-prover
+      why: both slice bounds are within the array index bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:18:18 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
@@ -175,18 +175,18 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       imprecision: this expression form is outside the scalar VC subset
       reason: unsupported-expression-kind
       blocked at: (others => 0)
-    /checkout/tests/verification_length_check_state.adb:40:15 [integer-overflow] unproved
-      method: abstract-interpretation
-      why: overflow is not established, but absence is not proved
-      imprecision: the current range domain does not certify the result
+    /checkout/tests/verification_length_check_state.adb:40:15 [integer-overflow] proved-safe
+      method: external-prover
+      why: scalar verification condition proves the arithmetic result fits its base type
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:40:15 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/verification_length_check_state.adb:40:15 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/verification_length_check_state.adb:40:15 [range-check] proved-safe
+      method: external-prover
+      why: scalar verification condition proves the value is inside the target subtype range
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:42:48 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
@@ -211,12 +211,10 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: abstract-interpretation
       why: range-check failure is not established, but absence is not proved
       imprecision: the current non-relational range domain is inconclusive
-    /checkout/tests/verification_length_check_state.adb:44:16 [index-check] unproved
-      method: abstract-interpretation
-      why: index-check failure is not established, but absence is not proved
-      imprecision: the required bounds are not statically known
-      reason: missing-static-bounds
-      blocked at: 1
+    /checkout/tests/verification_length_check_state.adb:44:16 [index-check] proved-safe
+      method: external-prover
+      why: scalar verification condition proves the index is within the object's own bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:37:36 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path

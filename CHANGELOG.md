@@ -9,6 +9,34 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.10.1 - 2026-10-23
+
+Aligned with AdaLang Analyzer 1.10.1. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line are
+those of 1.10.0, and the plugin reads them with no change. Expect fewer issues
+on loop invariants and on the checks that follow from them, and a few new ones
+where 1.10.0 called safe what is not.
+
+- **Fewer `unproved` issues.** 1.10.1 proves more loop invariants -- those of a
+  `for` loop that name its parameter, and those of a loop with an `exit` or a
+  `return` in it -- and keeps what is known across the declaration of a record
+  or array object, so more of the checks that follow from them are proved.
+- **New issues where 1.10.0 was wrong.** Two false-safes are corrected
+  (`FP-129` and `FP-130` in the analyzer's changelog): a check after a loop
+  that changes an object through a call, and the precondition of a call with
+  no actual in parentheses (`Bump;`) inside a loop. Such checks that do not
+  hold are `unproved` issues now, and a precondition that fails where it is
+  checked is a `definite-error` issue with a `Known_Precondition_Failure`
+  finding.
+- **A few `unproved` issues come back.** Some checks inside or after a loop
+  whose invariants are proved, which 1.10.0 proved soundly, are `unproved`
+  again; a later version is to prove them anew.
+- Over the analyzer's 205 `tests/verification_*` bodies, run with their specs,
+  the JSON reports give the 7,667 obligations of 1.10.0, 40 of them moving
+  from `unproved` to proved safe, 26 from proved safe to `unproved` -- 6 of
+  them where 1.10.0 was wrong -- and one to `definite-error`; the findings
+  are 910 instead of 909, and the issues on obligations 1,958 instead of 1,972.
+
 ## 1.10.0 - 2026-10-22
 
 Aligned with AdaLang Analyzer 1.10.0. The report formats, the methods, the
