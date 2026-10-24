@@ -9,6 +9,30 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.10.3 - 2026-10-24
+
+Aligned with AdaLang Analyzer 1.10.3. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line are
+those of 1.10.2, and the plugin reads them with no change. Expect fewer
+`unproved` issues and no new ones.
+
+- **Fewer `unproved` issues after an assignment.** What a variable is assigned
+  stays within the variable's subtype, so overflow and range checks on it that
+  rest on that subtype are proved, also after a loop has widened its bounds.
+- **Fewer `unproved` issues in loops.** A precondition on `in` parameters, or
+  what a constant declared before the loop says, holds all through the loop,
+  and checks in the body that rest on it together with the loop invariant are
+  proved.
+- **Fewer `unproved` issues after a write to an array element.** In SPARK code
+  that takes no `'Access` or `'Address`, such a write no longer makes the
+  analysis forget what it knew of every other array; and a division by a named
+  number is now decided.
+- No issue is new, and none changes rule or severity. Over the analyzer's 207
+  `tests/verification_*` bodies of 1.10.2, run with their specs, the JSON
+  reports give the same 7,744 obligations and 922 findings: 54 obligations move
+  from unproved to proved safe and none the other way, so the issues on
+  obligations are 1,893 instead of 1,947.
+
 ## 1.10.2 - 2026-10-24
 
 Aligned with AdaLang Analyzer 1.10.2. The report formats, the kinds of
