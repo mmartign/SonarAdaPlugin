@@ -214,7 +214,7 @@ with the new jars, and update the version/tag in
 Copy the generated JAR to the SonarQube Server plugin directory and restart SonarQube:
 
 ```bash
-cp target/sonar-ada-plugin-1.10.2.jar "$SONARQUBE_HOME/extensions/plugins/"
+cp target/sonar-ada-plugin-1.10.3.jar "$SONARQUBE_HOME/extensions/plugins/"
 ```
 
 ## Analyze an Ada project
