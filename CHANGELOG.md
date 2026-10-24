@@ -9,6 +9,29 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.10.2 - 2026-10-24
+
+Aligned with AdaLang Analyzer 1.10.2. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line are
+those of 1.10.1, and the plugin reads them with no change. Expect fewer
+`unproved` issues and no new ones.
+
+- **The `unproved` issues 1.10.1 brought back are gone again.** Checks inside
+  or after a loop whose invariants are proved, which 1.10.0 proved and 1.10.1
+  did not, are proved again.
+- **Fewer `unproved` issues after loops in a row.** What a loop does not
+  change keeps its bounds past it however many loops come before, and
+  overflow and range checks that rest on them are proved.
+- **Fewer `unproved` issues on components of a bounded subtype.** A subtype
+  bound written with `/`, `mod` or `rem` over an attribute
+  (`Positive range 1 .. Positive'Last / 8`) is known, and the overflow checks
+  of arithmetic on such components are proved.
+- No issue is new, and none changes rule or severity. Over the analyzer's 207
+  `tests/verification_*` bodies, run with their specs, the JSON reports give
+  the same 7,744 obligations as 1.10.1, 38 of them moving from `unproved` to
+  proved safe and none the other way; the findings are 922, as before, and
+  the issues on obligations 1,947 instead of 1,985.
+
 ## 1.10.1 - 2026-10-23
 
 Aligned with AdaLang Analyzer 1.10.1. The report formats, the kinds of
