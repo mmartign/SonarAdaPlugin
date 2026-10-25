@@ -9,6 +9,38 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.10.4 - 2026-10-25
+
+Aligned with AdaLang Analyzer 1.10.4. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line are
+those of 1.10.3, and the plugin reads them with no change. Expect fewer
+`unproved` issues, most of them in generic units, and one rare new
+`Ineffective_Operation` issue.
+
+- **Fewer `unproved` issues in generic units.** With `--verify` the analyzer
+  analyzes a generic unit once more for each of its instances in the run, its
+  formal objects having the values of their actuals and its formal scalar
+  types being their actual subtypes, and an obligation proved for every
+  instance is proved: Keccak's and RecordFlux's generics are where it shows.
+  The instances must be in the same run, as they are when the plugin runs the
+  analyzer on the project. On the analyzer's ten benchmark corpora 562
+  obligations move from unproved to proved safe.
+- **Fewer `unproved` issues on typed constants.** A constant of a package whose
+  initializer is static, such as `Bits : constant Positive := 2**Log`, has its
+  value, as a named number has; so has a name seen through an instance of a
+  generic package. Two checks that such a value makes hold by their form are
+  no longer raised, so their obligations, and the issue of the one that was
+  unproved, are gone.
+- **One more `Ineffective_Operation` issue can appear** where a typed constant
+  of value 0 or 1 is an identity operand (`Index_1 - Index_0` with
+  `Index_0 : constant Natural := 0`), as it already did for a named number:
+  one on the ten benchmark corpora.
+- No other issue is new, and none changes rule or severity. Over the
+  analyzer's 210 `tests/verification_*` bodies of 1.10.3, run with their specs,
+  the JSON reports give the same 8,001 obligations and 945 findings: 1
+  obligation moves from unproved to proved safe and none the other way, so the
+  issues on obligations are 1,934 instead of 1,935.
+
 ## 1.10.3 - 2026-10-24
 
 Aligned with AdaLang Analyzer 1.10.3. The report formats, the kinds of
