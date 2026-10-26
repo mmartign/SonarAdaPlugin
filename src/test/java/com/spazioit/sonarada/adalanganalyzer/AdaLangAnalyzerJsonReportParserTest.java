@@ -445,8 +445,56 @@ class AdaLangAnalyzerJsonReportParserTest {
   }
 
   @Test
+  void importsPointerDereferenceChecks() {
+    // Obligations copied verbatim from an AdaLang Analyzer 1.11.0 --verify JSON report of the
+    // analyzer's own tests/verification_dereferences, the release that adds the
+    // pointer-dereference kind: in SPARK code an access value that is dereferenced is not null.
+    // One read under a guard that it is not null is proved safe and raises no issue; one read
+    // after the guard has ended stays unproved.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.11.0", "selectedPreset": "verify", "skippedChecks": 0},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 2, "provedSafe": 1, "definiteError": 0, "unproved": 1, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/1daaf88829585c83", "kind": "pointer-dereference", "status": "proved-safe", \
+      "method": "external-prover", "file": "tests/verification_dereferences.adb", "line": 15, \
+      "column": 24, "operation": "Ok_B.Buffer'Length", "assumptions": "", \
+      "abstractState": "SMT-LIB scalar VC; CVC5 and Z3 agreement required", \
+      "explanation": "scalar verification condition proves the access value is not null", \
+      "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", \
+      "configurationId": "none"},
+          {"id": "proof/v1/ba94c17ef4dc1e2f", "kind": "pointer-dereference", "status": "unproved", \
+      "method": "abstract-interpretation", "file": "tests/verification_dereferences.adb", "line": 24, \
+      "column": 22, "operation": "Bad_B.Buffer'Length", "assumptions": "", "abstractState": "", \
+      "explanation": "dereference failure is not established, but absence is not proved", \
+      "imprecisionSource": "the access value is not known not to be null", "reasonCode": "", \
+      "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly("proof-obligation:pointer-dereference", "proof-obligation:pointer-dereference");
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::method)
+      .containsExactly("external-prover", "abstract-interpretation");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true);
+    assertThat(report.proofObligations().get(1).sonarMessage()).isEqualTo(
+      "Proof obligation [pointer-dereference] unproved. Operation: Bad_B.Buffer'Length"
+        + ". Method: abstract-interpretation"
+        + ". Why: dereference failure is not established, but absence is not proved"
+        + ". Imprecision: the access value is not known not to be null");
+  }
+
+  @Test
   void importsGnatproveVerdictsAndSubjectsFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.10.4 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.11.0 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
@@ -574,7 +622,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.10.4 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.11.0 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
@@ -624,7 +672,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.10.4 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.11.0 run with --verify on the
     // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
     // reads was proved safe: an out actual was taken to be initialized after a call whose callee
     // has a path that returns without writing the parameter.
@@ -722,7 +770,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray() {
-    // The complete --format=json report of AdaLang Analyzer 1.10.4 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.11.0 run with --verify on the
     // analyzer's own tests/verification_fp119_element_component.ads and .adb. Up to 1.8.5 a
     // component was one value for every element of its array, and the first two of these
     // obligations were proved safe: an assertion that two elements hold the same count, and a
@@ -976,7 +1024,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
-    // The complete --format=json report of AdaLang Analyzer 1.10.4 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.11.0 run with --verify on the
     // analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb. Up to 1.8.8 an
     // aliased parameter was taken to change only by its own name: read after a write through an
     // access value, or after a call that writes the object given for it, it was taken to hold
@@ -1021,7 +1069,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheItemOfAReadAttributeAsWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.10.4 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.11.0 run with --verify on the
     // analyzer's own tests/verification_fp122_read_item.adb, a procedure that gives its out
     // parameter Item to Character'Read and its out parameter Twice, never assigned, to
     // Character'Write. 'Read writes its second argument. Up to 1.8.8 that argument was taken for a

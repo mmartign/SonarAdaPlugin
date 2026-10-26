@@ -9,6 +9,38 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.11.0 - 2026-10-26
+
+Aligned with AdaLang Analyzer 1.11.0. The report formats, the methods, the
+reason codes, the rules, and the command line are those of 1.10.4, and the
+plugin reads them with no change. There is one new kind of obligation,
+`pointer-dereference`, which the plugin imports like any other. Expect new
+issues where SPARK code dereferences an access value, and a few fewer on
+preconditions and postconditions after a write through one.
+
+- **New `pointer-dereference` issues.** In SPARK code `--verify` checks that an
+  access value is not null where it is dereferenced: at `P.all` and at the
+  implicit dereferences `P.C`, `P (I)`, `P (I .. J)`, `P'First`, `P'Last`,
+  `P'Length` and `P'Range`. The check is an obligation of the new kind
+  `pointer-dereference` (rule `proof-obligation:pointer-dereference`); one
+  that a precondition, a guard, or a callee's postcondition proves raises no
+  issue, and one that is not proved is an `unproved` issue whose message says
+  that the access value is not known not to be null. None is raised where the
+  subtype of the access value excludes null, as GNATprove raises none, nor in
+  code that is not SPARK. On the analyzer's ten benchmark corpora 402 are
+  raised, all in CoAP-SPARK, 350 of them proved.
+- **Fewer `unproved` issues after a write through an access value.** In SPARK
+  code a write to elements of an array an access value designates, such as
+  `Ctx.Buffer.all (A .. B) := Data`, no longer makes the analysis forget what
+  it knew of the access value. On the ten benchmark corpora 21 obligations
+  move from unproved to proved safe, 14 preconditions and 7 postconditions,
+  all in CoAP-SPARK.
+- No other issue is new, and none changes rule or severity. Over the
+  analyzer's 219 `tests/verification_*` bodies, run with their specs, the JSON
+  reports give 8,213 obligations instead of 8,180 (33 dereference checks, 15
+  of them proved) and the same 982 findings; no obligation changes verdict, so
+  the issues on obligations are 2,005 instead of 1,987.
+
 ## 1.10.4 - 2026-10-25
 
 Aligned with AdaLang Analyzer 1.10.4. The report formats, the kinds of
