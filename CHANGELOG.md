@@ -9,6 +9,42 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.11.1 - 2026-10-27
+
+Aligned with AdaLang Analyzer 1.11.1. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.11.0, and the plugin reads them with no change. Expect fewer
+`unproved` issues on `--verify` reports, most of all on RecordFlux-generated
+code, and a few issues that move from `unproved` to a definite error.
+
+- **Fewer `unproved` issues.** `--verify` now proves obligations that read an
+  operator a declaration defines (RecordFlux's `Index - Index` among them),
+  `T'Pos` and `T'Val`, `F'Result` in the postcondition of a function,
+  `X'Constrained` of a component of a variable, a mask of low bits
+  (`X and 16#FF#`), a power of known operands, or `Interfaces.Shift_Right` and
+  `Shift_Left` by a known amount. On the analyzer's ten benchmark corpora 191
+  obligations move from unproved to proved safe -- 63 range checks, 52
+  preconditions, 37 overflow checks, 27 postconditions, 7 length checks, 4
+  assertions and 1 index check, 128 of them in CoAP-SPARK -- so their issues
+  are gone, and no finding of any preset changes.
+- **Some `unproved` issues become definite errors.** Where an operator's
+  function does not compute what its symbol says, or a modular power wraps to
+  zero, a claim that the function's expression shows false is now a definite
+  error: its `proof-obligation:<kind>` issue keeps its rule and moves from
+  MEDIUM to HIGH, and a false assertion also gets a `Known_Assertion_Failure`
+  issue. None of this happens on the benchmark corpora; on the analyzer's
+  own fixtures, written to show it, 9 obligations move so.
+- **A false proof is corrected.** 1.8.6 to 1.11.0 proved `not X'Constrained`
+  where `X` is a formal object of mode `in` of a generic unit, which is a
+  constant, so that `X'Constrained` is True (FP-131 in the analyzer's
+  changelog). Such a claim is now a definite error, raising a HIGH issue
+  where there was none.
+- Over the analyzer's 219 `tests/verification_*` bodies of 1.11.0, run with
+  their specs, the JSON reports give the same 8,213 obligations and 991
+  findings instead of 982 (the 9 `Known_Assertion_Failure` above); 13
+  obligations move from unproved to proved safe and 9 from unproved to a
+  definite error, so the issues on obligations are 1,992 instead of 2,005.
+
 ## 1.11.0 - 2026-10-26
 
 Aligned with AdaLang Analyzer 1.11.0. The report formats, the methods, the
