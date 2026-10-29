@@ -27,9 +27,9 @@ Files scanned : 1
 Violations    : 3
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
-  Total : 47
-  proved-safe : 34
-  unproved : 13
+  Total : 51
+  proved-safe : 39
+  unproved : 12
   Details:
     /checkout/tests/verification_length_check_state.adb:12:42 [initialization-check] proved-safe
       method: flow-analysis
@@ -91,6 +91,14 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: external-prover
       why: both slice bounds are within the array index bounds
       evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/verification_length_check_state.adb:18:13 [index-check] proved-safe
+      method: external-prover
+      why: the slice bound is within the array index bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/verification_length_check_state.adb:18:18 [index-check] proved-safe
+      method: external-prover
+      why: the slice bound is within the array index bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:18:18 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path
@@ -145,10 +153,18 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: abstract-interpretation
       why: length-check failure is not established, but absence is not proved
       imprecision: the two lengths are not known to be equal
-    /checkout/tests/verification_length_check_state.adb:29:7 [range-check] unproved
-      method: abstract-interpretation
-      why: slice bounds are not established as within the array bounds
-      imprecision: slice bound and array bound ranges remain inconclusive
+    /checkout/tests/verification_length_check_state.adb:29:7 [range-check] proved-safe
+      method: external-prover
+      why: both slice bounds are within the array index bounds whenever the slice is not null
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/verification_length_check_state.adb:29:13 [index-check] proved-safe
+      method: external-prover
+      why: the slice bound is within the array index bounds
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
+    /checkout/tests/verification_length_check_state.adb:29:18 [index-check] proved-safe
+      method: external-prover
+      why: the slice bound is within the array index bounds whenever the slice is not null
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/verification_length_check_state.adb:29:18 [initialization-check] proved-safe
       method: flow-analysis
       why: object is initialized on every incoming path

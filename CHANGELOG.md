@@ -9,6 +9,37 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.11.2 - 2026-10-29
+
+Aligned with AdaLang Analyzer 1.11.2. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.11.1, and the plugin reads them with no change. Expect a few
+new `proof-obligation:index-check` issues where code assigns to a slice, and
+fewer `proof-obligation:range-check` issues on slices.
+
+- **New `index-check` obligations on slices assigned to.** `--verify` now
+  raises an index check at each bound of a slice that is the target of an
+  assignment, `A (L .. H) := ...`, as GNATprove does, besides the range
+  check of the slice it raised already. One that is not proved is a new
+  `proof-obligation:index-check` issue. On the analyzer's ten benchmark
+  corpora 437 are raised: 186 proved, 233 unproved, and 18 unsupported,
+  which raise no issue.
+- **Fewer `range-check` issues on slices.** The range check of a slice is
+  now proved, too, when its bounds are within the array whenever the slice
+  is not null, as in `Tmp (0 .. B - 1)` with `B` of zero. On the ten corpora
+  176 such range checks move from unproved to proved safe, so their issues
+  are gone; no finding of any preset changes.
+- **A false positive is corrected.** `Dead_Store` and
+  `Overwritten_Assignment` no longer report a store to a variable that a
+  function or procedure declared in the same `declare` block reads when it
+  is called later in the block (FP-132 in the analyzer's changelog), so such
+  issues are gone. None of the benchmark corpora had one.
+- Over the analyzer's 221 `tests/verification_*` bodies, run with their
+  specs, the JSON reports give 8,489 obligations instead of 8,451, the 38
+  new index checks (32 proved, 6 unproved), and the same 1,017 findings; 8
+  range checks move from unproved to proved safe, so the issues on
+  obligations are 2,038 instead of 2,040.
+
 ## 1.11.1 - 2026-10-27
 
 Aligned with AdaLang Analyzer 1.11.1. The report formats, the kinds of
