@@ -1,5 +1,5 @@
 adalang-analyzer [INFO]: Unit lookup covers 2 sources, 2 of them analyzed
-adalang-analyzer [INFO]: Built 2 subprogram summaries
+adalang-analyzer [INFO]: Built 4 subprogram summaries
 adalang-analyzer [INFO]: Parsing: tests/gnatprove_import/sample.ads
 adalang-analyzer [INFO]: Parsing: tests/gnatprove_import/sample.adb
 /checkout/tests/gnatprove_import/sample.adb:3:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
@@ -16,6 +16,20 @@ adalang-analyzer [INFO]: Parsing: tests/gnatprove_import/sample.adb
   source:
        procedure Divide_By_Zero (Result : out Integer) is
                  ^^^^^^^^^^^^^^
+/checkout/tests/gnatprove_import/sample.adb:15:14: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+       procedure Through_Output (Result : out Integer) is
+                 ^^^^^^^^^^^^^^
+/checkout/tests/gnatprove_import/sample.adb:18:17: warning: subprogram has outputs but no Depends contract [Missing_Depends_Contract]
+  rule: Find subprograms with outputs but no explicit Depends contract, the SPARK aspect for documenting input-to-output dependencies; fires even before SPARK_Mode is adopted, as a readiness check for it.
+  advice: Add a Depends aspect documenting the inputs on which each output depends.
+  quality: Maintainability (Medium)
+  source:
+          procedure Give with Global => (Output => Local) is
+                    ^^^^
 /checkout/tests/gnatprove_import/sample.adb:11:22: warning: right operand is zero here based on an earlier assignment [Division_By_Zero]
   rule: Find division, mod, and rem operations whose right operand is statically zero.
   advice: Guard the operation, change the divisor, or make the exceptional case explicit before evaluating the operation.
@@ -27,13 +41,13 @@ adalang-analyzer [INFO]: Parsing: tests/gnatprove_import/sample.adb
                          ^^^^
 
 Files scanned : 2
-Violations    : 3
+Violations    : 5
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
-  Total : 27
-  proved-safe : 20
+  Total : 33
+  proved-safe : 25
   definite-error : 1
-  unproved : 6
+  unproved : 7
   Details:
     /checkout/tests/gnatprove_import/sample.ads:9:63 [division-by-zero] proved-safe
       method: abstract-interpretation
@@ -167,25 +181,53 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       GNATprove: proved
       why: out parameter is initialized at every represented normal exit
       evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.adb:24:17 [initialization-check] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: object is initialized on every incoming path
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.adb:24:17 [range-check] unproved
+      method: abstract-interpretation
+      why: range-check failure is not established, but absence is not proved
+      imprecision: the current non-relational range domain is inconclusive
+    /checkout/tests/gnatprove_import/sample.ads:32:30 [initialization-check] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: out parameter is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.adb:20:19 [range-check] proved-safe
+      method: abstract-interpretation
+      why: value range is contained in the target subtype range
+      evidence: value bounds are within target bounds
+    /checkout/tests/gnatprove_import/sample.adb:18:48 [initialization-check] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: output global is initialized at every represented normal exit
+      evidence: initialization => true
+    /checkout/tests/gnatprove_import/sample.adb:18:27 [data-dependencies] proved-safe
+      method: flow-analysis
+      GNATprove: proved
+      why: the subprogram reads and writes no outside object its Global aspect does not allow
+      evidence: every object the body may read or write is allowed by the aspect
 
 GNATprove verdicts (read from 1 log; not AdaLang's own results):
-  Checks in the log : 14 (11 proved, 0 justified, 3 not proved)
+  Checks in the log : 18 (15 proved, 0 justified, 3 not proved)
   Of the checks GNATprove proved:
-    proved by AdaLang too : 10
+    proved by AdaLang too : 14
     GNATprove's verdict alone, on an AdaLang obligation : 1
     GNATprove's verdict alone, no AdaLang obligation : 0
     a definite error for AdaLang : 0
   Proved by AdaLang where GNATprove did not prove : 0
-  Obligations with a GNATprove verdict : 14 of 27
+  Obligations with a GNATprove verdict : 18 of 33
 
 Violations by check:
   Division_By_Zero : 1  [Reliability/Blocker]
-  Missing_Depends_Contract : 2  [Maintainability/Medium]
+  Missing_Depends_Contract : 4  [Maintainability/Medium]
 
 Violations by software quality:
   Reliability : 1
-  Maintainability : 2
+  Maintainability : 4
 
 Violations by severity:
   Blocker : 1
-  Medium : 2
+  Medium : 4

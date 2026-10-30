@@ -9,6 +9,40 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.12.0 - 2026-10-30
+
+Aligned with AdaLang Analyzer 1.12.0. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.11.2, and the plugin reads them with no change. Expect many
+fewer `proof-obligation:initialization-check` issues, some new ones at calls,
+and a few new issues on code the analyzer used to pass by mistake. On the
+analyzer's ten benchmark corpora the issues on obligations go from 39,885 to
+38,214.
+
+- **Fewer `initialization-check` issues.** `--verify` now follows
+  initialization through contracts and through the parts of an object, as
+  GNATprove does: 1,658 such obligations move from unproved to proved safe on
+  the ten corpora, so their issues close, and 182 are no longer raised.
+- **New `initialization-check` issues at calls.** A subprogram of SPARK code is
+  now entered with what it takes from outside initialized, and each such object
+  is checked at each call. These obligations have the rule they had, are placed
+  at the call, name the object read as their subject, and read
+  "`P` reads `G`" as their operation. On the ten corpora 2,208 are raised:
+  2,035 proved safe and 173 unproved, which are new issues.
+- **Fewer issues of other kinds.** 116 obligations move from unproved to proved
+  safe as well: 36 `range-check`, 27 `integer-overflow`, 23 `precondition`, 12
+  `postcondition`, 8 `assertion`, 7 `index-check` and 3 `predicate-check`.
+- **New issues that were always due.** Two false-safes of the analyzer are
+  corrected, `FP-133` on objects with `Relaxed_Initialization` and `FP-134` on
+  an object declared with another name in one declaration, as in
+  `First, Second : Integer`. Code of either form can get a new unproved issue,
+  which earlier versions passed in error: 4 such on the ten corpora. Read the
+  analyzer's changelog for what to re-check.
+
+A proved initialization check now rests on the checks at the calls, which is an
+assumption the analyzer states in "What comes from outside" of its supported
+verification subset. No finding changes on any corpus.
+
 ## 1.11.2 - 2026-10-29
 
 Aligned with AdaLang Analyzer 1.11.2. The report formats, the kinds of
