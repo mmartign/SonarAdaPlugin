@@ -9,6 +9,32 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.12.1 - 2026-10-31
+
+Aligned with AdaLang Analyzer 1.12.1. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.12.0, and the plugin reads them with no change. Expect fewer
+issues on preconditions, above all on code that RecordFlux generates, and a
+few new issues on code the analyzer used to pass by mistake. On the analyzer's
+ten benchmark corpora the issues on obligations go from 38,214 to 37,826.
+
+- **Fewer issues.** `--verify` keeps more of what is known across a statement
+  and reads more of what a call says: 388 obligations move from unproved to
+  proved safe on the ten corpora, so their issues close: 357 `precondition`, 15
+  `integer-overflow`, 7 `pointer-dereference`, 7 `range-check` and 2
+  `postcondition`.
+- **New issues that were always due.** Two false-safes of the analyzer are
+  corrected, `FP-135` on an array passed to a formal of another constrained
+  subtype with other bounds and `FP-136` on a function given an access value.
+  Code of either form can get a new unproved issue, which earlier versions
+  passed in error: none on the ten corpora. Read the analyzer's changelog for
+  what to re-check.
+- **An issue can get more severe.** A precondition that a slice given as an
+  actual breaks is now a `definite-error`, a Reliability issue of high
+  severity, where it was unproved: none on the ten corpora.
+
+No finding changes on any corpus.
+
 ## 1.12.0 - 2026-10-30
 
 Aligned with AdaLang Analyzer 1.12.0. The report formats, the kinds of
