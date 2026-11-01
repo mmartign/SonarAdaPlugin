@@ -494,16 +494,16 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsInitializationChecksAtCalls() {
-    // Obligations copied verbatim from AdaLang Analyzer 1.12.1 --verify JSON reports of the
+    // Obligations copied verbatim from AdaLang Analyzer 1.12.2 --verify JSON reports of the
     // analyzer's own tests/verification_outside_objects and
-    // tests/verification_mutation_outside_objects, the release that raises them: a subprogram of
-    // SPARK code is entered with what it takes from outside initialized, and each such object is
-    // checked at each call, under the operation "P reads G". The kind is the one there was, so
+    // tests/verification_mutation_outside_objects: since 1.12.0 a subprogram of SPARK code is
+    // entered with what it takes from outside initialized, and each such object is checked at
+    // each call, under the operation "P reads G". The kind is the one there was, so
     // the rule is, and the subject is the object read. One proved safe raises no issue; one that
     // stays unproved is an issue at the call.
     String json = """
       {
-        "analysisConfiguration": {"toolVersion": "1.12.1", "selectedPreset": "verify", "skippedChecks": []},
+        "analysisConfiguration": {"toolVersion": "1.12.2", "selectedPreset": "verify", "skippedChecks": []},
         "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
       "total": 2, "provedSafe": 1, "definiteError": 0, "unproved": 1, "unreachable": 0, "unsupported": 0},
         "findings": [],
@@ -549,8 +549,62 @@ class AdaLangAnalyzerJsonReportParserTest {
   }
 
   @Test
+  void importsPreconditionsAtCallsOfFormalSubprograms() {
+    // Obligations copied verbatim from AdaLang Analyzer 1.12.2 --verify JSON reports of the
+    // analyzer's own tests/verification_formal_contracts and
+    // tests/verification_mutation_formal_contracts, the release that raises them: a call of a
+    // generic formal subprogram asks the precondition of the subprogram each instance gives the
+    // formal. The kind and the method are the ones there were, so the rule is, and there is no
+    // subject. One obligation stands for every instance, on the call in the generic body: proved
+    // safe when each instance proves it, which raises no issue, and otherwise unproved, which is
+    // an issue there.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.12.2", "selectedPreset": "verify", "skippedChecks": []},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 2, "provedSafe": 1, "definiteError": 0, "unproved": 1, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/ac39d34ec06f32b7", "kind": "precondition", "status": "proved-safe", \
+      "method": "contract-transfer", "file": "tests/verification_formal_contracts.adb", "line": 28, \
+      "column": 53, "operation": "Plain (V, 2)", "assumptions": "", \
+      "abstractState": "instances of the generic unit in this run: 3", \
+      "explanation": "proved for the actuals of each instance of the generic unit in this run", \
+      "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", \
+      "configurationId": "none"},
+          {"id": "proof/v1/f3f05d96365b5fdb", "kind": "precondition", "status": "unproved", \
+      "method": "contract-transfer", "file": "tests/verification_mutation_formal_contracts.adb", \
+      "line": 43, "column": 54, "operation": "Some_Hold (V, 5)", "assumptions": "", \
+      "abstractState": "", \
+      "explanation": "the precondition of this call is that of the subprogram each instance gives the formal", \
+      "imprecisionSource": "the actual of the formal subprogram is given by each instance", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly("proof-obligation:precondition", "proof-obligation:precondition");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true);
+
+    AdaLangAnalyzerProofObligation atCall = report.proofObligations().get(1);
+    assertThat(atCall.file()).isEqualTo("tests/verification_mutation_formal_contracts.adb");
+    assertThat(atCall.line()).isEqualTo(43);
+    assertThat(atCall.hasSeparateSubject()).isFalse();
+    assertThat(atCall.sonarMessage()).isEqualTo(
+      "Proof obligation [precondition] unproved. Operation: Some_Hold (V, 5)"
+        + ". Method: contract-transfer"
+        + ". Why: the precondition of this call is that of the subprogram each instance gives the formal"
+        + ". Imprecision: the actual of the formal subprogram is given by each instance");
+  }
+
+  @Test
   void importsGnatproveVerdictsAndSubjectsFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.12.1 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.12.2 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
@@ -679,7 +733,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.12.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.12.2 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
@@ -746,7 +800,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.12.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.12.2 run with --verify on the
     // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
     // reads was proved safe: an out actual was taken to be initialized after a call whose callee
     // has a path that returns without writing the parameter.
@@ -844,7 +898,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray() {
-    // The complete --format=json report of AdaLang Analyzer 1.12.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.12.2 run with --verify on the
     // analyzer's own tests/verification_fp119_element_component.ads and .adb. Up to 1.8.5 a
     // component was one value for every element of its array, and the first two of these
     // obligations were proved safe: an assertion that two elements hold the same count, and a
@@ -1098,7 +1152,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
-    // The complete --format=json report of AdaLang Analyzer 1.12.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.12.2 run with --verify on the
     // analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb. Up to 1.8.8 an
     // aliased parameter was taken to change only by its own name: read after a write through an
     // access value, or after a call that writes the object given for it, it was taken to hold
@@ -1143,7 +1197,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheItemOfAReadAttributeAsWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.12.1 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.12.2 run with --verify on the
     // analyzer's own tests/verification_fp122_read_item.adb, a procedure that gives its out
     // parameter Item to Character'Read and its out parameter Twice, never assigned, to
     // Character'Write. 'Read writes its second argument. Up to 1.8.8 that argument was taken for a
