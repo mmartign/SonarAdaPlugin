@@ -9,6 +9,39 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.12.3 - 2026-11-02
+
+Aligned with AdaLang Analyzer 1.12.3. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.12.2, and the plugin reads them with no change. Expect fewer
+issues on range, overflow and index checks and on loop invariants, and a few
+new `precondition` issues in code that RecordFlux generates. On the
+analyzer's benchmark corpora run with `--verify` the issues on obligations
+go from 36,251 to 36,144.
+
+- **Fewer issues.** 138 obligations move from unproved to proved safe, so
+  their issues close: 81 `range-check`, 27 `integer-overflow`, 4
+  `index-check`, and 26 loop invariants, 15 on entry and 11 preserved by an
+  iteration. 78 of them are in SPARKNaCl. An element of an array read at an
+  index that is not known is now within the subtype of the array's
+  components in SPARK code, and a `Loop_Invariant` that does not lead its
+  loop is now proved where it stands or by cutting the loop there.
+- **New `precondition` issues.** `--verify` now checks the precondition of
+  an operator that a generic unit hides behind an abstract function, as
+  RecordFlux does for `Index`, at the operator, and that of a call of a
+  renaming. Of the 44 obligations this adds on the corpora, all in
+  CoAP-SPARK, 13 are proved safe and 31 stay unproved and raise one issue
+  each, 22 at operators and 9 at calls of a renaming. GNATprove proves all
+  31, so they say what the analyzer could not prove, not that the code is
+  wrong. The operation of an issue at an operator is the operator alone
+  (`+`), at the column of the operator.
+- **Never a definite error at such an operator.** In an instance GNAT may
+  call the predefined operator of the actual instead, so a precondition the
+  arguments break there is `unproved`, with that reason, not
+  `definite-error`.
+
+No finding changes on any corpus, and no `definite-error` is new or gone.
+
 ## 1.12.2 - 2026-11-01
 
 Aligned with AdaLang Analyzer 1.12.2 as tagged on 2026-11-02. The tag first
