@@ -11,21 +11,30 @@ Versions before 1.8.3 are in the git history.
 
 ## 1.12.2 - 2026-11-01
 
-Aligned with AdaLang Analyzer 1.12.2. The report formats, the kinds of
+Aligned with AdaLang Analyzer 1.12.2 as tagged on 2026-11-02. The tag first
+stood on an earlier build, which gave a call two precondition obligations, and
+this entry first described that build. The report formats, the kinds of
 obligation, the methods, the reason codes, the rules, and the command line
-are those of 1.12.1, and the plugin reads them with no change. Expect a few
-new `precondition` issues in generic units and a few fewer issues in generic
-units declared inside generic units. On the analyzer's benchmark corpora run
-with `--verify` the issues on obligations go up, from 37,826 to 37,873.
+are those of 1.12.1, and the plugin reads them with no change. Expect about
+half as many `precondition` issues, a few new ones in generic units, and a few
+fewer issues in generic units declared inside generic units. On the analyzer's
+benchmark corpora run with `--verify` the issues on obligations go from 37,826
+to 36,251.
 
+- **One `precondition` issue for a call.** A call with actuals had two
+  precondition obligations at the same place, one whose operation is the name
+  of the subprogram and one whose operation is the call with its actuals, so
+  an unproved precondition raised two issues. The first is gone: its issue
+  closes, and the issue on the call stays. A call with no actuals in
+  parentheses had one and keeps it. On the corpora 1,596 issues close this
+  way, and the `precondition` issues go from 3,244 to 1,674.
 - **New `precondition` issues.** `--verify` now checks the precondition at a
   call of a generic formal subprogram when some instance gives the formal a
-  subprogram with a `Pre` aspect. Nothing checked it before. Of the 238
-  obligations this adds on the corpora, 186 are proved safe and raise no issue,
-  and 52 stay unproved and raise one each, 28 in libkeccak and 24 in
-  CoAP-SPARK. Those 52 sit at 26 calls: like every precondition issue, a call
-  gets one for the call and one for its name. GNATprove proves all 26, so they
-  say what the analyzer could not prove, not that the code is wrong.
+  subprogram with a `Pre` aspect. Nothing checked it before. Of the 119
+  obligations this adds on the corpora, 93 are proved safe and raise no issue,
+  and 26 stay unproved and raise one each, 14 in libkeccak and 12 in
+  CoAP-SPARK. GNATprove proves all 26, so they say what the analyzer could not
+  prove, not that the code is wrong.
 - **One issue for all the instances.** The issue is on the call in the generic
   body, and it closes when every instance proves the call. It is always
   `unproved`, never `definite-error`, even when an instance gives an actual
@@ -34,6 +43,12 @@ with `--verify` the issues on obligations go up, from 37,826 to 37,873.
   analyzed with the actuals of their instances: 5 obligations in libkeccak move
   from unproved to proved safe, so their issues close, 3 `range-check` and 2
   `integer-overflow`.
+- **Issues that may open on your code.** Since 1.10.0 a division, index or
+  range check in a postcondition could be proved safe with what was true on
+  entry instead of at the exit, when an `X'Old` stood to its left in an
+  `and then` and the subprogram writes the object the check reads (`FP-137` in
+  the analyzer's changelog). Such a check now stays unproved unless the exit
+  proves it, and raises an issue. None opens on the corpora.
 
 No finding changes on any corpus, and no `definite-error` is new or gone.
 
