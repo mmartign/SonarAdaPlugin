@@ -9,6 +9,33 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.13.0 - 2026-11-03
+
+Aligned with AdaLang Analyzer 1.13.0. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.12.3, and the plugin reads them with no change. Expect fewer
+issues on loop invariants, predicate checks, assertions and range checks in
+code that works on arrays, and one more on a loop invariant. On the
+analyzer's benchmark corpora run with `--verify` the issues on obligations
+go from 36,144 to 35,988.
+
+- **Fewer issues.** 157 obligations move from unproved to proved safe, so
+  their issues close: 60 loop invariants (43 on entry, 17 preserved by an
+  iteration), 36 `predicate-check`, 20 `range-check`, 19 `assertion`, 10
+  `precondition`, 5 `index-check`, 4 `integer-overflow` and 3
+  `postcondition`. 113 of them are in SPARKNaCl. An element of an array read
+  at an index that is not known is now the element of the array's contents,
+  of which preconditions, assertions and stores speak; loops keep what holds
+  of arrays they do not write, `X'Loop_Entry` is translated, and what holds
+  after a `for` loop is what holds at the end of its last iteration.
+- **One more issue.** A loop invariant in SPARKNaCl that 1.12.3 proved
+  preserved is `unproved` again: the analyzer had checked the next iteration
+  with the loop parameter at the value it had (its FP-139). GNATprove proves
+  the invariant, so the issue says what the analyzer cannot prove, not that
+  the code is wrong.
+
+No finding changes on any corpus, and no `definite-error` is new or gone.
+
 ## 1.12.3 - 2026-11-02
 
 Aligned with AdaLang Analyzer 1.12.3. The report formats, the kinds of

@@ -215,8 +215,9 @@ class AdaLangAnalyzerConsoleParserTest {
   @Test
   void parsesGnatproveVerdictsAndTheirSummaryFromRealAnalyzerOutput() {
     // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v --gnatprove-log on the
-    // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
-    String report = readResource("adalanganalyzer/gnatprove-import-console-output.txt");
+    // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened: kept
+    // for its addition at sample.ads:18:7, which only GNATprove proved there (1.13.0 proves it).
+    String report = readResource("adalanganalyzer/gnatprove-import-1.12.3-console-output.txt");
 
     List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
 
@@ -252,6 +253,28 @@ class AdaLangAnalyzerConsoleParserTest {
 
     assertThat(parser.reportedGnatproveSummary(report)).contains(
       new AdaLangAnalyzerGnatproveSummary(1, 18, 15, 0, 3, 14, 1, 0, 0, 0, 18));
+  }
+
+  @Test
+  void parsesTheAdditionBothToolsProveFromRealAnalyzerOutput() {
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v --gnatprove-log on the
+    // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened: the
+    // addition at sample.ads:18:7 reads Data (Data'First), an element at an index the analyzer
+    // reads in the contents of the array since 1.13.0, and is proved by both tools.
+    String report = readResource("adalanganalyzer/gnatprove-import-console-output.txt");
+
+    List<AdaLangAnalyzerProofObligation> obligations = parser.parseProofObligations(report);
+
+    assertThat(obligations).hasSize(33).hasSize(parser.reportedProofObligationCount(report));
+    assertThat(obligations.get(9).kind()).isEqualTo("integer-overflow");
+    assertThat(obligations.get(9).outcome()).isEqualTo("proved-safe");
+    assertThat(obligations.get(9).method()).isEqualTo("external-prover");
+    assertThat(obligations.get(9).gnatprove()).isEqualTo("proved");
+    assertThat(obligations)
+      .extracting(AdaLangAnalyzerProofObligation::outcome, AdaLangAnalyzerProofObligation::gnatprove)
+      .doesNotContain(org.assertj.core.groups.Tuple.tuple("unproved", "proved"));
+    assertThat(parser.reportedGnatproveSummary(report)).contains(
+      new AdaLangAnalyzerGnatproveSummary(1, 18, 15, 0, 3, 15, 0, 0, 0, 0, 18));
   }
 
   @Test
@@ -375,7 +398,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheLengthChecksOfRealAnalyzerOutput() {
-    // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened: the
     // length-check kind 1.8.4 added.
     String report = readResource("adalanganalyzer/length-check-console-output.txt");
@@ -426,7 +449,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v on the analyzer's own
     // tests/verification_fp117_unwritten_out.adb, with the checkout directory shortened. Up to
     // 1.8.4 every one of these reads was proved safe: an out actual was taken to be initialized
     // after a call whose callee has a path that returns without writing the parameter.
@@ -513,7 +536,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesAComponentReadInTwoElementsOfAnArray() {
-    // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v on the analyzer's own
     // tests/verification_fp119_element_component.ads and .adb, with the checkout directory
     // shortened. Up to 1.8.5 a component was one value for every element of its array, and the
     // first two of these obligations were proved safe: an assertion that two elements hold the
@@ -669,7 +692,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheReadsOfAnAliasedParameterChangedWithoutItsName() {
-    // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v on the analyzer's own
     // tests/verification_fp121_aliased_parameter.ads and .adb, with the checkout directory
     // shortened. Up to 1.8.8 an aliased parameter was taken to change only by its own name: read
     // after a write through an access value, or after a call that writes the object given for
@@ -711,7 +734,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void parsesTheItemOfAReadAttributeAsWritten() {
-    // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v on the analyzer's own
     // tests/verification_fp122_read_item.adb, with the checkout directory shortened: a procedure
     // that gives its out parameter Item to Character'Read and its out parameter Twice, never
     // assigned, to Character'Write. Up to 1.8.8 the second argument of 'Read was taken for a
@@ -745,7 +768,7 @@ class AdaLangAnalyzerConsoleParserTest {
 
   @Test
   void readsFromTheTextOutputWhatTheJsonReportHas() {
-    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.12.3.
+    // The text output and the --format=json report of the same runs of AdaLang Analyzer 1.13.0.
     // Only the JSON report has the operation, the assumptions and the subject of an obligation;
     // only the text output has the rule, the advice and the source line of a finding.
     for (String run : List.of(

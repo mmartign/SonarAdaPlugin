@@ -36,8 +36,9 @@ class AdaLangAnalyzerSensorTest {
   @Test
   void importsARealConsoleReportWithGnatproveVerdicts(@TempDir Path projectDirectory) throws IOException {
     // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v --gnatprove-log on the
-    // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
-    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/gnatprove-import-console-output.txt"));
+    // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened: kept
+    // for its addition at sample.ads:18:7, which only GNATprove proved there (1.13.0 proves it).
+    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/gnatprove-import-1.12.3-console-output.txt"));
 
     List<SavedIssue> issues = importReport(projectDirectory, "adalang.txt",
       "tests/gnatprove_import/sample.ads", "tests/gnatprove_import/sample.adb");
@@ -74,18 +75,41 @@ class AdaLangAnalyzerSensorTest {
   }
 
   @Test
+  void importsARealConsoleReportWhereBothToolsProveTheAddition(@TempDir Path projectDirectory)
+    throws IOException {
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v --gnatprove-log on the
+    // analyzer's own tests/gnatprove_import fixture, with the checkout directory shortened.
+    Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/gnatprove-import-console-output.txt"));
+
+    List<SavedIssue> issues = importReport(projectDirectory, "adalang.txt",
+      "tests/gnatprove_import/sample.ads", "tests/gnatprove_import/sample.adb");
+
+    // Five findings, and the seven obligations that are unproved or a definite error: the
+    // addition at sample.ads:18:7 is proved by both tools and is no issue.
+    assertThat(issues).hasSize(12);
+    assertThat(issues)
+      .extracting(issue -> issue.primary().file() + ":" + issue.primary().range())
+      .doesNotContain("tests/gnatprove_import/sample.ads:18:6");
+    assertThat(issues)
+      .extracting(issue -> issue.primary().message())
+      .noneMatch(message -> message.startsWith("Proof obligation [integer-overflow] unproved")
+        && message.contains("GNATprove: proved"));
+  }
+
+  @Test
   void importsTheLengthChecksOfARealConsoleReport(@TempDir Path projectDirectory) throws IOException {
-    // The complete output of AdaLang Analyzer 1.12.3 run with --verify -v on the analyzer's own
+    // The complete output of AdaLang Analyzer 1.13.0 run with --verify -v on the analyzer's own
     // tests/verification_length_check_state.adb, with the checkout directory shortened.
     Files.write(projectDirectory.resolve("adalang.txt"), readResource("adalanganalyzer/length-check-console-output.txt"));
 
     List<SavedIssue> issues = importReport(projectDirectory, "adalang.txt", "tests/verification_length_check_state.adb");
 
-    // Three findings and the twelve unproved obligations: since 1.10.1 the analyzer proves the
+    // Three findings and the eleven unproved obligations: since 1.10.1 the analyzer proves the
     // overflow, range and index checks that the declaration of a constant array before them used
-    // to hide, and since 1.11.2 the range check of the slice Into (1 .. Count), whose bounds are
-    // within Into whenever it is not null.
-    assertThat(issues).hasSize(15);
+    // to hide, since 1.11.2 the range check of the slice Into (1 .. Count), whose bounds are
+    // within Into whenever it is not null, and since 1.13.0 the range check of Wider (1), an
+    // element of a copy of Kept.
+    assertThat(issues).hasSize(14);
     // The five length checks that are not proved. An assignment to a slice has one at its value
     // and one at its ":=", three columns before.
     assertThat(issues)
@@ -107,7 +131,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten(@TempDir Path projectDirectory) throws IOException {
-    // The complete text output and --format=json report of AdaLang Analyzer 1.12.3 run with
+    // The complete text output and --format=json report of AdaLang Analyzer 1.13.0 run with
     // --verify on the analyzer's own tests/verification_fp117_unwritten_out.adb, the text with
     // the checkout directory shortened. Up to 1.8.4 the four reads were proved safe, and so
     // were no issue: an out actual was taken to be initialized after a call whose callee has a
@@ -164,7 +188,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray(@TempDir Path projectDirectory) throws IOException {
-    // The complete text output and --format=json report of AdaLang Analyzer 1.12.3 run with
+    // The complete text output and --format=json report of AdaLang Analyzer 1.13.0 run with
     // --verify on the analyzer's own tests/verification_fp119_element_component.ads and .adb,
     // the text with the checkout directory shortened. Up to 1.8.5 the assertion and the division
     // were proved safe, and so were no issue: a component was one value for every element of
@@ -216,7 +240,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheReadsOfAnAliasedParameterChangedWithoutItsName(@TempDir Path projectDirectory) throws IOException {
-    // The complete text output and --format=json report of AdaLang Analyzer 1.12.3 run with
+    // The complete text output and --format=json report of AdaLang Analyzer 1.13.0 run with
     // --verify on the analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb, the
     // text with the checkout directory shortened. Up to 1.8.8 the four obligations were proved
     // safe, and so were no issue: an aliased parameter was taken to change only by its own name.
@@ -265,7 +289,7 @@ class AdaLangAnalyzerSensorTest {
 
   @Test
   void importsTheItemOfAReadAttributeAsWritten(@TempDir Path projectDirectory) throws IOException {
-    // The complete text output and --format=json report of AdaLang Analyzer 1.12.3 run with
+    // The complete text output and --format=json report of AdaLang Analyzer 1.13.0 run with
     // --verify on the analyzer's own tests/verification_fp122_read_item.adb, the text with the
     // checkout directory shortened: a procedure that gives its out parameter Item to
     // Character'Read and its out parameter Twice, never assigned, to Character'Write. Up to 1.8.8

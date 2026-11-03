@@ -45,9 +45,9 @@ Violations    : 5
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
   Total : 33
-  proved-safe : 25
+  proved-safe : 26
   definite-error : 1
-  unproved : 7
+  unproved : 6
   Details:
     /checkout/tests/gnatprove_import/sample.ads:9:63 [division-by-zero] proved-safe
       method: abstract-interpretation
@@ -91,13 +91,11 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/gnatprove_import/sample.ads:18:7 [integer-overflow] unproved
-      method: abstract-interpretation
+    /checkout/tests/gnatprove_import/sample.ads:18:7 [integer-overflow] proved-safe
+      method: external-prover
       GNATprove: proved
-      why: overflow is not established, but absence is not proved
-      imprecision: this call form cannot be inlined safely
-      reason: unsupported-call
-      blocked at: Data (Data'First)
+      why: scalar verification condition proves the arithmetic result fits its base type
+      evidence: SMT-LIB scalar VC; CVC5 and Z3 agreement required
     /checkout/tests/gnatprove_import/sample.ads:18:13 [index-check] proved-safe
       method: external-prover
       GNATprove: proved
@@ -213,8 +211,8 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
 GNATprove verdicts (read from 1 log; not AdaLang's own results):
   Checks in the log : 18 (15 proved, 0 justified, 3 not proved)
   Of the checks GNATprove proved:
-    proved by AdaLang too : 14
-    GNATprove's verdict alone, on an AdaLang obligation : 1
+    proved by AdaLang too : 15
+    GNATprove's verdict alone, on an AdaLang obligation : 0
     GNATprove's verdict alone, no AdaLang obligation : 0
     a definite error for AdaLang : 0
   Proved by AdaLang where GNATprove did not prove : 0
