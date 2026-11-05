@@ -44,10 +44,10 @@ Files scanned : 2
 Violations    : 5
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
-  Total : 33
+  Total : 32
   proved-safe : 26
   definite-error : 1
-  unproved : 6
+  unproved : 5
   Details:
     /checkout/tests/gnatprove_import/sample.ads:9:63 [division-by-zero] proved-safe
       method: abstract-interpretation
@@ -138,12 +138,6 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/gnatprove_import/sample.adb:5:17 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: the expression conflicts with its symbolic scalar sort
-      reason: sort-mismatch
-      blocked at: Source
     /checkout/tests/gnatprove_import/sample.adb:5:14 [length-check] proved-safe
       method: external-prover
       GNATprove: proved
@@ -216,7 +210,7 @@ GNATprove verdicts (read from 1 log; not AdaLang's own results):
     GNATprove's verdict alone, no AdaLang obligation : 0
     a definite error for AdaLang : 0
   Proved by AdaLang where GNATprove did not prove : 0
-  Obligations with a GNATprove verdict : 18 of 33
+  Obligations with a GNATprove verdict : 18 of 32
 
 Violations by check:
   Division_By_Zero : 1  [Reliability/Blocker]

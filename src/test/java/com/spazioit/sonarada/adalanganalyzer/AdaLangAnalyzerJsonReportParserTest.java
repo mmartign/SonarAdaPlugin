@@ -654,13 +654,14 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheAdditionBothToolsProveFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.13.0 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.13.1 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture: the addition at
-    // sample.ads:18:7 is proved by both tools, and is no issue.
+    // sample.ads:18:7 is proved by both tools, and is no issue. Since 1.13.1 the array Source
+    // assigned at sample.adb:5:17 has no range check of a scalar.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/gnatprove-import-report.json"))));
 
-    assertThat(report.proofObligations()).hasSize(33).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations()).hasSize(32).hasSize(report.proofObligationCount());
     assertThat(report.gnatproveSummary()).contains(
       new AdaLangAnalyzerGnatproveSummary(1, 18, 15, 0, 3, 15, 0, 0, 0, 0, 18));
     AdaLangAnalyzerProofObligation overflow = report.proofObligations().get(9);
@@ -802,14 +803,15 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.13.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.13.1 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
       AdaLangAnalyzerJson.parse(readResource("adalanganalyzer/length-check-report.json"))));
 
     assertThat(report.findings()).hasSize(3).hasSize(report.violationCount());
-    assertThat(report.proofObligations()).hasSize(51).hasSize(report.proofObligationCount());
+    // Since 1.13.1 an array value has no range check of a scalar: five are gone.
+    assertThat(report.proofObligations()).hasSize(46).hasSize(report.proofObligationCount());
     assertThat(report.gnatproveSummary()).isEmpty();
 
     // Since 1.11.2 each bound of a slice assigned to has an index check of its own, at the bound.
@@ -869,7 +871,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.13.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.13.1 run with --verify on the
     // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
     // reads was proved safe: an out actual was taken to be initialized after a call whose callee
     // has a path that returns without writing the parameter.
@@ -967,7 +969,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray() {
-    // The complete --format=json report of AdaLang Analyzer 1.13.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.13.1 run with --verify on the
     // analyzer's own tests/verification_fp119_element_component.ads and .adb. Up to 1.8.5 a
     // component was one value for every element of its array, and the first two of these
     // obligations were proved safe: an assertion that two elements hold the same count, and a
@@ -1221,7 +1223,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
-    // The complete --format=json report of AdaLang Analyzer 1.13.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.13.1 run with --verify on the
     // analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb. Up to 1.8.8 an
     // aliased parameter was taken to change only by its own name: read after a write through an
     // access value, or after a call that writes the object given for it, it was taken to hold
@@ -1266,7 +1268,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheItemOfAReadAttributeAsWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.13.0 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.13.1 run with --verify on the
     // analyzer's own tests/verification_fp122_read_item.adb, a procedure that gives its out
     // parameter Item to Character'Read and its out parameter Twice, never assigned, to
     // Character'Write. 'Read writes its second argument. Up to 1.8.8 that argument was taken for a

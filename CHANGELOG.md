@@ -9,6 +9,38 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.13.1 - 2026-11-05
+
+Aligned with AdaLang Analyzer 1.13.1. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.13.0, and the plugin reads them with no change. Expect far
+fewer `range-check` issues on arrays, and fewer issues on index checks,
+preconditions and other checks in code that works on arrays of records,
+RecordFlux's in particular. On the analyzer's benchmark corpora run with
+`--verify` the issues on obligations go from 35,988 to 32,871.
+
+- **Range checks of array values gone.** An array given to an array subtype
+  -- the operand of a conversion, the initial value of an object, an
+  assigned value -- had a `range-check` obligation as a scalar has, beside
+  the checks of its length and of the bounds of a slice, and nothing could
+  decide it. The analyzer no longer raises it: 1,853 `unproved` obligations
+  and their issues are gone, and 18 proved ones with them. The
+  `--recommended` and `--spark` presets lose the same obligations.
+- **Fewer issues.** 1,264 obligations move from unproved to proved safe, so
+  their issues close: 963 `index-check`, 86 `precondition`, 83
+  `integer-overflow`, 51 `range-check`, 27 `postcondition`, 22 loop
+  invariants (8 on entry, 14 preserved by an iteration), 20 `assertion`, 10
+  `length-check` and 2 `predicate-check`. 1,108 of them are in CoAP-SPARK,
+  109 in Tokeneer and 45 in AWS. The scalar components of the elements of an
+  array of records are now in the analyzer's verification conditions, an
+  index of an enumeration type is its position, an object declared with a
+  slice or a concatenation has the bounds it takes from it, and what is
+  known of the elements where a loop is entered holds of `X'Loop_Entry`.
+  Most of the index checks are of an array indexed by an enumeration, at an
+  index of that type.
+
+No finding changes on any corpus, and no `definite-error` is new or gone.
+
 ## 1.13.0 - 2026-11-03
 
 Aligned with AdaLang Analyzer 1.13.0. The report formats, the kinds of

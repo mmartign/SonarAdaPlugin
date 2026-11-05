@@ -27,9 +27,9 @@ Files scanned : 1
 Violations    : 3
 
 Proof obligations (bounded scalar verification; unsupported boundaries are explicit):
-  Total : 51
+  Total : 46
   proved-safe : 40
-  unproved : 11
+  unproved : 6
   Details:
     /checkout/tests/verification_length_check_state.adb:12:42 [initialization-check] proved-safe
       method: flow-analysis
@@ -43,12 +43,6 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: abstract-interpretation
       why: value range is contained in the target subtype range
       evidence: value bounds are within target bounds
-    /checkout/tests/verification_length_check_state.adb:15:45 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: this expression form is outside the scalar VC subset
-      reason: unsupported-expression-kind
-      blocked at: (others => 0)
     /checkout/tests/verification_length_check_state.adb:17:15 [integer-overflow] proved-safe
       method: external-prover
       why: scalar verification condition proves the arithmetic result fits its base type
@@ -65,12 +59,6 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/verification_length_check_state.adb:18:27 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: the expression conflicts with its symbolic scalar sort
-      reason: sort-mismatch
-      blocked at: Local
     /checkout/tests/verification_length_check_state.adb:15:45 [length-check] proved-safe
       method: abstract-interpretation
       why: an aggregate with an others choice has the bounds of what it is given to
@@ -139,12 +127,6 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/verification_length_check_state.adb:29:28 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: this call form cannot be inlined safely
-      reason: unsupported-call
-      blocked at: From (1 .. Limit)
     /checkout/tests/verification_length_check_state.adb:29:28 [length-check] unproved
       method: abstract-interpretation
       why: length-check failure is not established, but absence is not proved
@@ -185,12 +167,6 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: abstract-interpretation
       why: value range is contained in the target subtype range
       evidence: value bounds are within target bounds
-    /checkout/tests/verification_length_check_state.adb:38:32 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: this expression form is outside the scalar VC subset
-      reason: unsupported-expression-kind
-      blocked at: (others => 0)
     /checkout/tests/verification_length_check_state.adb:40:15 [integer-overflow] proved-safe
       method: external-prover
       why: scalar verification condition proves the arithmetic result fits its base type
@@ -207,12 +183,6 @@ Proof obligations (bounded scalar verification; unsupported boundaries are expli
       method: flow-analysis
       why: object is initialized on every incoming path
       evidence: initialization => true
-    /checkout/tests/verification_length_check_state.adb:42:48 [range-check] unproved
-      method: abstract-interpretation
-      why: range-check failure is not established, but absence is not proved
-      imprecision: the expression conflicts with its symbolic scalar sort
-      reason: sort-mismatch
-      blocked at: Kept
     /checkout/tests/verification_length_check_state.adb:44:29 [index-check] unproved
       method: abstract-interpretation
       why: index-check failure is not established, but absence is not proved

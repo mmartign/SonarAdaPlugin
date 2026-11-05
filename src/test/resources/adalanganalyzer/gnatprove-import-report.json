@@ -4,7 +4,7 @@
   "structuralCoverageObjective": "none",
   "certificationClaim": "verification support only; not a compliance determination",
   "analysisConfiguration": {
-    "toolVersion": "1.13.0",
+    "toolVersion": "1.13.1",
     "selectedPreset": "verify",
     "enabledRules": [
       "No_Goto",
@@ -63,7 +63,7 @@
   "filesScanned": 2,
   "newViolations": 5,
   "baselineMatches": 0,
-  "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", "total": 33, "provedSafe": 26, "definiteError": 1, "unproved": 6, "unreachable": 0, "unsupported": 0},
+  "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", "total": 32, "provedSafe": 26, "definiteError": 1, "unproved": 5, "unreachable": 0, "unsupported": 0},
   "findings": [
     {"ruleId": "Missing_Depends_Contract", "message": "subprogram has outputs but no Depends contract", "explanation": "", "evidence": "", "file": "tests/gnatprove_import/sample.adb", "line": 3, "column": 14, "severity": "Medium", "quality": "Maintainability", "fingerprint": "2c3214d8670470ef", "baseline": false},
     {"ruleId": "Missing_Depends_Contract", "message": "subprogram has outputs but no Depends contract", "explanation": "", "evidence": "", "file": "tests/gnatprove_import/sample.adb", "line": 8, "column": 14, "severity": "Medium", "quality": "Maintainability", "fingerprint": "572d4cf300202028", "baseline": false},
@@ -91,7 +91,6 @@
     {"id": "proof/v1/bcb82e81455761cf", "kind": "termination", "status": "proved-safe", "method": "flow-analysis", "file": "tests/gnatprove_import/sample.ads", "line": 17, "column": 13, "operation": "Sum_Of_Two", "assumptions": "", "abstractState": "no unbounded loop, no recursion, every callee terminates", "explanation": "the subprogram returns: its loops are bounded, it is not recursive and what it calls returns", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "gnatprove": "proved"},
     {"id": "proof/v1/220511861509692d", "kind": "division-by-zero", "status": "definite-error", "method": "abstract-interpretation", "file": "tests/gnatprove_import/sample.adb", "line": 11, "column": 22, "operation": "Zero", "assumptions": "", "abstractState": "right operand => 0", "explanation": "right operand is zero in the incoming abstract state", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "gnatprove": "not-proved"},
     {"id": "proof/v1/250e9864024e9ed6", "kind": "initialization-check", "status": "proved-safe", "method": "flow-analysis", "file": "tests/gnatprove_import/sample.adb", "line": 5, "column": 17, "operation": "Source", "assumptions": "", "abstractState": "initialization => true", "explanation": "object is initialized on every incoming path", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/gnatprove_import/sample.adb", "line": 3, "column": 20}},
-    {"id": "proof/v1/fc802c81b7dc2e3b", "kind": "range-check", "status": "unproved", "method": "abstract-interpretation", "file": "tests/gnatprove_import/sample.adb", "line": 5, "column": 17, "operation": "Source", "assumptions": "", "abstractState": "", "explanation": "range-check failure is not established, but absence is not proved", "imprecisionSource": "the expression conflicts with its symbolic scalar sort", "reasonCode": "sort-mismatch", "blockingExpression": "Source", "inlinePath": "", "configurationId": "none"},
     {"id": "proof/v1/1a1cde184e601e05", "kind": "length-check", "status": "proved-safe", "method": "external-prover", "file": "tests/gnatprove_import/sample.adb", "line": 5, "column": 14, "operation": "Target := Source;", "assumptions": "", "abstractState": "SMT-LIB scalar VC; CVC5 and Z3 agreement required", "explanation": "scalar verification condition proves the value has the length of its target", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "gnatprove": "proved"},
     {"id": "proof/v1/b833cf91c5d5b89f", "kind": "initialization-check", "status": "proved-safe", "method": "flow-analysis", "file": "tests/gnatprove_import/sample.ads", "line": 24, "column": 37, "operation": "Target", "assumptions": "", "abstractState": "initialization => true", "explanation": "out parameter is initialized at every represented normal exit", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/gnatprove_import/sample.ads", "line": 24, "column": 37}, "gnatprove": "proved"},
     {"id": "proof/v1/b552985b5bfcd852", "kind": "range-check", "status": "proved-safe", "method": "abstract-interpretation", "file": "tests/gnatprove_import/sample.adb", "line": 9, "column": 25, "operation": "0", "assumptions": "", "abstractState": "value bounds are within target bounds", "explanation": "value range is contained in the target subtype range", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"},
