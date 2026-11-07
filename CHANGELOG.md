@@ -9,6 +9,46 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.13.2 - 2026-11-07
+
+Aligned with AdaLang Analyzer 1.13.2. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.13.1, and the plugin reads them with no change. Expect fewer
+`initialization-check` issues on objects with `Relaxed_Initialization`, and
+a few new ones where the analyzer used to take such an object as having a
+value in every part. On the analyzer's benchmark corpora run with
+`--verify` the issues on obligations go from 32,871 to 32,658.
+
+- **Initialization checks GNATprove does not have gone.** The prefix of
+  `X'Initialized`, the copy of an object with relaxed initialization into
+  another one or as the actual of such a formal, which reads no value, and
+  such an `out` parameter at the exit no longer have an
+  `initialization-check` obligation: 122 `unproved` obligations and their
+  issues are gone, and 33 proved ones with them.
+- **Fewer issues.** 99 obligations move from unproved to proved safe, so
+  their issues close: 26 `initialization-check`, 20 `range-check`, 19
+  `assertion`, 13 loop invariants (6 on entry, 7 preserved by an
+  iteration), 12 `precondition`, 5 `postcondition`, 2 `predicate-check` and
+  1 `integer-overflow`; 92 of them are in SPARKNaCl. The analyzer now
+  follows an object with relaxed initialization as a whole, and knows it
+  has a value in every part where a precondition, an assertion or a loop
+  invariant says `X'Initialized` of it.
+- **New issues.** 8 `initialization-check` obligations that were proved
+  are `unproved` now (6 in SPARKNaCl, 2 in a Saatana test program): reads of
+  a parameter with relaxed initialization, which can come with parts that
+  have no value (FP-140 in the analyzer). GNATprove proves the 6 of
+  SPARKNaCl from what the precondition says of each element, which the
+  analyzer does not follow yet; nothing says that the 2 of Saatana have a
+  value.
+- **The reason given.** The issue of an initialization check left unproved
+  on an object with relaxed initialization says so: "the object has relaxed
+  initialization and is not known to have a value in every part".
+- **A false proof gone.** In 1.13.0 and 1.13.1 an assertion read after a
+  write of an element of the same array could be proved whatever it said
+  (FP-141 in the analyzer). No obligation of the corpora relied on it.
+
+No finding changes on any corpus, and no `definite-error` is new or gone.
+
 ## 1.13.1 - 2026-11-05
 
 Aligned with AdaLang Analyzer 1.13.1. The report formats, the kinds of
