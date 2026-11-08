@@ -9,6 +9,36 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.13.3 - 2026-11-08
+
+Aligned with AdaLang Analyzer 1.13.3. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.13.2, and the plugin reads them with no change. Expect fewer
+issues on arrays with `Relaxed_Initialization`, whose elements the analyzer
+now follows one by one. On the analyzer's benchmark corpora run with
+`--verify` the issues on obligations go from 32,658 to 32,469, and none
+opens.
+
+- **Initialization checks GNATprove does not have gone.** An element or a
+  slice of an object with relaxed initialization passed to an `out`
+  parameter reads no value and no longer has an `initialization-check`
+  obligation: 18 `unproved` obligations and their issues are gone.
+- **Fewer issues.** 171 obligations move from unproved to proved safe, so
+  their issues close: 45 `assertion` (`R (0 .. 5)'Initialized` and the
+  like), 32 `initialization-check`, 28 `index-check`, 23
+  `integer-overflow`, 18 `range-check`, 21 loop invariants (11 on entry,
+  10 preserved by an iteration), 2 `postcondition` and 2 `precondition`;
+  101 of them in SPARKNaCl.
+- **Another reason on some issues that stay.** 37 unproved assertions,
+  postconditions and loop invariants say `'Initialized` of elements, of a
+  slice or of a whole array that the analyzer now translates; their issues
+  give what stops it next: 31 that had `uninitialized-object` now have no
+  reason code (the provers left them unproved), 4 have
+  `unsupported-operator` instead, and 2 `unsupported-expression-kind`
+  instead of `unsupported-conversion`.
+
+No finding changes, and no definite error is new or gone.
+
 ## 1.13.2 - 2026-11-07
 
 Aligned with AdaLang Analyzer 1.13.2. The report formats, the kinds of
