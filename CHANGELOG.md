@@ -9,6 +9,36 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.13.4 - 2026-11-09
+
+Aligned with AdaLang Analyzer 1.13.4. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.13.3, and the plugin reads them with no change. Expect fewer
+issues on records that hold an access value, the contexts RecordFlux
+generates among them: the analyzer now follows access values and the
+bounds of the arrays they designate. On the analyzer's benchmark corpora
+run with `--verify` the issues on obligations go from 32,469 to 32,336,
+and none opens.
+
+- **Fewer issues.** 133 obligations move from unproved to proved safe, so
+  their issues close: 57 `predicate-check` (the predicate of a RecordFlux
+  context at `Ctx.Cursors (Fld) := ...`, `Ctx.Buffer := null` and the
+  like), 42 `range-check`, 18 `integer-overflow`, 6
+  `pointer-dereference`, 6 `assertion`, 3 `postcondition` and 1
+  `precondition`; 129 of them in CoAP-SPARK, 4 in GNATColl.
+- **Another reason on some issues that stay.** 261 unproved obligations
+  read an access value or the bounds of what it designates, which the
+  analyzer now translates; their issues give what stops it next: 232 now
+  have no reason code (the provers left them unproved) instead of
+  `missing-static-bounds` (172), `unsupported-expression-kind` (50) or
+  `unsupported-attribute` (10), and 29 have another code.
+- **Definite errors where null was just assigned.** A dereference of an
+  access object just assigned `null`, or a call whose precondition requires
+  it not to be null, is a definite error: its issue goes from medium to high
+  severity. None of the corpora has one.
+
+No finding changes, and no definite error is new or gone on the corpora.
+
 ## 1.13.3 - 2026-11-08
 
 Aligned with AdaLang Analyzer 1.13.3. The report formats, the kinds of
