@@ -9,6 +9,41 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.13.5 - 2026-11-10
+
+Aligned with AdaLang Analyzer 1.13.5. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules, and the command line
+are those of 1.13.4, and the plugin reads them with no change. Expect
+issues on discriminant checks in SPARK code: the analyzer now raises one at
+each component of a variant part and at each assignment of a record with
+discriminants, where it raised one only where a static constraint decided
+it. On the analyzer's benchmark corpora run with `--verify` the issues on
+obligations go from 32,336 to 32,233: 105 close and 2 open.
+
+- **Issues on discriminant checks.** A `discriminant-check` obligation the
+  analyzer leaves unproved opens an issue under the rule
+  `proof-obligation:discriminant-check`, which the plugin already had. On
+  the corpora 135 are added, all in CoAP-SPARK: 130 proved safe, 3
+  unsupported, and 2 unproved, the two issues that open.
+- **Fewer issues.** 105 obligations move from unproved to proved safe, so
+  their issues close: 38 `precondition`, 17 `assertion`, 12
+  `integer-overflow`, 8 `range-check`, 8 `pointer-dereference`, 7
+  `loop-invariant-preservation`, 6 `postcondition`, 5 `predicate-check`, 3
+  `loop-invariant-initialization` and 1 `length-check`; 79 in CoAP-SPARK,
+  21 in libkeccak, 5 in Saatana.
+- **Another reason on some issues that stay.** 28 unproved obligations
+  read a discriminant of an object that has no value yet, which the
+  analyzer now allows (a discriminant always has one): instead of
+  `uninitialized-object`, 16 now have no reason code (the provers left them
+  unproved), 11 have `unsupported-expression-kind` and 1
+  `missing-static-bounds`.
+- **Definite errors on discriminants.** A component read under a guard
+  that selects another variant, or a constrained object given other
+  discriminants, is a definite error: its issue has high severity. None of
+  the corpora has one.
+
+No finding changes, and no definite error is new or gone on the corpora.
+
 ## 1.13.4 - 2026-11-09
 
 Aligned with AdaLang Analyzer 1.13.4. The report formats, the kinds of
