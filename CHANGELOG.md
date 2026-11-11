@@ -9,6 +9,37 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.14.0 - 2026-11-11
+
+Aligned with AdaLang Analyzer 1.14.0. The report formats, the methods, the
+reason codes, the rules and the command line are those of 1.13.5, and the
+plugin reads them with no change; there is one new kind of obligation,
+`resource-leak`. Expect issues on resource leaks in SPARK code, and far
+fewer on range checks: the analyzer no longer raises a range check whose
+target is an access value or a record, which could never fail. On the
+analyzer's benchmark corpora run with `--verify` the issues on obligations
+go from 32,233 to 29,503: 2,750 close and 20 open.
+
+- **Issues on resource leaks.** A `resource-leak` obligation the analyzer
+  leaves unproved opens an issue under the rule
+  `proof-obligation:resource-leak`, which the plugin makes from the kind as
+  it does for every other. The analyzer raises one at an assignment to an
+  object with owning access parts, at an `out` actual, and wherever the
+  scope of an owning local ends; it is never a definite error, so the
+  issue has medium severity. On the corpora 216 are added, all in
+  CoAP-SPARK: 188 proved safe, 8 unsupported, and 20 unproved, the issues
+  that open.
+- **Fewer issues on range checks.** 2,744 unproved range checks are gone,
+  and their issues close: 1,501 in AWS, 757 in GNATcoll, 223 in
+  CoAP-SPARK, 198 in Tokeneer, 61 in CubedOS, 2 in SPARKNaCl, 1 in Saatana
+  and 1 in libkeccak. With `--recommended`, `--spark` and `--automotive` the
+  same checks go: 1,445 in AWS, 757 in GNATcoll, 36 in Ada Drivers Library.
+- **Fewer issues elsewhere.** 6 obligations move from unproved to proved
+  safe, so their issues close: 3 `precondition`, 2 `pointer-dereference`
+  and 1 `postcondition`, all in CoAP-SPARK.
+
+No finding changes, and no definite error is new or gone on the corpora.
+
 ## 1.13.5 - 2026-11-10
 
 Aligned with AdaLang Analyzer 1.13.5. The report formats, the kinds of
