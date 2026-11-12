@@ -9,6 +9,41 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.15.0 - 2026-11-12
+
+Aligned with AdaLang Analyzer 1.15.0. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules and the command line
+are those of 1.14.0, and the plugin reads them with no change. Expect more
+issues on range checks -- the analyzer now checks the value a function
+returns and the bounds of the range of a `for` loop or a quantified
+expression -- and fewer on divisions, overflows and termination. With
+`--verify` the analyzer also verifies the generic units of imported
+projects that the analyzed code instantiates (SPARKlib's containers, say):
+their obligations are reported in the files of those units, outside the
+project, and their issues are skipped unless Sonar indexes those files,
+as the import log says ("skipped because their file was not indexed by
+Sonar"). On the analyzer's benchmark corpora run with `--verify` the issues
+on obligations go from 29,503 to 30,113: 718 open and 108 close.
+
+- **Issues on range checks.** The analyzer raises a range check on the
+  value a function with an integer result returns, and on the bounds of
+  `T range L .. H` in a `for` loop or a quantified expression. The 218 it
+  leaves unproved open issues under `proof-obligation:range-check`: 73 in
+  CoAP-SPARK, 65 in AWS, 48 in GNATcoll, 15 in SPARKNaCl, 8 in libkeccak,
+  8 in Tokeneer and 1 in CubedOS.
+- **Issues in SPARKlib's files.** CoAP-SPARK instantiates SPARKlib
+  containers, whose files now have 2,241 obligations: 1,155 proved safe,
+  586 unsupported, and 500 unproved, which are issues when the SPARKlib
+  sources are indexed and are skipped otherwise.
+- **Fewer issues elsewhere.** 108 obligations move from unproved to proved
+  safe, so their issues close: 85 `division-by-zero` (libkeccak 33,
+  CoAP-SPARK 21, SPARKNaCl 18, AWS 5, Saatana 3, GNATcoll 3, Tokeneer 2),
+  14 `integer-overflow` (libkeccak 11, SPARKNaCl 2, Tokeneer 1) and 9
+  `termination` (CoAP-SPARK 8, libkeccak 1).
+
+No finding changes, and no definite error is new or gone on the corpora.
+The other presets report the same obligations as with 1.14.0.
+
 ## 1.14.0 - 2026-11-11
 
 Aligned with AdaLang Analyzer 1.14.0. The report formats, the methods, the
