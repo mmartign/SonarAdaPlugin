@@ -9,6 +9,34 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.15.2 - 2026-11-14
+
+Aligned with AdaLang Analyzer 1.15.2. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules and the command line
+are those of 1.15.1, and the plugin reads them with no change. Expect
+fewer issues, in code RecordFlux generates most of all: the analyzer now
+carries the precondition of a generic subprogram into its body, takes the
+predicates of the components of a parameter to hold on entry, reads an
+expression function through a renaming, and folds `2 ** N` where `N` is a
+number. No obligation is added or removed. On the analyzer's benchmark
+corpora run with `--verify` the issues on obligations go from 29,733 to
+29,263: 470 close and none opens.
+
+- **Fewer issues.** 470 obligations move from unproved to proved safe, so
+  their issues close: 247 `initialization-check`, 156 `precondition`, 23
+  `pointer-dereference`, 16 `integer-overflow`, 12 `range-check`, 8
+  `assertion` and 8 `postcondition`; CoAP-SPARK 446, libkeccak 22, CubedOS
+  1 and GNATcoll 1.
+- **Issues that move.** The initialization check of an `out` parameter of
+  a generic subprogram is raised at the parameter's name in the generic
+  declaration, as for any subprogram declared apart from its body, not at
+  its name in the body. Two such checks are unproved (CoAP-SPARK's
+  SPARKlib, GNATcoll): their issues close at the body and open at the
+  declaration, with the same rule and severity.
+
+No finding changes, and no definite error is new or gone on the corpora.
+The other presets report the same obligations as with 1.15.1.
+
 ## 1.15.1 - 2026-11-14
 
 Aligned with AdaLang Analyzer 1.15.1. The report formats, the kinds of
