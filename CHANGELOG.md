@@ -9,6 +9,29 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.15.1 - 2026-11-14
+
+Aligned with AdaLang Analyzer 1.15.1. The report formats, the kinds of
+obligation, the methods, the reason codes, the rules and the command line
+are those of 1.15.0, and the plugin reads them with no change. Expect
+fewer issues, in and after loops most of all: the analyzer now keeps what
+is known of an object a loop does not write, the value on entry of a
+bound of a `for` loop's range, the bounds of an array an access value
+designates, `T'Min` and `T'Max`, and what the index or the bounds of a
+slice actual read across a call. No obligation is added or removed. On
+the analyzer's benchmark corpora run with `--verify` the issues on
+obligations go from 30,113 to 29,733: 380 close and none opens.
+
+- **Fewer issues.** 380 obligations move from unproved to proved safe, so
+  their issues close: 174 `range-check`, 117 `integer-overflow`, 40
+  `precondition`, 20 `index-check`, 13 loop invariants (9 preserved by an
+  iteration, 4 on entry), 9 `assertion`, 5 `postcondition` and 2
+  `initialization-check`; CoAP-SPARK 210, libkeccak 66, GNATcoll 54,
+  Saatana 19, AWS 11, SPARKNaCl 9, CubedOS 7 and Tokeneer 4.
+
+No finding changes, and no definite error is new or gone on the corpora.
+The other presets report the same obligations as with 1.15.0.
+
 ## 1.15.0 - 2026-11-12
 
 Aligned with AdaLang Analyzer 1.15.0. The report formats, the kinds of
