@@ -9,6 +9,43 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.16.0 - 2026-11-15
+
+Aligned with AdaLang Analyzer 1.16.0. The report formats, the methods, the
+reason codes, the rules and the command line are those of 1.15.2, and the
+plugin reads them with no change; there is one new kind of obligation,
+`non-aliasing`, which gets its rule, `proof-obligation:non-aliasing`, from
+the kind as every other does. Expect far fewer issues: the analyzer keeps
+the predicates of what a loop writes at its head and where branches meet,
+follows state abstractions through their refined contracts, knows the
+bounds of string literals, catenations and components, and takes the
+constants of record and array types to have a value. On the analyzer's
+benchmark corpora run with `--verify` the issues on obligations go from
+29,263 to 26,565: 2,699 close and one opens.
+
+- **Fewer issues.** 2,699 obligations move from unproved to proved safe,
+  so their issues close: 2,087 `initialization-check`, 293
+  `integer-overflow`, 135 `precondition`, 71 `predicate-check`, 66
+  `termination`, 16 `data-dependencies`, 11 `assertion`, 11
+  `range-check` and 9 others; AWS 1,242, tokeneer 461, CoAP-SPARK 360,
+  GNATcoll 291, CubedOS 144, SPARKNaCl 101, libkeccak 81, Saatana 15 and
+  Project Bias 4.
+- **One issue opens.** A postcondition of libkeccak's generic MonkeyWrap
+  (`State_Of (Ctx) = Auth_Data` of `Update_Auth_Data`) that 1.15.2 proved
+  is unproved.
+- **Non-aliasing checks.** 46 `non-aliasing` obligations are added on the
+  corpora (libkeccak 37, CoAP-SPARK 9), all proved, so none raises an
+  issue; where the analyzer cannot show two actuals apart the obligation is
+  unproved and raises one.
+- **One definite error, and a finding.** In CubedOS a precondition issue
+  that was unproved is now a definite error, with a
+  `Known_Precondition_Failure` finding beside it: `Handle_Add_Request`
+  calls `Add_Request_Decode`, whose precondition can never hold there.
+  GNATprove reports the call too.
+
+No other finding changes on the corpora. The other presets report the same
+obligations as with 1.15.2.
+
 ## 1.15.2 - 2026-11-14
 
 Aligned with AdaLang Analyzer 1.15.2. The report formats, the kinds of

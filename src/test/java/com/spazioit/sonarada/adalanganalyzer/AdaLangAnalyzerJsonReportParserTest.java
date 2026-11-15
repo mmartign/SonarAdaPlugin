@@ -493,6 +493,55 @@ class AdaLangAnalyzerJsonReportParserTest {
   }
 
   @Test
+  void importsNonAliasingChecks() {
+    // Obligations copied verbatim from AdaLang Analyzer 1.16.0 --verify JSON reports of the
+    // analyzer's own tests/verification_parameter_aliasing and
+    // tests/verification_mutation_parameter_aliasing, the release that adds the non-aliasing
+    // kind: at a call in SPARK code two actuals that name parts of one object, the formal of
+    // one of them written, must not overlap (SPARK RM 6.4.2). Two elements at static indexes
+    // that differ are proved apart and raise no issue; an element at an index that is not
+    // static stays unproved.
+    String json = """
+      {
+        "analysisConfiguration": {"toolVersion": "1.16.0", "selectedPreset": "verify", "skippedChecks": 0},
+        "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", \
+      "total": 2, "provedSafe": 1, "definiteError": 0, "unproved": 1, "unreachable": 0, "unsupported": 0},
+        "findings": [],
+        "proofObligations": [
+          {"id": "proof/v1/143972ac4a6c9d8b", "kind": "non-aliasing", "status": "proved-safe", \
+      "method": "static-evaluation", "file": "tests/verification_parameter_aliasing.adb", "line": 22, \
+      "column": 13, "operation": "G (0, 0)", "assumptions": "", "abstractState": "", \
+      "explanation": "the actuals denote parts of one object that cannot overlap", \
+      "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", \
+      "configurationId": "none"},
+          {"id": "proof/v1/99bfd0d72a321cda", "kind": "non-aliasing", "status": "unproved", \
+      "method": "static-evaluation", "file": "tests/verification_mutation_parameter_aliasing.adb", \
+      "line": 17, "column": 13, "operation": "G (I, 0)", "assumptions": "", "abstractState": "", \
+      "explanation": "two actuals denote parts of one object, one of them written", \
+      "imprecisionSource": "the parts the actuals denote are not known to be apart", \
+      "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none"}
+        ]
+      }
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(json)));
+
+    assertThat(report.proofObligations()).hasSize(report.proofObligationCount());
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::ruleId)
+      .containsExactly("proof-obligation:non-aliasing", "proof-obligation:non-aliasing");
+    assertThat(report.proofObligations())
+      .extracting(AdaLangAnalyzerProofObligation::method)
+      .containsExactly("static-evaluation", "static-evaluation");
+    assertThat(report.proofObligations()).extracting(report::isIssue).containsExactly(false, true);
+    assertThat(report.proofObligations().get(1).sonarMessage()).isEqualTo(
+      "Proof obligation [non-aliasing] unproved. Operation: G (I, 0)"
+        + ". Method: static-evaluation"
+        + ". Why: two actuals denote parts of one object, one of them written"
+        + ". Imprecision: the parts the actuals denote are not known to be apart");
+  }
+
+  @Test
   void importsInitializationChecksAtCalls() {
     // Obligations copied verbatim from AdaLang Analyzer 1.12.3 --verify JSON reports of the
     // analyzer's own tests/verification_outside_objects and
@@ -654,7 +703,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheAdditionBothToolsProveFromARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.15.2 run with --verify
+    // The complete --format=json report of AdaLang Analyzer 1.16.0 run with --verify
     // --gnatprove-log on the analyzer's own tests/gnatprove_import fixture: the addition at
     // sample.ads:18:7 is proved by both tools, and is no issue. Since 1.13.1 the array Source
     // assigned at sample.adb:5:17 has no range check of a scalar; since 1.15.0 the value each of
@@ -804,7 +853,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheLengthChecksOfARealReport() {
-    // The complete --format=json report of AdaLang Analyzer 1.15.2 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.16.0 run with --verify on the
     // analyzer's own tests/verification_length_check_state.adb: the length-check kind 1.8.4
     // added.
     AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(
@@ -872,7 +921,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnOutActualItsCalleeMayNotHaveWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.15.2 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.16.0 run with --verify on the
     // analyzer's own tests/verification_fp117_unwritten_out.adb. Up to 1.8.4 every one of these
     // reads was proved safe: an out actual was taken to be initialized after a call whose callee
     // has a path that returns without writing the parameter.
@@ -970,7 +1019,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsAComponentReadInTwoElementsOfAnArray() {
-    // The complete --format=json report of AdaLang Analyzer 1.15.2 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.16.0 run with --verify on the
     // analyzer's own tests/verification_fp119_element_component.ads and .adb. Up to 1.8.5 a
     // component was one value for every element of its array, and the first two of these
     // obligations were proved safe: an assertion that two elements hold the same count, and a
@@ -1224,7 +1273,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheReadsOfAnAliasedParameterChangedWithoutItsName() {
-    // The complete --format=json report of AdaLang Analyzer 1.15.2 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.16.0 run with --verify on the
     // analyzer's own tests/verification_fp121_aliased_parameter.ads and .adb. Up to 1.8.8 an
     // aliased parameter was taken to change only by its own name: read after a write through an
     // access value, or after a call that writes the object given for it, it was taken to hold
@@ -1269,7 +1318,7 @@ class AdaLangAnalyzerJsonReportParserTest {
 
   @Test
   void importsTheItemOfAReadAttributeAsWritten() {
-    // The complete --format=json report of AdaLang Analyzer 1.15.2 run with --verify on the
+    // The complete --format=json report of AdaLang Analyzer 1.16.0 run with --verify on the
     // analyzer's own tests/verification_fp122_read_item.adb, a procedure that gives its out
     // parameter Item to Character'Read and its out parameter Twice, never assigned, to
     // Character'Write. 'Read writes its second argument. Up to 1.8.8 that argument was taken for a
