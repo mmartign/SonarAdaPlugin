@@ -9,6 +9,25 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.16.1 - 2026-11-17
+
+Aligned with AdaLang Analyzer 1.16.1. The analyzer's results do not
+change, so no issue opens or closes: on its benchmark corpora run with
+`--verify` the issues on obligations stay at 26,565. The plugin reads the
+reports with no change.
+
+- **Obligation ids.** Every obligation id in the reports is new
+  (`proof/v2/...`) and no longer depends on where the sources were checked
+  out. The plugin does not use these ids, so no issue is affected.
+- **Two new report fields.** `analysisConfiguration.solverLimit`, and with
+  `--verify` `solverStatistics`, say what the external solvers were given
+  per query and how many of their runs a time limit stopped. The plugin
+  ignores both.
+- **Reproducible verification.** With `--solver-steps=<n>`, a `--verify`
+  run settles the same obligations on any host that has the same solver
+  binaries, so the same sources raise the same issues wherever the analysis
+  runs. The plugin imports those reports as it imports any other.
+
 ## 1.16.0 - 2026-11-15
 
 Aligned with AdaLang Analyzer 1.16.0. The report formats, the methods, the

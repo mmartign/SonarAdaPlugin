@@ -4,7 +4,7 @@
   "structuralCoverageObjective": "none",
   "certificationClaim": "verification support only; not a compliance determination",
   "analysisConfiguration": {
-    "toolVersion": "1.16.0",
+    "toolVersion": "1.16.1",
     "selectedPreset": "verify",
     "enabledRules": [
       "No_Goto",
@@ -46,6 +46,7 @@
       "Potentially_Blocking_Operation"
     ],
     "thresholds": {"cyclomaticComplexity": 10, "nestingDepth": 4, "parameterCount": 6, "lineLength": 120, "genericInstantiations": 10, "dependencies": 20},
+    "solverLimit": "time 2000 ms",
     "configFile": "",
     "baselineFile": "",
     "projectFiles": [
@@ -63,15 +64,16 @@
   "newViolations": 2,
   "baselineMatches": 0,
   "proofSummary": {"scope": "bounded scalar verification; unsupported boundaries are explicit", "total": 5, "provedSafe": 2, "definiteError": 1, "unproved": 2, "unreachable": 0, "unsupported": 0},
+  "solverStatistics": {"runs": 0, "stoppedByTime": 0},
   "findings": [
     {"ruleId": "Uninitialized_Output", "message": "out parameter 'Twice' is not initialized on every normal return path", "explanation": "", "evidence": "", "file": "tests/verification_fp122_read_item.adb", "line": 9, "column": 4, "severity": "High", "quality": "Reliability", "fingerprint": "43591306fc711f11", "baseline": false},
     {"ruleId": "Missing_Depends_Contract", "message": "subprogram has outputs but no Depends contract", "explanation": "", "evidence": "", "file": "tests/verification_fp122_read_item.adb", "line": 6, "column": 11, "severity": "Medium", "quality": "Maintainability", "fingerprint": "6175d60652e4eac3", "baseline": false}
   ],
   "proofObligations": [
-    {"id": "proof/v1/10f5227c802f5205", "kind": "initialization-check", "status": "proved-safe", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 11, "column": 20, "operation": "Strm", "assumptions": "", "abstractState": "initialization => true", "explanation": "object is initialized on every incoming path", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 7, "column": 4}},
-    {"id": "proof/v1/3588d7295a29bef1", "kind": "initialization-check", "status": "proved-safe", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 12, "column": 21, "operation": "Strm", "assumptions": "", "abstractState": "initialization => true", "explanation": "object is initialized on every incoming path", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 7, "column": 4}},
-    {"id": "proof/v1/ba9ed11680630b17", "kind": "initialization-check", "status": "definite-error", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 12, "column": 27, "operation": "Twice", "assumptions": "", "abstractState": "initialization => false", "explanation": "object is uninitialized on every incoming path", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 9, "column": 4}},
-    {"id": "proof/v1/c1c7a7245b7a92e4", "kind": "initialization-check", "status": "unproved", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 8, "column": 4, "operation": "Item", "assumptions": "", "abstractState": "", "explanation": "out parameter is not established as initialized at the normal exit", "imprecisionSource": "some path to the exit does not assign the whole parameter", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 8, "column": 4}},
-    {"id": "proof/v1/9c79eb88d12a4db6", "kind": "initialization-check", "status": "unproved", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 9, "column": 4, "operation": "Twice", "assumptions": "", "abstractState": "", "explanation": "out parameter is not established as initialized at the normal exit", "imprecisionSource": "some path to the exit does not assign the whole parameter", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 9, "column": 4}}
+    {"id": "proof/v2/018a10e611672e23", "kind": "initialization-check", "status": "proved-safe", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 11, "column": 20, "operation": "Strm", "assumptions": "", "abstractState": "initialization => true", "explanation": "object is initialized on every incoming path", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 7, "column": 4}},
+    {"id": "proof/v2/1bd2a23e5bfad3e7", "kind": "initialization-check", "status": "proved-safe", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 12, "column": 21, "operation": "Strm", "assumptions": "", "abstractState": "initialization => true", "explanation": "object is initialized on every incoming path", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 7, "column": 4}},
+    {"id": "proof/v2/c2a8515eeb8f46b1", "kind": "initialization-check", "status": "definite-error", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 12, "column": 27, "operation": "Twice", "assumptions": "", "abstractState": "initialization => false", "explanation": "object is uninitialized on every incoming path", "imprecisionSource": "", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 9, "column": 4}},
+    {"id": "proof/v2/0775876e19b60ba2", "kind": "initialization-check", "status": "unproved", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 8, "column": 4, "operation": "Item", "assumptions": "", "abstractState": "", "explanation": "out parameter is not established as initialized at the normal exit", "imprecisionSource": "some path to the exit does not assign the whole parameter", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 8, "column": 4}},
+    {"id": "proof/v2/de530f2c965232e8", "kind": "initialization-check", "status": "unproved", "method": "flow-analysis", "file": "tests/verification_fp122_read_item.adb", "line": 9, "column": 4, "operation": "Twice", "assumptions": "", "abstractState": "", "explanation": "out parameter is not established as initialized at the normal exit", "imprecisionSource": "some path to the exit does not assign the whole parameter", "reasonCode": "", "blockingExpression": "", "inlinePath": "", "configurationId": "none", "subject": {"file": "tests/verification_fp122_read_item.adb", "line": 9, "column": 4}}
   ]
 }
