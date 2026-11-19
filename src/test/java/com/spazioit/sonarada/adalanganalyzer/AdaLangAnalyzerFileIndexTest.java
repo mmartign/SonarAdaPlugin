@@ -28,6 +28,25 @@ class AdaLangAnalyzerFileIndexTest {
       .contains(inputFile);
   }
 
+  @Test
+  void resolvesADrivePathWrittenOnWindowsByProjectRelativeSuffix() {
+    InputFile inputFile = inputFile("/opt/project/src/demo.adb", "src/demo.adb");
+    AdaLangAnalyzerFileIndex index = new AdaLangAnalyzerFileIndex(Path.of("/opt/project"), List.of(inputFile));
+
+    assertThat(index.find("C:/Work/project/src/demo.adb")).contains(inputFile);
+    assertThat(index.find("C:\\Work\\project\\src\\demo.adb")).contains(inputFile);
+  }
+
+  @Test
+  void matchesBySuffixAPathThatIsNoPathOnThisHost() {
+    // A NUL character makes a path invalid on every host: the lookup must not throw.
+    InputFile inputFile = inputFile("/opt/project/src/demo.adb", "src/demo.adb");
+    AdaLangAnalyzerFileIndex index = new AdaLangAnalyzerFileIndex(Path.of("/opt/project"), List.of(inputFile));
+
+    assertThat(index.find("/elsewhere/\u0000/src/demo.adb")).contains(inputFile);
+    assertThat(index.find("/elsewhere/\u0000/src/other.adb")).isEmpty();
+  }
+
   private static InputFile inputFile(String absolutePath, String relativePath) {
     return (InputFile) Proxy.newProxyInstance(
       InputFile.class.getClassLoader(),

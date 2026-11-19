@@ -106,6 +106,18 @@ class AdaLangAnalyzerRunnerTest {
   }
 
   @Test
+  void passesAnObjectAdaProjectFileAsAGnatOneIs(@TempDir Path projectDirectory) {
+    // AdaLang Analyzer 1.17.0 reads the .prj file the ObjectAda IDE saves, given with -P.
+    assertThat(command(projectDirectory, Map.of(
+      AdaProperties.ADALANG_ANALYZER_PRESET_KEY, "recommended",
+      AdaProperties.ADALANG_ANALYZER_PROJECT_FILE_KEY, "legacy/legacy.prj")))
+      .containsExactly(
+        "adalang_analyzer", "-v", "--recommended",
+        "-P" + projectDirectory.resolve("legacy/legacy.prj"),
+        "/project/src/a.adb", "/project/src/b.adb");
+  }
+
+  @Test
   void passesNoGnatproveLogUnlessOneIsConfigured(@TempDir Path projectDirectory) {
     assertThat(command(projectDirectory, Map.of(AdaProperties.ADALANG_ANALYZER_PRESET_KEY, "verify")))
       .noneMatch(argument -> argument.startsWith("--gnatprove-log"));

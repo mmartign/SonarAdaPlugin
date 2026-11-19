@@ -26,6 +26,8 @@ import java.util.Optional;
  * check and {@code properties.gnatproveImport} has the counts.
  */
 final class AdaLangAnalyzerSarifReportParser {
+  private static final String FILE_SCHEME = "file://";
+
 
   AdaLangAnalyzerReport parse(Map<String, Object> root) {
     List<Object> runs = AdaLangAnalyzerJson.listOf(root.get("runs"));
@@ -56,7 +58,7 @@ final class AdaLangAnalyzerSarifReportParser {
       RuleMetadata rule = rules.getOrDefault(ruleId, RuleMetadata.EMPTY);
 
       findings.add(new AdaLangAnalyzerFinding(
-        percentDecode(AdaLangAnalyzerJson.stringOf(artifactLocation, "uri")),
+        artifactPath(AdaLangAnalyzerJson.stringOf(artifactLocation, "uri")),
         AdaLangAnalyzerJson.intOf(region, "startLine"),
         AdaLangAnalyzerJson.intOf(region, "startColumn"),
         "warning",
@@ -135,6 +137,29 @@ final class AdaLangAnalyzerSarifReportParser {
       case "note" -> "Low";
       default -> "";
     };
+  }
+
+  /**
+   * The path of the file an artifact URI names. AdaLang Analyzer writes a file under the
+   * directory it ran in as a relative path and any other as it was named, except that since 1.17.0
+   * a path on a Windows drive is a {@code file:} URI ({@code file:///C:/src/demo.adb}), whose drive
+   * letter would otherwise read as a URI scheme. Such a URI gives back the drive path; a {@code
+   * file:} URI of a POSIX path or of a UNC share, as other tools write them, gives back that path.
+   */
+  static String artifactPath(String uri) {
+    String path = percentDecode(uri);
+    if (!path.regionMatches(true, 0, FILE_SCHEME, 0, FILE_SCHEME.length())) {
+      return path;
+    }
+    String rest = path.substring(FILE_SCHEME.length());
+    if (rest.length() >= 3 && rest.charAt(0) == '/' && isAsciiLetter(rest.charAt(1)) && rest.charAt(2) == ':') {
+      return rest.substring(1);
+    }
+    return rest.startsWith("/") ? rest : "//" + rest;
+  }
+
+  private static boolean isAsciiLetter(char c) {
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
   }
 
   private static String percentDecode(String uri) {

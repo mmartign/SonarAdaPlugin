@@ -9,6 +9,34 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.17.0 - 2026-11-19
+
+Aligned with AdaLang Analyzer 1.17.0, which reads ObjectAda project files,
+runs on Windows, and reads a source with CR LF line ends as the same source
+with LF ends. On the analyzer's benchmark corpora its findings and proof
+obligations do not change, so no issue opens or closes there: run with
+`--verify`, the issues on obligations stay at 26,565.
+
+- **ObjectAda project files.** `sonar.ada.adalang.projectFile` can name
+  the `.prj` file the ObjectAda IDE saves (checked on those of Aonix
+  ObjectAda 7.2, ObjectAda 9.1 and PTC ObjectAda64 10). The plugin passes it
+  with `-P`, as it does a `.gpr`
+  file, and the analyzer analyzes the sources it lists. The analyzer's
+  earlier versions refuse such a file.
+- **Windows.** The analyzer runs on Windows, as `adalang_analyzer.exe`. Its
+  SARIF reports give a file outside the directory it ran in as a
+  `file:///C:/...` URI: the plugin now reads such a URI as the path it
+  names, where it took the whole URI for a path, which Java on Windows
+  rejects. A report path that is no valid path on the scanner's host, such
+  as one written on another system, no longer stops the import: it is
+  matched by its project-relative suffix like any path from another
+  checkout.
+- **CR LF sources.** On sources with CR LF line ends, the analyzer's
+  `Long_Line` no longer counts the CR, and `Trailing_Whitespace` and
+  `Malformed_Requirement_Trace` find what the CR hid, so issues of these
+  rules can close or open on such files. The analyzer's fingerprints of
+  findings on them change too; the plugin does not use fingerprints.
+
 ## 1.16.1 - 2026-11-17
 
 Aligned with AdaLang Analyzer 1.16.1. The analyzer's results do not

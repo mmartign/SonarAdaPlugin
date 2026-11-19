@@ -4,6 +4,7 @@
  */
 package com.spazioit.sonarada.adalanganalyzer;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,10 +36,16 @@ final class AdaLangAnalyzerFileIndex {
     if (direct != null) {
       return Optional.of(direct);
     }
-    Path candidate = Path.of(path);
-    InputFile resolved = paths.get(normalize(candidate.isAbsolute() ? candidate : baseDir.resolve(candidate)));
-    if (resolved != null) {
-      return Optional.of(resolved);
+    // A path written on another host may not be one here ("C:/src/demo.adb" on Linux is, a
+    // name with a character Windows forbids is not on Windows): only its suffix can match then.
+    try {
+      Path candidate = Path.of(path);
+      InputFile resolved = paths.get(normalize(candidate.isAbsolute() ? candidate : baseDir.resolve(candidate)));
+      if (resolved != null) {
+        return Optional.of(resolved);
+      }
+    } catch (InvalidPathException notAPathHere) {
+      // Fall through to the suffix match.
     }
 
     String normalized = normalize(path);

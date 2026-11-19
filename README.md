@@ -247,7 +247,7 @@ clang-analyzer, and is under active development. The plugin can run it during
 the scan, import reports it wrote earlier, or both. Its findings are published
 as Sonar external issues.
 
-This version of the plugin is tested against AdaLang Analyzer 1.16.1. Reports of
+This version of the plugin is tested against AdaLang Analyzer 1.17.0. Reports of
 earlier versions are still imported.
 
 | Property | Default | Purpose |
@@ -256,7 +256,7 @@ earlier versions are still imported.
 | `sonar.ada.adalang.executable` | `adalang_analyzer` | Path to the analyzer. Use an absolute path when it is not on `PATH`. |
 | `sonar.ada.adalang.preset` | | Preset of checks, passed as `--<preset>`. |
 | `sonar.ada.adalang.checks` | | Check names, passed with `-checks=`. |
-| `sonar.ada.adalang.projectFile` | | GNAT project file, passed with `-P`. |
+| `sonar.ada.adalang.projectFile` | | GNAT project file (`.gpr`) or ObjectAda project file (`.prj`), passed with `-P`. |
 | `sonar.ada.adalang.extraArgs` | | Further arguments, passed before the input files. |
 | `sonar.ada.adalang.gnatproveLogPaths` | | GNATprove logs, each passed with `--gnatprove-log=`. |
 | `sonar.ada.adalang.timeoutSeconds` | `300` | How long to wait for the analyzer. |
@@ -310,9 +310,20 @@ sonar.ada.adalang.extraArgs=-rule-param=Identifier_Casing.type=mixed -rule-param
 Their findings are imported like any other finding, under the check's name.
 
 **Project file.** The sources of the project given in `projectFile` are
-analyzed together with the Ada files indexed by Sonar, and `--verify` takes the
-project's configuration pragmas into account: a function in a project whose
-configuration pragmas set `SPARK_Mode` is treated as free of side effects.
+analyzed together with the Ada files indexed by Sonar, and `--verify` takes a
+GNAT project's configuration pragmas into account: a function in a project
+whose configuration pragmas set `SPARK_Mode` is treated as free of side
+effects. From AdaLang Analyzer 1.17.0 the project can also be the `.prj` file
+the ObjectAda IDE saves (checked on those of Aonix ObjectAda 7.2, ObjectAda
+9.1 and PTC ObjectAda64 10): the sources it lists are analyzed.
+
+**Windows.** From 1.17.0 AdaLang Analyzer also runs on Windows, as
+`adalang_analyzer.exe`, a single executable that needs no DLL beside it. The
+default `executable` finds it on `PATH`; otherwise give its full path. Its
+reports name files with `/` separators, relative to the directory it ran in
+(the plugin runs it in the project base directory) when they are under it, and
+the plugin resolves them as on the other hosts, including the `file:///C:/...`
+URIs its SARIF reports give a file outside that directory.
 
 **Further arguments.** `extraArgs` takes arguments such as `-X<name>=<value>`
 scenario variables, thresholds, or `--baseline=<file>`. Do not pass `--format`,

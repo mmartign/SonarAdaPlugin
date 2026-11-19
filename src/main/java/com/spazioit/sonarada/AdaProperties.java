@@ -158,8 +158,9 @@ public final class AdaProperties {
         .build(),
       PropertyDefinition.builder(ADALANG_ANALYZER_PROJECT_FILE_KEY)
         .name("AdaLang Analyzer project file")
-        .description("Optional GNAT .gpr project file passed with -P. Its sources are analyzed together with the "
-          + "Ada files indexed by Sonar, and its configuration pragmas (such as SPARK_Mode) are taken into account.")
+        .description("Optional project file passed with -P: a GNAT .gpr project or, with AdaLang Analyzer 1.17.0 "
+          + "and later, an ObjectAda .prj project. Its sources are analyzed together with the Ada files indexed by "
+          + "Sonar, and a .gpr project's configuration pragmas (such as SPARK_Mode) are taken into account.")
         .category(CATEGORY)
         .subCategory("AdaLang Analyzer")
         .type(PropertyType.STRING)

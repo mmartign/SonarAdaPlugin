@@ -312,6 +312,39 @@ class AdaLangAnalyzerSarifReportParserTest {
   }
 
   @Test
+  void readsTheDrivePathOfAWindowsFileUri() {
+    // AdaLang Analyzer 1.17.0 on Windows writes a file outside the directory it ran in as a
+    // "file:" URI, with "/" separators and its name escaped.
+    String sarif = """
+      {"runs": [{"tool": {"driver": {"name": "AdaLang Analyzer", "rules": []}}, "results": [
+        {"ruleId": "No_Goto", "level": "warning", "message": {"text": "goto statements are forbidden"}, \
+      "locations": [{"physicalLocation": {"artifactLocation": {"uri": "file:///C:/Work/My%20Project/src/demo.adb"}, \
+      "region": {"startLine": 3, "startColumn": 4}}}]}
+      ]}]}
+      """;
+
+    AdaLangAnalyzerReport report = parser.parse(AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(sarif)));
+
+    assertThat(report.findings())
+      .extracting(AdaLangAnalyzerFinding::file)
+      .containsExactly("C:/Work/My Project/src/demo.adb");
+  }
+
+  @Test
+  void readsThePathOfAFileUri() {
+    assertThat(AdaLangAnalyzerSarifReportParser.artifactPath("file:///home/ada/src/demo.adb"))
+      .isEqualTo("/home/ada/src/demo.adb");
+    assertThat(AdaLangAnalyzerSarifReportParser.artifactPath("FILE:///d:/src/demo.adb"))
+      .isEqualTo("d:/src/demo.adb");
+    assertThat(AdaLangAnalyzerSarifReportParser.artifactPath("file://server/share/demo.adb"))
+      .isEqualTo("//server/share/demo.adb");
+    assertThat(AdaLangAnalyzerSarifReportParser.artifactPath("src/demo%2Bmore.adb"))
+      .isEqualTo("src/demo+more.adb");
+    assertThat(AdaLangAnalyzerSarifReportParser.artifactPath("/project/src/demo.adb"))
+      .isEqualTo("/project/src/demo.adb");
+  }
+
+  @Test
   void reportsNoGnatproveSummaryForARunWithoutALog() {
     Map<String, Object> root = AdaLangAnalyzerJson.mapOf(AdaLangAnalyzerJson.parse(
       "{\"runs\": [{\"properties\": {\"proofObligations\": []}, \"results\": []}]}"));
