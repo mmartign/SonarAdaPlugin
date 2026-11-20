@@ -9,6 +9,39 @@ analyzer itself changed is in
 [its own changelog](https://github.com/mmartign/AdaLang_Analyzer/blob/main/CHANGELOG.md).
 Versions before 1.8.3 are in the git history.
 
+## 1.17.1 - 2026-11-20
+
+Aligned with AdaLang Analyzer 1.17.1, which fixes what running it on Alire
+showed. The report formats, the rules and the command line are those of
+1.17.0, and the plugin reads them with no change. On the analyzer's
+benchmark corpora run with `--verify` the issues on obligations go from
+26,565 to 26,567: five open and three close.
+
+- **Five issues open.** Five `data-dependencies` obligations that were
+  proved safe are unproved, four on Tokeneer and one on SPARKNaCl. The
+  analyzer now checks that a body reading a global its `Global` aspect
+  lists as `Output` gives the whole global a value first; it does not yet
+  follow one given its value a component or an element at a time, or in a
+  loop. The issue message gives the reason as its imprecision:
+  "Imprecision: <global> may be read before it is written and is listed
+  as Output".
+- **Three issues close.** Three unproved `initialization-check`
+  obligations of gnatcoll-core are gone: the object named before the dot
+  of a call in prefix notation, given to an `out` formal, is no longer
+  also taken as read.
+- **Fewer findings.** Outside code declared SPARK, `Uninitialized_Output`
+  no longer reports an `out` parameter whose type keeps a value however
+  the subprogram returns (tagged, controlled, access, or with defaults):
+  16 of its issues close on gnatcoll-core and 35 on AWS.
+  `Uninitialized_Read` follows the calls of nested procedures, and no
+  longer reports a read under a guard in a loop that writes the object
+  later: 2 of its issues close on gnatcoll-core with `--recommended`.
+- **Guarded calls.** A call whose actuals make its precondition false, but
+  which is reached only through a guard the analysis does not establish,
+  is an unproved precondition instead of a definite error: its issue goes
+  from high to medium severity, and its `Known_Precondition_Failure` issue
+  closes. None of the benchmark corpora has such a call.
+
 ## 1.17.0 - 2026-11-19
 
 Aligned with AdaLang Analyzer 1.17.0, which reads ObjectAda project files,
